@@ -12,8 +12,9 @@
       try {
         var saved = localStorage.getItem('mihwar-theme');
         if (saved === 'dark' || saved === 'light') document.documentElement.setAttribute('data-theme', saved);
-        var auth = JSON.parse(sessionStorage.getItem('mihwar-admin-auth'));
-        if (!auth || auth.loggedIn !== true) {
+        var auth = JSON.parse(localStorage.getItem('mihwar-admin-auth'));
+        var fresh = auth && auth.loggedIn === true && (Date.now() - (auth.at || 0)) < 43200000;
+        if (!fresh) {
           location.replace('login.html');
           return;
         }
@@ -28,11 +29,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Tajawal:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/styles.css">
-  <link rel="stylesheet" href="admin.css?v=order-1">
+  <link rel="stylesheet" href="admin.css?v=data-1">
+  <script src="../assets/data.js" defer></script>
   <script src="../assets/app.js" defer></script>
-  <script src="admin-components.js?v=order-1" defer></script>
-  <script src="admin.js?v=order-1" defer></script>
-  <script src="order.js?v=order-1" defer></script>
+  <script src="admin-components.js?v=data-1" defer></script>
+  <script src="admin.js?v=data-1" defer></script>
+  <script src="order.js?v=data-1" defer></script>
 </head>
 <body class="admin-page order-page">
   <a class="skip-link" href="#order-main">تخطَّ إلى ملف الطلب</a>
@@ -115,6 +117,41 @@
       <div class="dialog-actions">
         <button class="btn btn-ghost" type="button" data-close-order-note>إلغاء</button>
         <button class="btn btn-primary" type="submit">حفظ الملاحظة</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="equipment-dialog" data-order-details-dialog aria-labelledby="order-details-title">
+    <form method="dialog" class="dialog-card" data-order-details-form>
+      <div class="dialog-heading">
+        <div><span class="eyebrow">بيانات الإيجار</span><h2 id="order-details-title">تعديل بيانات الطلب</h2></div>
+        <button class="dialog-close" type="button" data-close-order-details aria-label="إغلاق">×</button>
+      </div>
+      <div class="dialog-grid">
+        <div class="admin-field">
+          <label for="order-start-date">تاريخ البداية</label>
+          <input id="order-start-date" name="startDate" type="date">
+        </div>
+        <div class="admin-field">
+          <label for="order-end-date">تاريخ النهاية</label>
+          <input id="order-end-date" name="endDate" type="date">
+        </div>
+        <div class="admin-field">
+          <label for="order-value">قيمة الطلب (ر.س)</label>
+          <input id="order-value" name="value" type="number" min="0" step="1" inputmode="numeric">
+        </div>
+        <div class="admin-field">
+          <label for="order-location">موقع التسليم</label>
+          <input id="order-location" name="location" type="text">
+        </div>
+        <div class="admin-field dialog-wide">
+          <label for="order-operational-note">ملاحظة تشغيلية مختصرة</label>
+          <textarea id="order-operational-note" name="operationalNote" rows="3"></textarea>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <button class="btn btn-ghost" type="button" data-close-order-details>إلغاء</button>
+        <button class="btn btn-primary" type="submit">حفظ البيانات</button>
       </div>
     </form>
   </dialog>

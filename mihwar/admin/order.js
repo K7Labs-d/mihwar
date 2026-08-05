@@ -23,6 +23,8 @@
   var statusForm = document.querySelector('[data-order-status-form]');
   var noteDialog = document.querySelector('[data-order-note-dialog]');
   var noteForm = document.querySelector('[data-order-note-form]');
+  var detailsDialog = document.querySelector('[data-order-details-dialog]');
+  var detailsForm = document.querySelector('[data-order-details-form]');
   var toast = document.querySelector('[data-order-toast]');
   var toastTimer;
 
@@ -38,21 +40,8 @@
   var validTabs = ORDER_TABS.map(function (tab) { return tab.id; });
   var currentTab = validTabs.indexOf(location.hash.slice(1)) !== -1 ? location.hash.slice(1) : 'overview';
 
-  var STATUS_LABELS = {
-    new: 'جديد',
-    contacting: 'جارٍ التواصل',
-    reviewed: 'تمت المراجعة',
-    awaiting_owner: 'بانتظار موافقة المالك',
-    approved: 'تمت الموافقة',
-    confirmed: 'مؤكد',
-    in_progress: 'قيد التنفيذ',
-    delivered: 'تم التسليم',
-    returned: 'تم الإرجاع',
-    completed: 'مكتمل',
-    closed: 'مغلق',
-    rejected: 'مرفوض',
-    cancelled: 'ملغي'
-  };
+  // المسميات من طبقة البيانات المشتركة — لا نسخة ثانية تتفرّع عنها
+  var STATUS_LABELS = admin.STATUS_LABELS;
 
   var STATUS_TIMELINE_LABELS = {
     new: 'تم إنشاء الطلب',
@@ -70,15 +59,7 @@
     cancelled: 'تم إلغاء الطلب'
   };
 
-  var PAYMENT_LABELS = {
-    pending: 'بانتظار الدفع',
-    unpaid: 'غير مدفوع',
-    partially_paid: 'مدفوع جزئيًا',
-    paid: 'مدفوع',
-    confirmed: 'الدفع مؤكد',
-    failed: 'فشل الدفع',
-    refunded: 'مسترد'
-  };
+  var PAYMENT_LABELS = admin.PAYMENT_STATUS_LABELS;
 
   var ALLOWED_NEXT = {
     new: ['reviewed', 'awaiting_owner'],
@@ -125,12 +106,7 @@
     });
   }
 
-  function normalizePhone(value) {
-    var digits = String(value || '').replace(/\D/g, '');
-    if (digits.indexOf('00') === 0) digits = digits.slice(2);
-    if (digits.indexOf('05') === 0) digits = '966' + digits.slice(1);
-    return digits;
-  }
+  var normalizePhone = admin.normalizePhone;
 
   function emptyState(title, description, action) {
     return components.EmptyState({ title: title, description: description, className: 'owner-page-empty', action: action || null });
@@ -223,7 +199,7 @@
     if (!start || !end) return '';
     var difference = new Date(end).getTime() - new Date(start).getTime();
     if (Number.isNaN(difference) || difference < 0) return '';
-    return admin.formatNumber(Math.max(1, Math.ceil(difference / 86400000))) + ' يوم';
+    return window.MihwarData.countLabel(Math.max(1, Math.ceil(difference / 86400000)), { one: 'يوم واحد', two: 'يومان', few: 'أيام', many: 'يوماً' });
   }
 
   function renderBreadcrumb() {
@@ -254,6 +230,7 @@
       { id: 'return', label: 'تسجيل الإرجاع', hidden: order.status !== 'delivered' },
       { id: 'close', label: 'إغلاق الطلب', hidden: order.status !== 'returned', className: 'owner-account-action' },
       { id: 'confirm-payment', label: 'تأكيد الدفع', hidden: paymentConfirmed() || order.status === 'rejected' || order.status === 'cancelled' },
+      { id: 'edit-details', label: 'تعديل بيانات الطلب' },
       { id: 'add-note', label: 'إضافة ملاحظة' },
       { id: 'call', label: 'اتصال', href: phone.length >= 9 ? 'tel:+' + phone : null, hidden: phone.length < 9 },
       { id: 'whatsapp', label: 'واتساب', href: phone.length >= 9 ? 'https://wa.me/' + phone : null, target: '_blank', rel: 'noopener', hidden: phone.length < 9 },
@@ -461,6 +438,20 @@
   function openNoteDialog() { noteForm.reset(); noteDialog.showModal(); noteForm.elements.note.focus(); }
   function closeNoteDialog() { noteDialog.close(); }
 
+  /* بيانات الإيجار التجارية (المدة والقيمة والموقع) كانت للقراءة فقط بعد
+     إنشاء الطلب، فأي طلب يدوي يبقى بلا مدة ولا قيمة إلى الأبد. */
+  function openDetailsDialog() {
+    detailsForm.elements.startDate.value = order.startDate || order.date || '';
+    detailsForm.elements.endDate.value = order.endDate || '';
+    detailsForm.elements.value.value = typeof order.value === 'number' ? String(order.value) : '';
+    detailsForm.elements.location.value = order.deliveryLocation || order.location || '';
+    detailsForm.elements.operationalNote.value = order.operationalNote || '';
+    detailsDialog.showModal();
+    detailsForm.elements.startDate.focus();
+  }
+
+  function closeDetailsDialog() { detailsDialog.close(); }
+
   if (!order) {
     renderBreadcrumb();
     notFound.hidden = false;
@@ -470,13 +461,11 @@
   content.hidden = false;
   renderPage();
 
-  tabsHost.addEventListener('click', function (event) {
-    var tab = event.target.closest('[data-entity-tab]');
-    if (!tab || validTabs.indexOf(tab.dataset.entityTab) === -1) return;
-    currentTab = tab.dataset.entityTab;
+  components.bindEntityTabs(tabsHost, function (tabId) {
+    if (validTabs.indexOf(tabId) === -1) return;
+    currentTab = tabId;
     history.replaceState(null, '', location.pathname + location.search + '#' + currentTab);
     renderTabs();
-    panel.focus();
   });
 
   panel.addEventListener('click', function (event) {
@@ -519,11 +508,46 @@
       renderPage();
       showToast('تم تأكيد الدفع وتسجيل الإجراء.');
     }
+    if (actionId === 'edit-details') openDetailsDialog();
     if (actionId === 'add-note') openNoteDialog();
   });
 
   document.querySelectorAll('[data-close-order-status]').forEach(function (button) { button.addEventListener('click', closeStatusDialog); });
   document.querySelectorAll('[data-close-order-note]').forEach(function (button) { button.addEventListener('click', closeNoteDialog); });
+  document.querySelectorAll('[data-close-order-details]').forEach(function (button) { button.addEventListener('click', closeDetailsDialog); });
+  detailsDialog.addEventListener('click', function (event) { if (event.target === detailsDialog) closeDetailsDialog(); });
+
+  detailsForm.addEventListener('submit', function (event) {
+    event.preventDefault();
+    if (!detailsForm.reportValidity()) return;
+    var startDate = detailsForm.elements.startDate.value;
+    var endDate = detailsForm.elements.endDate.value;
+    if (startDate && endDate && endDate < startDate) {
+      showToast('تاريخ النهاية يسبق تاريخ البداية.');
+      return;
+    }
+    var typedValue = parseInt(detailsForm.elements.value.value, 10);
+
+    order.startDate = startDate;
+    order.endDate = endDate;
+    order.date = startDate || order.date;
+    order.deliveryLocation = detailsForm.elements.location.value.trim();
+    order.operationalNote = detailsForm.elements.operationalNote.value.trim();
+    if (isNaN(typedValue)) delete order.value;
+    else {
+      order.value = typedValue;
+      if (order.payment && typeof order.payment === 'object') {
+        order.payment.total = typedValue;
+        if (typeof order.payment.paid === 'number') order.payment.due = Math.max(0, typedValue - order.payment.paid);
+      }
+    }
+
+    recordEvent('order_updated', 'تعديل بيانات الطلب', '', 'order_updated');
+    admin.saveState(state);
+    closeDetailsDialog();
+    renderPage();
+    showToast('تم حفظ بيانات الطلب.');
+  });
   statusDialog.addEventListener('click', function (event) { if (event.target === statusDialog) closeStatusDialog(); });
   noteDialog.addEventListener('click', function (event) { if (event.target === noteDialog) closeNoteDialog(); });
 
@@ -549,7 +573,7 @@
   });
 
   document.querySelector('[data-order-logout]').addEventListener('click', function () {
-    try { sessionStorage.removeItem(admin.AUTH_KEY); } catch (e) { /* لا شيء */ }
+    admin.clearAuth();
     location.replace('login.html');
   });
 })();

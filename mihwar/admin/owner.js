@@ -36,38 +36,10 @@
   var validTabs = OWNER_TABS.map(function (tab) { return tab.id; });
   var currentTab = validTabs.indexOf(location.hash.slice(1)) !== -1 ? location.hash.slice(1) : 'overview';
 
-  var EQUIPMENT_STATUS = {
-    active: 'معروضة',
-    displayed: 'معروضة',
-    pending: 'بانتظار المراجعة',
-    pending_review: 'بانتظار المراجعة',
-    booked: 'محجوزة',
-    unavailable: 'غير متاحة',
-    paused: 'موقوفة',
-    suspended: 'موقوفة'
-  };
-
-  var ORDER_STATUS = {
-    new: 'جديد',
-    awaiting_owner: 'بانتظار موافقة المالك',
-    contacting: 'جارٍ التواصل',
-    reviewed: 'تمت المراجعة',
-    approved: 'تمت الموافقة',
-    confirmed: 'مؤكد',
-    in_progress: 'قيد التنفيذ',
-    delivered: 'تم التسليم',
-    returned: 'تم الإرجاع',
-    completed: 'مكتمل',
-    closed: 'مغلق',
-    cancelled: 'ملغي',
-    rejected: 'مرفوض'
-  };
-
-  var ACCOUNT_STATUS = {
-    active: 'نشط',
-    suspended: 'موقوف',
-    inactive: 'غير نشط'
-  };
+  // المسميات كلها من طبقة البيانات المشتركة — لا نسخة ثانية تتفرّع عنها
+  var EQUIPMENT_STATUS = admin.EQUIPMENT_STATUS_LABELS;
+  var ORDER_STATUS = admin.STATUS_LABELS;
+  var ACCOUNT_STATUS = window.MihwarData.ACCOUNT_STATUS_LABELS;
 
   function showToast(message) {
     window.clearTimeout(toastTimer);
@@ -76,12 +48,7 @@
     toastTimer = window.setTimeout(function () { toast.hidden = true; }, 2600);
   }
 
-  function normalizePhone(value) {
-    var digits = String(value || '').replace(/\D/g, '');
-    if (digits.indexOf('00') === 0) digits = digits.slice(2);
-    if (digits.indexOf('05') === 0) digits = '966' + digits.slice(1);
-    return digits;
-  }
+  var normalizePhone = admin.normalizePhone;
 
   function addActivity(type, title) {
     if (!Array.isArray(owner.activity)) owner.activity = [];
@@ -229,7 +196,7 @@
       '<article><span>المعدات النشطة</span><strong>' + admin.formatNumber(activeEquipment) + '</strong></article>' +
       '<article><span>الطلبات المفتوحة</span><strong>' + admin.formatNumber(openOrders) + '</strong></article>' +
       '<article><span>الطلبات المكتملة</span><strong>' + admin.formatNumber(completedOrders) + '</strong></article>' +
-      '<article><span>متوسط التقييم</span><strong>' + (ratingAverage === null ? '—' : admin.escapeHTML(ratingAverage.toFixed(1))) + '</strong><small>' + (ratingAverage === null ? 'لا توجد تقييمات' : admin.formatNumber(ratings.length) + ' تقييمات') + '</small></article>' +
+      '<article><span>متوسط التقييم</span><strong>' + (ratingAverage === null ? '—' : admin.escapeHTML(ratingAverage.toFixed(1))) + '</strong><small>' + (ratingAverage === null ? 'لا توجد تقييمات' : window.MihwarData.countLabel(ratings.length, { one: 'تقييم واحد', two: 'تقييمان', few: 'تقييمات', many: 'تقييماً' })) + '</small></article>' +
       '<article><span>المستندات الناقصة</span><strong>' + (incompleteDocuments === null ? '—' : admin.formatNumber(incompleteDocuments)) + '</strong><small>' + (incompleteDocuments === null ? 'لا توجد مستندات' : 'بحسب المستندات المسجلة') + '</small></article>' +
       '<article><span>آخر طلب</span><strong class="metric-date">' + (lastOrder ? admin.escapeHTML(lastOrder.id) : '—') + '</strong><small>' + (lastOrder ? admin.escapeHTML(admin.formatDate(lastOrder.date || lastOrder.createdAt)) : 'لا توجد طلبات') + '</small></article>' +
       '<article><span>آخر تواصل</span><strong class="metric-date"><bdi>' + admin.escapeHTML(lastConversation ? admin.formatDateTime(lastConversation.updatedAt) : '—') + '</bdi></strong><small>' + (lastConversation ? 'محادثة مسجلة' : 'لا توجد محادثات') + '</small></article>' +
@@ -275,7 +242,7 @@
     var metrics = '<div class="owner-metric-grid owner-finance-grid"><article><span>إجمالي الإيرادات</span><strong>' + (total === null ? '—' : admin.escapeHTML(admin.formatRiyal(total))) + '</strong></article><article><span>المستحق</span><strong>' + (due === null ? '—' : admin.escapeHTML(admin.formatRiyal(due))) + '</strong></article><article><span>المحوّل</span><strong>' + (transferred === null ? '—' : admin.escapeHTML(admin.formatRiyal(transferred))) + '</strong></article></div>';
     if (!transactions.length) return metrics + emptyState('لا توجد عمليات مالية', 'ستظهر الإيرادات والمستحقات والتحويلات عند تسجيل عمليات حقيقية.');
     return metrics + '<div class="admin-table-wrap"><table class="admin-table profile-table"><thead><tr><th>العملية</th><th>التاريخ</th><th>النوع</th><th>الحالة</th><th>القيمة</th></tr></thead><tbody>' + transactions.map(function (item) {
-      return '<tr><td data-label="العملية"><bdi>' + admin.escapeHTML(item.id || '—') + '</bdi></td><td data-label="التاريخ"><bdi>' + admin.escapeHTML(admin.formatDate(item.date)) + '</bdi></td><td data-label="النوع">' + admin.escapeHTML(item.label || item.type || '—') + '</td><td data-label="الحالة">' + admin.escapeHTML(item.status || '—') + '</td><td data-label="القيمة"><bdi>' + (typeof item.amount === 'number' ? admin.escapeHTML(admin.formatRiyal(item.amount)) : '—') + '</bdi></td></tr>';
+      return '<tr><td data-label="العملية"><bdi>' + admin.escapeHTML(item.id || '—') + '</bdi></td><td data-label="التاريخ"><bdi>' + admin.escapeHTML(admin.formatDate(item.date)) + '</bdi></td><td data-label="النوع">' + admin.escapeHTML(item.label || item.type || '—') + '</td><td data-label="الحالة">' + admin.escapeHTML(admin.recordStatusLabel(item.status)) + '</td><td data-label="القيمة"><bdi>' + (typeof item.amount === 'number' ? admin.escapeHTML(admin.formatRiyal(item.amount)) : '—') + '</bdi></td></tr>';
     }).join('') + '</tbody></table></div>';
   }
 
@@ -363,7 +330,7 @@
   }
 
   document.querySelector('[data-owner-logout]').addEventListener('click', function () {
-    try { sessionStorage.removeItem(admin.AUTH_KEY); } catch (e) { /* لا شيء */ }
+    admin.clearAuth();
     location.replace('login.html');
   });
 
@@ -377,14 +344,11 @@
   content.hidden = false;
   renderPage();
 
-  tabsHost.addEventListener('click', function (event) {
-    var button = event.target.closest('[data-entity-tab]');
-    if (button) {
-      currentTab = button.dataset.entityTab;
-      history.replaceState(null, '', location.pathname + location.search + '#' + currentTab);
-      renderTab();
-      panel.focus();
-    }
+  components.bindEntityTabs(tabsHost, function (tabId) {
+    if (validTabs.indexOf(tabId) === -1) return;
+    currentTab = tabId;
+    history.replaceState(null, '', location.pathname + location.search + '#' + currentTab);
+    renderTab();
   });
 
   pageHeaderHost.addEventListener('click', function (event) {

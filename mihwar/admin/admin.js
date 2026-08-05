@@ -1,167 +1,75 @@
-/* مِحور — إدارة محلية تجريبية بلا قاعدة بيانات */
+/* مِحور — إدارة محلية تجريبية بلا قاعدة بيانات
+   البيانات والتنسيق ومسميات الحالات كلها من assets/data.js، وهو نفسه
+   المصدر الذي يقرأ منه الموقع العام. */
 
 (function () {
   'use strict';
 
   var components = window.MihwarComponents;
+  var data = window.MihwarData;
 
   var AUTH_KEY = 'mihwar-admin-auth';
-  var DATA_KEY = 'mihwar-admin-data-v3';
+  var AUTH_TTL = 12 * 60 * 60 * 1000;   // اثنتا عشرة ساعة
   var DEMO_PASSWORD = 'Mihwar123';
   var DEMO_IDENTITIES = ['admin@mihwar.local', '0500000000'];
 
-  var STATUS_LABELS = {
-    new: 'جديد',
-    contacting: 'جارٍ التواصل',
-    reviewed: 'تمت المراجعة',
-    awaiting_owner: 'بانتظار موافقة المالك',
-    approved: 'تمت الموافقة',
-    confirmed: 'مؤكد',
-    in_progress: 'قيد التنفيذ',
-    delivered: 'تم التسليم',
-    returned: 'تم الإرجاع',
-    completed: 'مكتمل',
-    closed: 'مغلق',
-    rejected: 'مرفوض',
-    cancelled: 'ملغي'
-  };
+  var STATUS_LABELS = data.ORDER_STATUS_LABELS;
+  var EQUIPMENT_STATUS_LABELS = data.EQUIPMENT_STATUS_LABELS;
+  var OWNER_VERIFICATION_LABELS = data.OWNER_VERIFICATION_LABELS;
+  var DOCUMENT_STATUS_LABELS = data.DOCUMENT_STATUS_LABELS;
 
-  var OWNER_VERIFICATION_LABELS = {
-    verified: 'موثق',
-    pending: 'بانتظار التحقق',
-    rejected: 'مرفوض'
-  };
+  var escapeHTML = data.escapeHTML;
+  var formatDate = data.formatDate;
+  var formatDateTime = data.formatDateTime;
+  var formatNumber = data.formatNumber;
+  var formatRiyal = data.formatRiyal;
 
-  var DOCUMENT_STATUS_LABELS = {
-    verified: 'موثق',
-    pending: 'بانتظار المراجعة',
-    rejected: 'مرفوض'
-  };
-
-  var DEFAULT_STATE = {
-    owners: [],
-    equipment: [],
-    orders: [],
-    customers: [],
-    conversations: [],
-    visits: { total: 0, today: 0 }
-  };
+  /* ------------------------------- الجلسة -------------------------------
+     الجلسة في localStorage لا sessionStorage، كي لا يُطرد المستخدم عند فتح
+     أي سجل في تبويب جديد؛ ومدّتها محدودة فلا تبقى مفتوحة إلى الأبد. */
 
   function readAuth() {
     try {
-      var auth = JSON.parse(sessionStorage.getItem(AUTH_KEY));
-      return Boolean(auth && auth.loggedIn === true);
+      var auth = JSON.parse(localStorage.getItem(AUTH_KEY));
+      return Boolean(auth && auth.loggedIn === true && (Date.now() - (auth.at || 0)) < AUTH_TTL);
     } catch (e) {
       return false;
     }
   }
 
-  function cloneDefaults() {
-    return JSON.parse(JSON.stringify(DEFAULT_STATE));
+  function clearAuth() {
+    try { localStorage.removeItem(AUTH_KEY); } catch (e) { /* لا شيء */ }
   }
 
-  function loadState() {
-    try {
-      var stored = JSON.parse(localStorage.getItem(DATA_KEY));
-      if (stored && Array.isArray(stored.owners) && Array.isArray(stored.equipment) && Array.isArray(stored.orders)) {
-        var defaults = cloneDefaults();
-        if (!Array.isArray(stored.customers)) stored.customers = defaults.customers;
-        if (!Array.isArray(stored.conversations)) stored.conversations = defaults.conversations;
-        if (!stored.visits || typeof stored.visits.total !== 'number') stored.visits = defaults.visits;
-        stored.owners = stored.owners.map(function (owner) {
-          owner.verification = owner.verification || 'pending';
-          owner.accountStatus = owner.accountStatus || 'active';
-          owner.lastLogin = owner.lastLogin || null;
-          owner.documents = Array.isArray(owner.documents) ? owner.documents : [];
-          owner.ratings = Array.isArray(owner.ratings) ? owner.ratings : [];
-          owner.activity = Array.isArray(owner.activity) ? owner.activity : [];
-          owner.earnings = owner.earnings && Array.isArray(owner.earnings.transactions) ? owner.earnings : { transactions: [] };
-          return owner;
-        });
-        stored.equipment = stored.equipment.map(function (item) {
-          item.documents = Array.isArray(item.documents) ? item.documents : [];
-          item.activity = Array.isArray(item.activity) ? item.activity : [];
-          return item;
-        });
-        stored.orders = stored.orders.map(function (order) {
-          order.activity = Array.isArray(order.activity) ? order.activity : [];
-          order.timeline = Array.isArray(order.timeline) ? order.timeline : [];
-          order.notes = Array.isArray(order.notes) ? order.notes : [];
-          order.documents = Array.isArray(order.documents) ? order.documents : [];
-          if (order.payment && typeof order.payment === 'object' && !Array.isArray(order.payment.transactions)) order.payment.transactions = [];
-          return order;
-        });
-        stored.customers = stored.customers.map(function (customer) {
-          customer.activity = Array.isArray(customer.activity) ? customer.activity : [];
-          return customer;
-        });
-        stored.conversations = stored.conversations.map(function (conversation) {
-          conversation.messages = Array.isArray(conversation.messages) ? conversation.messages : [];
-          return conversation;
-        });
-        return stored;
-      }
-    } catch (e) { /* نعود إلى البيانات الافتراضية */ }
-    return cloneDefaults();
-  }
-
-  function saveState(state) {
-    try { localStorage.setItem(DATA_KEY, JSON.stringify(state)); } catch (e) { /* المعاينة تظل تعمل في الذاكرة */ }
-  }
-
-  function escapeHTML(value) {
-    return String(value)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
-  }
-
-  function formatDate(value) {
-    if (!value) return '—';
-    try {
-      var parsed = /^\d{4}-\d{2}-\d{2}$/.test(String(value)) ? new Date(value + 'T12:00:00') : new Date(value);
-      return new Intl.DateTimeFormat('ar-SA-u-nu-latn', { day: 'numeric', month: 'short', year: 'numeric' })
-        .format(parsed);
-    } catch (e) {
-      return value;
-    }
-  }
-
-  function formatRiyal(value) {
-    return new Intl.NumberFormat('ar-SA-u-nu-latn', { maximumFractionDigits: 0 }).format(value) + ' ر.س';
-  }
-
-  function formatNumber(value) {
-    return new Intl.NumberFormat('ar-SA-u-nu-latn', { maximumFractionDigits: 0 }).format(value);
-  }
-
-  function formatDateTime(value) {
-    if (!value) return '—';
-    try {
-      return new Intl.DateTimeFormat('ar-SA-u-nu-latn', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
-        .format(new Date(value));
-    } catch (e) {
-      return value;
-    }
-  }
+  function loadState() { return data.load(); }
+  function saveState(state) { return data.save(state); }
 
   window.MihwarAdmin = {
     AUTH_KEY: AUTH_KEY,
-    DATA_KEY: DATA_KEY,
     STATUS_LABELS: STATUS_LABELS,
+    EQUIPMENT_STATUS_LABELS: EQUIPMENT_STATUS_LABELS,
     OWNER_VERIFICATION_LABELS: OWNER_VERIFICATION_LABELS,
     DOCUMENT_STATUS_LABELS: DOCUMENT_STATUS_LABELS,
+    RECORD_STATUS_LABELS: data.RECORD_STATUS_LABELS,
+    PAYMENT_STATUS_LABELS: data.PAYMENT_STATUS_LABELS,
     readAuth: readAuth,
+    clearAuth: clearAuth,
     loadState: loadState,
     saveState: saveState,
     escapeHTML: escapeHTML,
     formatDate: formatDate,
     formatDateTime: formatDateTime,
     formatNumber: formatNumber,
-    formatRiyal: formatRiyal
+    formatRiyal: formatRiyal,
+    normalizePhone: data.normalizePhone,
+    // مسمّى عربي لأي حالة عامة (حجز، صيانة، عملية مالية) بدل إظهار المفتاح خاماً
+    recordStatusLabel: function (status) {
+      if (!status) return 'غير محددة';
+      return data.RECORD_STATUS_LABELS[status] || data.PAYMENT_STATUS_LABELS[status] || status;
+    }
   };
+
+  /* ----------------------------- تسجيل الدخول ----------------------------- */
 
   function initLogin() {
     var form = document.querySelector('[data-login-form]');
@@ -188,7 +96,7 @@
 
       error.hidden = true;
       try {
-        sessionStorage.setItem(AUTH_KEY, JSON.stringify({ loggedIn: true, identity: identity }));
+        localStorage.setItem(AUTH_KEY, JSON.stringify({ loggedIn: true, identity: identity, at: Date.now() }));
       } catch (e) {
         error.textContent = 'تعذّر بدء الجلسة المحلية في هذا المتصفح.';
         error.hidden = false;
@@ -199,6 +107,8 @@
 
     return true;
   }
+
+  /* ------------------------------ لوحة العمليات ------------------------------ */
 
   function initDashboard() {
     var ordersBody = document.querySelector('[data-orders-body]');
@@ -248,6 +158,10 @@
       return state.owners.find(function (owner) { return owner.id === ownerId; });
     }
 
+    function getEquipment(equipmentId) {
+      return state.equipment.find(function (item) { return item.id === equipmentId; });
+    }
+
     function ownerEquipment(ownerId) {
       return state.equipment.filter(function (item) { return item.ownerId === ownerId; });
     }
@@ -256,11 +170,8 @@
       return state.orders.filter(function (order) { return order.ownerId === ownerId; });
     }
 
-    function normalizePhone(value) {
-      var digits = String(value || '').replace(/\D/g, '');
-      if (digits.indexOf('00') === 0) digits = digits.slice(2);
-      if (digits.indexOf('05') === 0) digits = '966' + digits.slice(1);
-      return digits;
+    function equipmentOrders(equipmentId) {
+      return state.orders.filter(function (order) { return order.equipmentId === equipmentId; });
     }
 
     function ownerVerificationBadge(status) {
@@ -277,12 +188,12 @@
 
     function addOwnerActivity(owner, type, title) {
       if (!Array.isArray(owner.activity)) owner.activity = [];
-      owner.activity.unshift({ id: 'AC-' + String(Date.now()), type: type, title: title, at: new Date().toISOString() });
+      owner.activity.unshift({ id: data.nextId('AC'), type: type, title: title, at: new Date().toISOString() });
     }
 
     function addRecordActivity(record, type, title) {
       if (!Array.isArray(record.activity)) record.activity = [];
-      record.activity.unshift({ id: 'AC-' + String(Date.now()), type: type, title: title, at: new Date().toISOString() });
+      record.activity.unshift({ id: data.nextId('AC'), type: type, title: title, at: new Date().toISOString() });
       record.updatedAt = new Date().toISOString();
     }
 
@@ -319,16 +230,20 @@
         var dueValue = order.dueAt || order.endDate;
         return Boolean(order.needsFollowUp || (dueValue && new Date(dueValue).getTime() < now && closedStatuses.indexOf(order.status) === -1));
       }).length;
+      var unreadMessages = state.conversations.reduce(function (count, conversation) {
+        return count + (Number(conversation.unread) || 0);
+      }, 0);
       var missingOwnerDocuments = state.owners.filter(function (owner) { return !owner.documents || !owner.documents.length; }).length;
       var missingEquipmentDocuments = state.equipment.filter(function (item) { return !item.documents || !item.documents.length; }).length;
       var rejectedDocuments = state.owners.reduce(function (count, owner) {
-        return count + owner.documents.filter(function (document) { return document.status === 'rejected'; }).length;
+        return count + owner.documents.filter(function (doc) { return doc.status === 'rejected'; }).length;
       }, 0) + state.equipment.reduce(function (count, item) {
-        return count + item.documents.filter(function (document) { return document.status === 'rejected'; }).length;
+        return count + item.documents.filter(function (doc) { return doc.status === 'rejected'; }).length;
       }, 0);
 
       var items = [
         { count: newOrders, title: 'طلبات جديدة', description: 'بانتظار بدء المتابعة', target: 'orders', tone: 'primary' },
+        { count: unreadMessages, title: 'رسائل غير مقروءة', description: 'بانتظار الرد', target: 'conversations', tone: 'primary' },
         { count: pendingEquipment, title: 'معدات بانتظار المراجعة', description: 'تحتاج قرار عرض', target: 'equipment', tone: 'warning' },
         { count: pendingOwners, title: 'ملاك بانتظار التحقق', description: 'تحتاج مراجعة بياناتهم', target: 'owners', tone: 'warning' },
         { count: followUps, title: 'طلبات تحتاج متابعة', description: 'متأخرة أو معلّمة للمتابعة', target: 'orders', tone: 'danger' },
@@ -378,6 +293,12 @@
       renderOperationsActivity();
     }
 
+    function orderTone(status) {
+      if (['completed', 'closed', 'returned'].indexOf(status) !== -1) return 'verified';
+      if (status === 'cancelled' || status === 'rejected') return 'rejected';
+      return 'pending';
+    }
+
     function renderOrders() {
       if (!state.orders.length) {
         ordersBody.innerHTML = emptyRow('لا توجد طلبات حتى الآن.', 6);
@@ -387,14 +308,15 @@
         var customer = getCustomer(order.customerId);
         var linkedEquipment = state.equipment.find(function (item) { return item.id === order.equipmentId || (!order.equipmentId && item.name === order.equipment); });
         var status = STATUS_LABELS[order.status] || order.status || 'غير محددة';
-        var tone = ['completed', 'closed', 'returned'].indexOf(order.status) !== -1 ? 'verified' : (order.status === 'cancelled' || order.status === 'rejected' ? 'rejected' : 'pending');
         return '<tr data-record-type="order" data-record-id="' + escapeHTML(order.id) + '">' +
-          '<td data-label="رقم الطلب"><a class="record-link cell-title" href="order.html?id=' + encodeURIComponent(order.id) + '"><bdi>' + escapeHTML(order.id) + '</bdi></a></td>' +
+          '<td data-label="رقم الطلب"><a class="record-link cell-title" href="order.html?id=' + encodeURIComponent(order.id) + '"><bdi>' + escapeHTML(order.id) + '</bdi></a>' +
+            (order.source === 'public' ? '<span class="cell-sub">من الموقع العام</span>' : '') + '</td>' +
           '<td data-label="المستأجر">' + (customer ? '<a class="record-link" href="index.html?recordType=customer&amp;recordId=' + encodeURIComponent(customer.id) + '#customers">' + escapeHTML(order.renter || customer.name) + '</a>' : escapeHTML(order.renter || '—')) + '</td>' +
           '<td data-label="المعدة">' + (linkedEquipment ? '<a class="record-link" href="equipment.html?id=' + encodeURIComponent(linkedEquipment.id) + '">' + escapeHTML(linkedEquipment.name) + '</a>' : escapeHTML(order.equipment || '—')) + '</td>' +
           '<td data-label="التاريخ"><bdi>' + escapeHTML(formatDate(order.startDate || order.date || order.createdAt)) + '</bdi></td>' +
-          '<td data-label="الحالة">' + components.StatusBadge({ label: status, tone: tone }) + '</td>' +
-          '<td data-label="الإجراء"><a class="table-action table-action-primary" href="order.html?id=' + encodeURIComponent(order.id) + '">عرض الملف</a></td>' +
+          '<td data-label="الحالة">' + components.StatusBadge({ label: status, tone: orderTone(order.status) }) + '</td>' +
+          '<td data-label="الإجراءات"><div class="table-actions"><a class="table-action table-action-primary" href="order.html?id=' + encodeURIComponent(order.id) + '">عرض الملف</a>' +
+            '<button class="table-action table-action-danger" type="button" data-delete-order="' + escapeHTML(order.id) + '">حذف</button></div></td>' +
           '</tr>';
       }).join('');
     }
@@ -406,16 +328,18 @@
       }
       equipmentBody.innerHTML = state.equipment.map(function (item) {
         var owner = getOwner(item.ownerId);
-        var isActive = item.status === 'active' || item.status === 'displayed';
-        var equipmentStatuses = { active: 'معروضة', displayed: 'معروضة', pending: 'بانتظار المراجعة', pending_review: 'بانتظار المراجعة', booked: 'محجوزة', unavailable: 'غير متاحة', paused: 'موقوفة', suspended: 'موقوفة' };
+        var isActive = data.isListed(item);
         var statusTone = isActive ? 'admin-badge-active' : 'admin-badge-paused';
         return '<tr data-record-type="equipment" data-record-id="' + escapeHTML(item.id) + '">' +
           '<td data-label="المعدة"><a class="record-link cell-title" href="equipment.html?id=' + encodeURIComponent(item.id) + '">' + escapeHTML(item.name) + '</a><span class="cell-sub">' + escapeHTML(item.category) + ' · <bdi>' + escapeHTML(item.id) + '</bdi></span></td>' +
           '<td data-label="المالك">' + (owner ? '<a class="record-link" href="owner.html?id=' + encodeURIComponent(owner.id) + '">' + escapeHTML(owner.name) + '</a>' : 'غير محدد') + '</td>' +
           '<td data-label="المدينة">' + escapeHTML(item.city) + '</td>' +
           '<td data-label="السعر اليومي"><bdi>' + escapeHTML(formatRiyal(item.dailyRate)) + '</bdi></td>' +
-          '<td data-label="حالة العرض"><span class="admin-badge ' + statusTone + '">' + escapeHTML(equipmentStatuses[item.status] || item.status || 'غير محددة') + '</span></td>' +
-          '<td data-label="الإجراءات"><div class="table-actions"><a class="table-action table-action-primary" href="equipment.html?id=' + encodeURIComponent(item.id) + '">عرض الملف</a><button class="table-action" type="button" data-edit-equipment="' + escapeHTML(item.id) + '">تعديل</button><button class="table-action" type="button" data-toggle-equipment="' + escapeHTML(item.id) + '">' + (isActive ? 'إيقاف العرض' : 'إعادة العرض') + '</button></div></td>' +
+          '<td data-label="حالة العرض"><span class="admin-badge ' + statusTone + '">' + escapeHTML(EQUIPMENT_STATUS_LABELS[item.status] || item.status || 'غير محددة') + '</span></td>' +
+          '<td data-label="الإجراءات"><div class="table-actions"><a class="table-action table-action-primary" href="equipment.html?id=' + encodeURIComponent(item.id) + '">عرض الملف</a>' +
+            '<button class="table-action" type="button" data-edit-equipment="' + escapeHTML(item.id) + '">تعديل</button>' +
+            '<button class="table-action" type="button" data-toggle-equipment="' + escapeHTML(item.id) + '">' + (isActive ? 'إيقاف العرض' : 'إعادة العرض') + '</button>' +
+            '<button class="table-action table-action-danger" type="button" data-delete-equipment="' + escapeHTML(item.id) + '">حذف</button></div></td>' +
           '</tr>';
       }).join('');
     }
@@ -444,7 +368,7 @@
       ownersBody.innerHTML = filteredOwners.map(function (owner) {
         var equipmentCount = ownerEquipment(owner.id).length;
         var ordersCount = ownerOrders(owner.id).length;
-        var phone = normalizePhone(owner.contact);
+        var phone = data.normalizePhone(owner.contact);
         var whatsapp = phone.length >= 9
           ? '<a class="table-action" href="https://wa.me/' + phone + '" target="_blank" rel="noopener">واتساب</a>'
           : '<button class="table-action" type="button" disabled title="أضف رقم التواصل أولًا">واتساب</button>';
@@ -457,7 +381,10 @@
           '<td data-label="عدد المعدات"><bdi>' + formatNumber(equipmentCount) + '</bdi></td>' +
           '<td data-label="عدد الطلبات"><bdi>' + formatNumber(ordersCount) + '</bdi></td>' +
           '<td data-label="آخر نشاط"><bdi>' + escapeHTML(formatDateTime(latestOwnerActivity(owner))) + '</bdi></td>' +
-          '<td data-label="الإجراءات"><div class="table-actions"><a class="table-action table-action-primary" href="owner.html?id=' + encodeURIComponent(owner.id) + '">عرض الملف</a><button class="table-action" type="button" data-edit-owner="' + escapeHTML(owner.id) + '">تعديل</button>' + whatsapp + '<button class="table-action ' + (suspended ? 'table-action-success' : 'table-action-danger') + '" type="button" data-toggle-owner="' + escapeHTML(owner.id) + '">' + (suspended ? 'تفعيل الحساب' : 'إيقاف الحساب') + '</button></div></td>' +
+          '<td data-label="الإجراءات"><div class="table-actions"><a class="table-action table-action-primary" href="owner.html?id=' + encodeURIComponent(owner.id) + '">عرض الملف</a>' +
+            '<button class="table-action" type="button" data-edit-owner="' + escapeHTML(owner.id) + '">تعديل</button>' + whatsapp +
+            '<button class="table-action ' + (suspended ? 'table-action-success' : 'table-action-danger') + '" type="button" data-toggle-owner="' + escapeHTML(owner.id) + '">' + (suspended ? 'تفعيل الحساب' : 'إيقاف الحساب') + '</button>' +
+            '<button class="table-action table-action-danger" type="button" data-delete-owner="' + escapeHTML(owner.id) + '">حذف</button></div></td>' +
           '</tr>';
       }).join('');
     }
@@ -472,7 +399,6 @@
       }).join('');
       ownerCityFilter.value = cities.indexOf(selected) !== -1 ? selected : 'all';
     }
-
 
     function openOwnerEdit(owner) {
       ownerEditForm.reset();
@@ -503,6 +429,46 @@
       saveState(state);
       renderOwners();
       showToast(owner.accountStatus === 'suspended' ? 'تم إيقاف حساب المالك.' : 'تم تفعيل حساب المالك.');
+    }
+
+    /* ------------------------------- الحذف -------------------------------
+       الحذف يرفض ترك سجلات يتيمة، فيمنع حذف مالك أو معدة مرتبطة بسجلات أخرى. */
+
+    function deleteOwner(owner) {
+      var linkedEquipment = ownerEquipment(owner.id).length;
+      var linkedOrders = ownerOrders(owner.id).length;
+      if (linkedEquipment || linkedOrders) {
+        showToast('لا يمكن حذف المالك قبل فكّ ارتباطه بـ ' + formatNumber(linkedEquipment) + ' معدة و' + formatNumber(linkedOrders) + ' طلب.');
+        return;
+      }
+      if (!window.confirm('هل تريد حذف ملف «' + owner.name + '» نهائيًا؟')) return;
+      state.owners = state.owners.filter(function (row) { return row.id !== owner.id; });
+      state.conversations = state.conversations.filter(function (row) { return row.ownerId !== owner.id; });
+      saveState(state);
+      renderAll();
+      showToast('تم حذف ملف المالك.');
+    }
+
+    function deleteEquipment(item) {
+      var linkedOrders = equipmentOrders(item.id).length;
+      if (linkedOrders) {
+        showToast('لا يمكن حذف المعدة لارتباطها بـ ' + formatNumber(linkedOrders) + ' طلب.');
+        return;
+      }
+      if (!window.confirm('هل تريد حذف «' + item.name + '» من الكتالوج نهائيًا؟')) return;
+      state.equipment = state.equipment.filter(function (row) { return row.id !== item.id; });
+      saveState(state);
+      renderAll();
+      showToast('تم حذف المعدة من الكتالوج.');
+    }
+
+    function deleteOrder(order) {
+      if (!window.confirm('هل تريد حذف الطلب ' + order.id + ' نهائيًا؟')) return;
+      state.orders = state.orders.filter(function (row) { return row.id !== order.id; });
+      state.conversations = state.conversations.filter(function (row) { return row.orderId !== order.id; });
+      saveState(state);
+      renderAll();
+      showToast('تم حذف الطلب.');
     }
 
     function renderCustomers() {
@@ -641,7 +607,7 @@
       }).join('');
       manualOrderForm.elements.customerId.innerHTML = '<option value="">اختر العميل</option>' + customerOptions;
       manualOrderForm.elements.equipmentId.innerHTML = '<option value="">اختر المعدة</option>' + equipmentOptions;
-      manualOrderForm.elements.date.value = new Date().toISOString().slice(0, 10);
+      manualOrderForm.elements.startDate.value = data.todayISO();
       var missing = [];
       if (!state.customers.length) missing.push('عميل مسجل');
       if (!state.equipment.length) missing.push('معدة مسجلة');
@@ -721,10 +687,19 @@
       conversationMessages.innerHTML = conversation.messages.map(function (message) {
         var isAdmin = message.from === 'admin';
         return '<article class="conversation-message ' + (isAdmin ? 'conversation-message-admin' : '') + '">' +
-          '<header><strong>' + (isAdmin ? 'فريق مِحور' : 'العميل') + '</strong><bdi>' + escapeHTML(message.time) + '</bdi></header>' +
+          '<header><strong>' + (isAdmin ? 'فريق مِحور' : 'العميل') + '</strong><bdi>' + escapeHTML(formatDateTime(message.time)) + '</bdi></header>' +
           '<p>' + escapeHTML(message.text) + '</p>' +
           '</article>';
       }).join('');
+
+      // فتح المحادثة يُعلّمها مقروءة — وإلا بقي العدّاد معلّقاً إلى الأبد
+      if (conversation.unread) {
+        conversation.unread = 0;
+        saveState(state);
+        renderSummary();
+        renderConversations();
+      }
+
       if (typeof conversationDialog.showModal === 'function') conversationDialog.showModal();
       else conversationDialog.setAttribute('open', '');
     }
@@ -778,7 +753,6 @@
       if (event.target === dialog) closeDialog();
     });
 
-
     ownerSearch.addEventListener('input', renderOwners);
     ownerCityFilter.addEventListener('change', renderOwners);
     ownerVerificationFilter.addEventListener('change', renderOwners);
@@ -786,6 +760,7 @@
     ownersBody.addEventListener('click', function (event) {
       var editButton = event.target.closest('[data-edit-owner]');
       var toggleButton = event.target.closest('[data-toggle-owner]');
+      var deleteButton = event.target.closest('[data-delete-owner]');
       if (editButton) {
         var ownerToEdit = getOwner(editButton.dataset.editOwner);
         if (ownerToEdit) openOwnerEdit(ownerToEdit);
@@ -794,6 +769,17 @@
         var ownerToToggle = getOwner(toggleButton.dataset.toggleOwner);
         if (ownerToToggle) toggleOwnerAccount(ownerToToggle);
       }
+      if (deleteButton) {
+        var ownerToDelete = getOwner(deleteButton.dataset.deleteOwner);
+        if (ownerToDelete) deleteOwner(ownerToDelete);
+      }
+    });
+
+    ordersBody.addEventListener('click', function (event) {
+      var deleteButton = event.target.closest('[data-delete-order]');
+      if (!deleteButton) return;
+      var order = state.orders.find(function (row) { return row.id === deleteButton.dataset.deleteOrder; });
+      if (order) deleteOrder(order);
     });
 
     document.querySelectorAll('[data-close-owner-edit]').forEach(function (button) {
@@ -811,7 +797,7 @@
       var isNewOwner = !owner;
       if (isNewOwner) {
         owner = {
-          id: 'OW-' + String(Date.now()).slice(-6),
+          id: data.nextId('OW'),
           name: ownerEditForm.elements.name.value.trim(),
           contact: ownerEditForm.elements.contact.value.trim(),
           city: ownerEditForm.elements.city.value.trim(),
@@ -848,25 +834,47 @@
       event.preventDefault();
       if (!manualOrderForm.reportValidity() || manualOrderSubmit.disabled) return;
       var customer = getCustomer(manualOrderForm.elements.customerId.value);
-      var equipment = state.equipment.find(function (item) { return item.id === manualOrderForm.elements.equipmentId.value; });
+      var equipment = getEquipment(manualOrderForm.elements.equipmentId.value);
       if (!customer || !equipment) {
         showToast('تعذّر إنشاء الطلب لعدم اكتمال السجلات المرتبطة.');
         return;
       }
+
+      var startDate = manualOrderForm.elements.startDate.value;
+      var endDate = manualOrderForm.elements.endDate.value;
+      if (endDate && endDate < startDate) {
+        showToast('تاريخ النهاية يسبق تاريخ البداية.');
+        return;
+      }
+
+      // القيمة إمّا يكتبها المشغّل أو تُحتسب من سعر المعدة ومدة الإيجار
+      var typedValue = parseInt(manualOrderForm.elements.value.value, 10);
+      var days = endDate ? data.daysBetween(startDate, endDate) : 1;
+      var value = isNaN(typedValue)
+        ? Math.round(equipment.dailyRate * days * (1 + data.VAT))
+        : typedValue;
+      var now = new Date().toISOString();
+
       var order = {
-        id: 'MH-' + String(Date.now()).slice(-6),
+        id: data.nextId('MH'),
         customerId: customer.id,
         ownerId: equipment.ownerId,
         equipmentId: equipment.id,
         renter: customer.name,
         equipment: equipment.name,
-        date: manualOrderForm.elements.date.value,
+        startDate: startDate,
+        endDate: endDate,
+        date: startDate,
         status: manualOrderForm.elements.status.value,
-        createdAt: new Date().toISOString(),
+        value: value,
+        deliveryLocation: manualOrderForm.elements.location.value.trim(),
+        source: 'admin',
+        createdAt: now,
         activity: [],
-        timeline: [],
+        timeline: [{ id: data.nextId('TL'), stage: 'new', title: 'تم إنشاء الطلب', meta: 'طلب يدوي من اللوحة', at: now }],
         notes: [],
-        documents: []
+        documents: [],
+        payment: { status: 'pending', total: value, paid: 0, due: value, transactions: [] }
       };
       addRecordActivity(order, 'order_created', 'إنشاء طلب يدوي');
       state.orders.unshift(order);
@@ -875,7 +883,7 @@
       saveState(state);
       closeManualOrder();
       renderAll();
-      showToast('تم إنشاء الطلب اليدوي.');
+      showToast('تم إنشاء الطلب ' + order.id + '.');
     });
 
     document.querySelectorAll('[data-close-message]').forEach(function (button) {
@@ -901,7 +909,7 @@
       var now = new Date().toISOString();
       if (!conversation) {
         conversation = {
-          id: 'CV-' + String(Date.now()).slice(-6),
+          id: data.nextId('CV'),
           ownerId: recipientType === 'owner' ? recipientId : null,
           customerId: recipientType === 'customer' ? recipientId : null,
           equipment: '',
@@ -911,7 +919,7 @@
         };
         state.conversations.unshift(conversation);
       }
-      conversation.messages.push({ from: 'admin', text: messageForm.elements.message.value.trim(), time: formatDateTime(now) });
+      conversation.messages.push({ from: 'admin', text: messageForm.elements.message.value.trim(), time: now });
       conversation.updatedAt = now;
       if (recipientType === 'owner') addOwnerActivity(recipient, 'message_sent', 'إرسال رسالة إدارية');
       else addRecordActivity(recipient, 'message_sent', 'إرسال رسالة إدارية');
@@ -920,7 +928,6 @@
       renderAll();
       showToast('تم تسجيل الرسالة في المحادثات.');
     });
-
 
     document.querySelectorAll('[data-close-conversation]').forEach(function (button) {
       button.addEventListener('click', closeConversation);
@@ -940,24 +947,43 @@
     equipmentBody.addEventListener('click', function (event) {
       var editButton = event.target.closest('[data-edit-equipment]');
       var toggleButton = event.target.closest('[data-toggle-equipment]');
+      var deleteButton = event.target.closest('[data-delete-equipment]');
 
       if (editButton) {
-        var itemToEdit = state.equipment.find(function (item) { return item.id === editButton.dataset.editEquipment; });
+        var itemToEdit = getEquipment(editButton.dataset.editEquipment);
         if (itemToEdit) openDialog(itemToEdit);
       }
 
+      if (deleteButton) {
+        var itemToDelete = getEquipment(deleteButton.dataset.deleteEquipment);
+        if (itemToDelete) deleteEquipment(itemToDelete);
+      }
+
       if (toggleButton) {
-        var itemToToggle = state.equipment.find(function (item) { return item.id === toggleButton.dataset.toggleEquipment; });
-        if (!itemToToggle) return;
-        itemToToggle.status = itemToToggle.status === 'active' ? 'paused' : 'active';
-        addRecordActivity(itemToToggle, 'equipment_status', itemToToggle.status === 'active' ? 'إعادة عرض معدة' : 'إيقاف عرض معدة');
-        var owner = getOwner(itemToToggle.ownerId);
-        if (owner) addOwnerActivity(owner, 'equipment_status', itemToToggle.status === 'active' ? 'إعادة عرض معدة' : 'إيقاف عرض معدة');
+        var item = getEquipment(toggleButton.dataset.toggleEquipment);
+        if (!item) return;
+
+        // نفس منطق صفحة المعدة: الإيقاف يحفظ الحالة السابقة ليستعيدها التفعيل،
+        // فلا تقفز معدة «بانتظار المراجعة» إلى العرض بضغطة واحدة.
+        var listed = data.isListed(item);
+        if (listed) {
+          item.previousStatus = item.status;
+          item.status = 'paused';
+        } else {
+          item.status = item.previousStatus && item.previousStatus !== 'paused' && item.previousStatus !== 'suspended'
+            ? item.previousStatus
+            : 'active';
+        }
+
+        var title = listed ? 'إيقاف عرض معدة' : 'إعادة عرض معدة';
+        addRecordActivity(item, 'equipment_status', title);
+        var owner = getOwner(item.ownerId);
+        if (owner) addOwnerActivity(owner, 'equipment_status', title);
         saveState(state);
         renderSummary();
         renderEquipment();
         renderOwners();
-        showToast(itemToToggle.status === 'active' ? 'أُعيد عرض المعدة.' : 'تم إيقاف عرض المعدة.');
+        showToast(listed ? 'تم إيقاف عرض المعدة.' : 'أُعيد عرض المعدة.');
       }
     });
 
@@ -966,12 +992,12 @@
       if (!equipmentForm.reportValidity()) return;
 
       var id = equipmentForm.elements.equipmentId.value;
-      var existing = state.equipment.find(function (item) { return item.id === id; });
+      var existing = getEquipment(id);
       var ownerName = equipmentForm.elements.ownerName.value.trim();
       var owner = state.owners.find(function (item) { return item.name.toLowerCase() === ownerName.toLowerCase(); });
       if (!owner) {
         owner = {
-          id: 'OW-' + String(Date.now()).slice(-6),
+          id: data.nextId('OW'),
           name: ownerName,
           contact: '',
           city: equipmentForm.elements.city.value,
@@ -1003,9 +1029,19 @@
         }
         showToast('تم حفظ تعديلات المعدة.');
       } else {
-        values.id = 'EQ-' + String(Date.now()).slice(-6);
+        values.id = data.nextId('EQ');
+        values.availability = 'available';
+        values.icon = 'i-excavator';
+        values.highlights = [];
+        values.specs = [];
+        values.terms = [];
+        values.included = [];
+        values.excluded = [];
         values.documents = [];
+        values.maintenance = [];
+        values.bookings = [];
         values.activity = [];
+        values.createdAt = new Date().toISOString();
         addRecordActivity(values, 'equipment_added', 'إضافة معدة');
         state.equipment.unshift(values);
         addOwnerActivity(owner, 'equipment_added', 'إضافة معدة');
@@ -1019,8 +1055,19 @@
 
     document.querySelectorAll('[data-logout]').forEach(function (button) {
       button.addEventListener('click', function () {
-        try { sessionStorage.removeItem(AUTH_KEY); } catch (e) { /* لا شيء */ }
+        clearAuth();
         location.replace('login.html');
+      });
+    });
+
+    // إعادة البيانات التجريبية — مخرج آمن بعد العبث بالنموذج
+    document.querySelectorAll('[data-reset-data]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        if (!window.confirm('سيُحذف كل ما أدخلته على هذا الجهاز وتعود البيانات التجريبية. متابعة؟')) return;
+        state = data.reset();
+        saveState(state);
+        renderAll();
+        showToast('أُعيدت البيانات التجريبية.');
       });
     });
 

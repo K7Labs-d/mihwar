@@ -12,8 +12,9 @@
       try {
         var saved = localStorage.getItem('mihwar-theme');
         if (saved === 'dark' || saved === 'light') document.documentElement.setAttribute('data-theme', saved);
-        var auth = JSON.parse(sessionStorage.getItem('mihwar-admin-auth'));
-        if (!auth || auth.loggedIn !== true) {
+        var auth = JSON.parse(localStorage.getItem('mihwar-admin-auth'));
+        var fresh = auth && auth.loggedIn === true && (Date.now() - (auth.at || 0)) < 43200000;
+        if (!fresh) {
           location.replace('login.html');
           return;
         }
@@ -28,11 +29,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Tajawal:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/styles.css">
-  <link rel="stylesheet" href="admin.css?v=order-1">
+  <link rel="stylesheet" href="admin.css?v=data-1">
+  <script src="../assets/data.js" defer></script>
   <script src="../assets/app.js" defer></script>
-  <script src="admin-components.js?v=order-1" defer></script>
-  <script src="admin.js?v=order-1" defer></script>
-  <script src="owner.js?v=order-1" defer></script>
+  <script src="admin-components.js?v=data-1" defer></script>
+  <script src="admin.js?v=data-1" defer></script>
+  <script src="owner.js?v=data-1" defer></script>
 </head>
 <body class="admin-page owner-page">
   <a class="skip-link" href="#owner-main">تخطَّ إلى ملف المالك</a>

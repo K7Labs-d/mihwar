@@ -21,6 +21,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Tajawal:wght@700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/styles.css">
+<script src="../assets/data.js" defer></script>
 <script src="../assets/app.js" defer></script>
 </head>
 <body>
@@ -358,19 +359,19 @@
               <h3>قلاب 30 طن</h3>
               <p>حمولة 30 طن · 6×4 · الدمام</p>
               <p class="eq-price" style="margin-block-start:.75rem">يبدأ من <strong>1,300 ر.س</strong> / يوم</p>
-              <a class="btn btn-ghost" href="../index.html#equipment" style="margin-block-start:1rem">عرض في القائمة</a>
+              <a class="btn btn-ghost" href="detail.html?id=EQ-2003" style="margin-block-start:1rem">التفاصيل</a>
             </div>
             <div class="card">
               <h3>شيول 3 م³</h3>
               <p>167 حصان · قادوس 3 م³ · الرياض</p>
               <p class="eq-price" style="margin-block-start:.75rem">يبدأ من <strong>1,900 ر.س</strong> / يوم</p>
-              <a class="btn btn-ghost" href="../index.html#equipment" style="margin-block-start:1rem">عرض في القائمة</a>
+              <a class="btn btn-ghost" href="detail.html?id=EQ-2004" style="margin-block-start:1rem">التفاصيل</a>
             </div>
             <div class="card">
               <h3>رافعة متحركة 50 طن</h3>
               <p>حمولة 50 طن · ذراع 40 م · جدة</p>
               <p class="eq-price" style="margin-block-start:.75rem">يبدأ من <strong>6,500 ر.س</strong> / يوم</p>
-              <a class="btn btn-ghost" href="../index.html#equipment" style="margin-block-start:1rem">عرض في القائمة</a>
+              <a class="btn btn-ghost" href="detail.html?id=EQ-2006" style="margin-block-start:1rem">التفاصيل</a>
             </div>
           </div>
         </section>
@@ -379,7 +380,7 @@
       <!-- ================ لوحة طلب التأجير (منطقة booking) ================ -->
       <aside class="eq-booking">
         <!-- novalidate: نتولّى التحقق بأنفسنا كي تظهر رسالة عربية موحّدة بدل فقاعة المتصفح -->
-        <form class="booking" id="booking" data-booking-form aria-labelledby="booking-head" novalidate>
+        <form class="booking" id="booking" data-booking-form data-equipment-id="EQ-2005" aria-labelledby="booking-head" novalidate>
           <h2 id="booking-head" class="sr-only">طلب تأجير</h2>
 
           <div class="booking-price">
@@ -426,6 +427,21 @@
               <span class="lbl">نقل للموقع<span class="sub">900 ر.س ذهاباً وإياباً</span></span>
               <input type="checkbox" data-opt-transport>
             </label>
+
+            <div class="field">
+              <label for="renter-name">اسم المنشأة أو الشخص</label>
+              <input id="renter-name" type="text" autocomplete="organization" data-renter-name required>
+            </div>
+
+            <div class="field">
+              <label for="renter-phone">رقم الجوال</label>
+              <input id="renter-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="05xxxxxxxx" data-renter-phone required>
+            </div>
+
+            <div class="field">
+              <label for="renter-location">موقع التسليم <span style="font-weight:400;color:var(--fg-soft)">(اختياري)</span></label>
+              <input id="renter-location" type="text" data-renter-location>
+            </div>
           </div>
 
           <div class="breakdown">
@@ -450,6 +466,8 @@
               <span data-sum-total>4,025 ر.س</span>
             </div>
           </div>
+
+          <p class="form-error" data-booking-error hidden></p>
 
           <button class="btn btn-primary btn-block btn-lg" type="submit">أرسل طلب تأجير</button>
 

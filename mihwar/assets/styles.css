@@ -491,6 +491,20 @@ a { color: inherit; }
 .cat-card strong { display: block; font-family: var(--display); font-size: 1.05rem; }
 .cat-card span { font-size: .82rem; color: var(--fg-soft); }
 
+/* عدّاد المعدات في الفئة — يُملأ من البيانات وقت التشغيل */
+.cat-count {
+  display: inline-block;
+  margin-block-start: .6rem;
+  padding: .12rem .5rem;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--fg-soft);
+  font-size: .72rem;
+  font-style: normal;
+  font-weight: 700;
+}
+.cat-count:empty { display: none; }
+
 /* رسوم المعدات نسبتها 16:10 — إطار مربّع يضغطها لحجم غير مقروء */
 .cat-card .card-icon { width: 4.25rem; height: 3rem; }
 .cat-card .card-icon svg { width: 3.25rem; height: auto; }

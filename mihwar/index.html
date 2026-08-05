@@ -22,6 +22,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Tajawal:wght@700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/styles.css">
+<script src="assets/data.js" defer></script>
 <script src="assets/app.js" defer></script>
 </head>
 <body>
@@ -173,11 +174,8 @@
           </div>
           <div class="field">
             <label for="hero-city">المدينة</label>
-            <select id="hero-city" name="city">
+            <select id="hero-city" name="city" data-city-options>
               <option value="all">كل المدن</option>
-              <option value="riyadh">الرياض</option>
-              <option value="jeddah">جدة</option>
-              <option value="dammam">الدمام</option>
             </select>
           </div>
           <div class="field">
@@ -231,21 +229,25 @@
           <div class="card-icon"><svg viewBox="0 0 160 100" aria-hidden="true"><use href="#i-excavator"/></svg></div>
           <strong>حفر</strong>
           <span>حفّارات جنزير وحفّارات صغيرة</span>
+          <em class="cat-count" data-cat-count="dig"></em>
         </button>
         <button class="cat-card" type="button" data-filter-cat="load" aria-pressed="false">
           <div class="card-icon"><svg viewBox="0 0 160 100" aria-hidden="true"><use href="#i-loader"/></svg></div>
           <strong>تحميل</strong>
           <span>شيولات وبوبكات</span>
+          <em class="cat-count" data-cat-count="load"></em>
         </button>
         <button class="cat-card" type="button" data-filter-cat="haul" aria-pressed="false">
           <div class="card-icon"><svg viewBox="0 0 160 100" aria-hidden="true"><use href="#i-dumptruck"/></svg></div>
           <strong>نقل</strong>
           <span>قلابات ونقل مواد</span>
+          <em class="cat-count" data-cat-count="haul"></em>
         </button>
         <button class="cat-card" type="button" data-filter-cat="lift" aria-pressed="false">
           <div class="card-icon"><svg viewBox="0 0 160 100" aria-hidden="true"><use href="#i-mobilecrane"/></svg></div>
           <strong>رفع</strong>
           <span>رافعات متحركة ومناولات</span>
+          <em class="cat-count" data-cat-count="lift"></em>
         </button>
       </div>
     </div>
@@ -267,114 +269,13 @@
         </div>
         <div class="field">
           <label for="eq-city">المدينة</label>
-          <select id="eq-city" data-eq-city>
+          <select id="eq-city" data-eq-city data-city-options>
             <option value="all">كل المدن</option>
-            <option value="riyadh">الرياض</option>
-            <option value="jeddah">جدة</option>
-            <option value="dammam">الدمام</option>
           </select>
         </div>
       </div>
 
-      <div class="grid grid-3" data-eq-grid>
-
-        <article class="eq-card" data-category="load" data-city="riyadh" data-search="بوبكات S650 لودر انزلاقي skid steer bobcat">
-          <div class="eq-media" style="color:var(--primary)">
-            <svg viewBox="0 0 160 100" aria-hidden="true"><use href="#i-skidsteer"/></svg>
-            <span class="badge badge-ok">متاحة الآن</span>
-          </div>
-          <div class="eq-body">
-            <h3>بوبكات S650</h3>
-            <p class="eq-meta">مؤسسة الراسخ للمقاولات · الرياض</p>
-            <ul class="eq-specs"><li>74 حصان</li><li>حمولة 1,327 كجم</li><li>موديل 2022</li></ul>
-            <div class="eq-foot">
-              <p class="eq-price">يبدأ من <strong>600 ر.س</strong> / يوم</p>
-              <span class="badge badge-neutral">قريباً</span>
-            </div>
-          </div>
-        </article>
-
-        <article class="eq-card" data-category="dig" data-city="jeddah" data-search="حفّار صغير 5 طن ميني حفارة mini excavator">
-          <div class="eq-media" style="color:var(--primary)">
-            <svg viewBox="0 0 160 100" aria-hidden="true"><use href="#i-miniexcavator"/></svg>
-            <span class="badge badge-ok">متاحة الآن</span>
-          </div>
-          <div class="eq-body">
-            <h3>حفّار صغير 5 طن</h3>
-            <p class="eq-meta">شركة البناء الحديث · جدة</p>
-            <ul class="eq-specs"><li>40 حصان</li><li>عمق 3.8 م</li><li>موديل 2021</li></ul>
-            <div class="eq-foot">
-              <p class="eq-price">يبدأ من <strong>950 ر.س</strong> / يوم</p>
-              <span class="badge badge-neutral">قريباً</span>
-            </div>
-          </div>
-        </article>
-
-        <article class="eq-card" data-category="haul" data-city="dammam" data-search="قلاب 30 طن شاحنة نقل dump truck">
-          <div class="eq-media" style="color:var(--primary)">
-            <svg viewBox="0 0 160 100" aria-hidden="true"><use href="#i-dumptruck"/></svg>
-            <span class="badge badge-ok">متاحة الآن</span>
-          </div>
-          <div class="eq-body">
-            <h3>قلاب 30 طن</h3>
-            <p class="eq-meta">مؤسسة سند للنقل · الدمام</p>
-            <ul class="eq-specs"><li>حمولة 30 طن</li><li>6×4</li><li>موديل 2020</li></ul>
-            <div class="eq-foot">
-              <p class="eq-price">يبدأ من <strong>1,300 ر.س</strong> / يوم</p>
-              <span class="badge badge-neutral">قريباً</span>
-            </div>
-          </div>
-        </article>
-
-        <article class="eq-card" data-category="load" data-city="riyadh" data-search="شيول 3 م³ لودر عجل wheel loader">
-          <div class="eq-media" style="color:var(--primary)">
-            <svg viewBox="0 0 160 100" aria-hidden="true"><use href="#i-loader"/></svg>
-            <span class="badge badge-ok">متاحة الآن</span>
-          </div>
-          <div class="eq-body">
-            <h3>شيول 3 م³</h3>
-            <p class="eq-meta">مؤسسة الراسخ للمقاولات · الرياض</p>
-            <ul class="eq-specs"><li>167 حصان</li><li>قادوس 3 م³</li><li>موديل 2020</li></ul>
-            <div class="eq-foot">
-              <p class="eq-price">يبدأ من <strong>1,900 ر.س</strong> / يوم</p>
-              <span class="badge badge-neutral">قريباً</span>
-            </div>
-          </div>
-        </article>
-
-        <article class="eq-card" data-category="dig" data-city="riyadh" data-search="حفّار جنزير 22 طن كاتربيلر 320 crawler excavator caterpillar">
-          <div class="eq-media" style="color:var(--primary)">
-            <svg viewBox="0 0 160 100" aria-hidden="true"><use href="#i-excavator"/></svg>
-            <span class="badge badge-ok">متاحة الآن</span>
-          </div>
-          <div class="eq-body">
-            <h3><a href="equipment/excavator-cat-320.html">حفّار جنزير 22 طن</a></h3>
-            <p class="eq-meta">مؤسسة الراسخ للمقاولات · الرياض</p>
-            <ul class="eq-specs"><li>122 حصان</li><li>عمق 6.7 م</li><li>موديل 2021</li></ul>
-            <div class="eq-foot">
-              <p class="eq-price">يبدأ من <strong>3,500 ر.س</strong> / يوم</p>
-              <a class="btn btn-ghost" href="equipment/excavator-cat-320.html">التفاصيل</a>
-            </div>
-          </div>
-        </article>
-
-        <article class="eq-card" data-category="lift" data-city="jeddah" data-search="رافعة متحركة 50 طن ونش mobile crane">
-          <div class="eq-media" style="color:var(--primary)">
-            <svg viewBox="0 0 160 100" aria-hidden="true"><use href="#i-mobilecrane"/></svg>
-            <span class="badge badge-warn">محجوزة حتى 15 سبتمبر</span>
-          </div>
-          <div class="eq-body">
-            <h3>رافعة متحركة 50 طن</h3>
-            <p class="eq-meta">مجموعة الأفق للرافعات · جدة</p>
-            <ul class="eq-specs"><li>حمولة 50 طن</li><li>ذراع 40 م</li><li>موديل 2019</li></ul>
-            <div class="eq-foot">
-              <p class="eq-price">يبدأ من <strong>6,500 ر.س</strong> / يوم</p>
-              <span class="badge badge-neutral">قريباً</span>
-            </div>
-          </div>
-        </article>
-
-      </div>
+      <div class="grid grid-3" data-eq-grid></div>
 
       <p class="empty-state" data-eq-empty hidden>
         لا توجد معدّات مطابقة. جرّب توسيع البحث أو اختيار «كل المدن».
@@ -573,6 +474,7 @@
           <li><a href="#equipment">أدرج معدّتك</a></li>
           <li><a href="#faq">المستندات المطلوبة</a></li>
           <li><a href="#faq">آلية التحقق</a></li>
+          <li><a href="admin/login.html">لوحة الإدارة</a></li>
         </ul>
       </div>
 

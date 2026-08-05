@@ -5,6 +5,7 @@
 
   var admin = window.MihwarAdmin;
   var components = window.MihwarComponents;
+  var data = window.MihwarData;
   if (!admin || !components || !admin.readAuth()) {
     location.replace('login.html');
     return;
@@ -40,32 +41,9 @@
   var validTabs = EQUIPMENT_TABS.map(function (tab) { return tab.id; });
   var currentTab = validTabs.indexOf(location.hash.slice(1)) !== -1 ? location.hash.slice(1) : 'overview';
 
-  var EQUIPMENT_STATUS = {
-    active: 'معروضة',
-    displayed: 'معروضة',
-    pending: 'بانتظار المراجعة',
-    pending_review: 'بانتظار المراجعة',
-    booked: 'محجوزة',
-    unavailable: 'غير متاحة',
-    paused: 'موقوفة',
-    suspended: 'موقوفة'
-  };
-
-  var ORDER_STATUS = {
-    new: 'جديد',
-    awaiting_owner: 'بانتظار موافقة المالك',
-    contacting: 'جارٍ التواصل',
-    reviewed: 'تمت المراجعة',
-    approved: 'تمت الموافقة',
-    confirmed: 'مؤكد',
-    in_progress: 'قيد التنفيذ',
-    delivered: 'تم التسليم',
-    returned: 'تم الإرجاع',
-    completed: 'مكتمل',
-    closed: 'مغلق',
-    cancelled: 'ملغي',
-    rejected: 'مرفوض'
-  };
+  // المسميات كلها من طبقة البيانات المشتركة — لا نسخة ثانية تتفرّع عنها
+  var EQUIPMENT_STATUS = admin.EQUIPMENT_STATUS_LABELS;
+  var ORDER_STATUS = admin.STATUS_LABELS;
 
   function showToast(message) {
     window.clearTimeout(toastTimer);
@@ -198,7 +176,7 @@
 
   function refreshHeader() {
     owner = state.owners.find(function (item) { return item.id === equipment.ownerId; }) || null;
-    var previewUrl = equipment.publicUrl || equipment.previewUrl || equipment.listingUrl || '';
+    var previewUrl = data.isListed(equipment) ? '../' + data.detailPath(equipment) : '';
     var imageUrl = typeof (equipment.imageUrl || equipment.image || equipment.photoUrl) === 'string' ? (equipment.imageUrl || equipment.image || equipment.photoUrl) : '';
     document.title = equipment.name + ' — مِحور';
     renderBreadcrumb();
@@ -220,7 +198,7 @@
       actionsAriaLabel: 'إجراءات المعدة',
       actions: [
         { id: 'edit', label: 'تعديل' },
-        { id: 'preview', label: 'معاينة في الموقع', href: previewUrl || null, target: previewUrl ? '_blank' : '', rel: previewUrl ? 'noopener' : '', disabled: !previewUrl, title: !previewUrl ? 'لا يوجد رابط عرض عام مسجل لهذه المعدة' : '' },
+        { id: 'preview', label: 'معاينة في الموقع', href: previewUrl || null, target: previewUrl ? '_blank' : '', rel: previewUrl ? 'noopener' : '', disabled: !previewUrl, title: !previewUrl ? 'المعدة غير معروضة على الموقع حاليًا' : '' },
         { id: 'change-status', label: 'تغيير الحالة' },
         { id: 'toggle', label: equipment.status === 'paused' || equipment.status === 'suspended' ? 'تفعيل' : 'إيقاف', className: equipment.status === 'paused' || equipment.status === 'suspended' ? 'owner-account-action is-activate' : 'owner-account-action' },
         { id: 'owner', label: 'فتح ملف المالك', href: owner ? 'owner.html?id=' + encodeURIComponent(owner.id) : null, disabled: !owner, title: !owner ? 'لا يوجد مالك مرتبط' : '' }
@@ -271,7 +249,7 @@
     if (!bookings.length) return emptyState('لا توجد حجوزات', 'لا توجد حجوزات مسجلة لهذه المعدة.');
     return '<div class="document-list">' + bookings.map(function (booking) {
       var order = booking.orderId ? state.orders.find(function (item) { return item.id === booking.orderId; }) : null;
-      return '<article class="document-row"><div><strong>' + (order ? '<a class="record-link" href="' + orderHref(order) + '">' + admin.escapeHTML(booking.label || order.id) + '</a>' : admin.escapeHTML(booking.label || booking.id || 'حجز')) + '</strong><span><bdi>' + admin.escapeHTML(admin.formatDate(booking.startDate)) + '</bdi>' + (booking.endDate ? ' — <bdi>' + admin.escapeHTML(admin.formatDate(booking.endDate)) + '</bdi>' : '') + '</span></div>' + badge(booking.status || 'غير محددة', booking.status === 'completed' ? 'verified' : 'pending') + '</article>';
+      return '<article class="document-row"><div><strong>' + (order ? '<a class="record-link" href="' + orderHref(order) + '">' + admin.escapeHTML(booking.label || order.id) + '</a>' : admin.escapeHTML(booking.label || booking.id || 'حجز')) + '</strong><span><bdi>' + admin.escapeHTML(admin.formatDate(booking.startDate)) + '</bdi>' + (booking.endDate ? ' — <bdi>' + admin.escapeHTML(admin.formatDate(booking.endDate)) + '</bdi>' : '') + '</span></div>' + badge(admin.recordStatusLabel(booking.status), booking.status === 'completed' ? 'verified' : 'pending') + '</article>';
     }).join('') + '</div>';
   }
 
@@ -283,7 +261,7 @@
     var summary = total === null ? '' : '<div class="owner-metric-grid owner-finance-grid"><article><span>إجمالي الإيرادات المسجلة</span><strong>' + admin.escapeHTML(admin.formatRiyal(total)) + '</strong><small>' + (typeof earnings.total === 'number' ? 'بحسب سجل الإيرادات' : 'محسوب من الطلبات المكتملة ذات القيمة المسجلة') + '</small></article></div>';
     if (!transactions.length) return summary + emptyState('لا توجد عمليات إيراد', 'ستظهر العمليات المالية عند تسجيل بيانات حقيقية لهذه المعدة.');
     return summary + '<div class="admin-table-wrap"><table class="admin-table profile-table"><thead><tr><th>العملية</th><th>التاريخ</th><th>البيان</th><th>الحالة</th><th>القيمة</th></tr></thead><tbody>' + transactions.map(function (item) {
-      return '<tr><td data-label="العملية"><bdi>' + admin.escapeHTML(item.id || '—') + '</bdi></td><td data-label="التاريخ"><bdi>' + admin.escapeHTML(admin.formatDate(item.date)) + '</bdi></td><td data-label="البيان">' + admin.escapeHTML(item.label || item.type || '—') + '</td><td data-label="الحالة">' + admin.escapeHTML(item.status || '—') + '</td><td data-label="القيمة"><bdi>' + (typeof item.amount === 'number' ? admin.escapeHTML(admin.formatRiyal(item.amount)) : '—') + '</bdi></td></tr>';
+      return '<tr><td data-label="العملية"><bdi>' + admin.escapeHTML(item.id || '—') + '</bdi></td><td data-label="التاريخ"><bdi>' + admin.escapeHTML(admin.formatDate(item.date)) + '</bdi></td><td data-label="البيان">' + admin.escapeHTML(item.label || item.type || '—') + '</td><td data-label="الحالة">' + admin.escapeHTML(admin.recordStatusLabel(item.status)) + '</td><td data-label="القيمة"><bdi>' + (typeof item.amount === 'number' ? admin.escapeHTML(admin.formatRiyal(item.amount)) : '—') + '</bdi></td></tr>';
     }).join('') + '</tbody></table></div>';
   }
 
@@ -300,7 +278,7 @@
     var records = Array.isArray(equipment.maintenance) ? equipment.maintenance : [];
     if (!records.length) return emptyState('لا يوجد سجل صيانة', 'لم تُسجل أعمال صيانة لهذه المعدة.');
     return '<div class="document-list">' + records.map(function (record) {
-      return '<article class="document-row"><div><strong>' + admin.escapeHTML(record.title || record.type || 'صيانة') + '</strong><span>' + admin.escapeHTML(record.note || '') + '</span><small><bdi>' + admin.escapeHTML(admin.formatDate(record.date)) + '</bdi></small></div>' + badge(record.status || 'مسجلة', record.status === 'completed' ? 'verified' : 'pending') + '</article>';
+      return '<article class="document-row"><div><strong>' + admin.escapeHTML(record.title || record.type || 'صيانة') + '</strong><span>' + admin.escapeHTML(record.note || '') + '</span><small><bdi>' + admin.escapeHTML(admin.formatDate(record.date)) + '</bdi></small></div>' + badge(admin.recordStatusLabel(record.status), record.status === 'completed' ? 'verified' : 'pending') + '</article>';
     }).join('') + '</div>';
   }
 
@@ -375,13 +353,11 @@
   content.hidden = false;
   renderPage();
 
-  tabsHost.addEventListener('click', function (event) {
-    var tab = event.target.closest('[data-entity-tab]');
-    if (!tab || validTabs.indexOf(tab.dataset.entityTab) === -1) return;
-    currentTab = tab.dataset.entityTab;
+  components.bindEntityTabs(tabsHost, function (tabId) {
+    if (validTabs.indexOf(tabId) === -1) return;
+    currentTab = tabId;
     history.replaceState(null, '', location.pathname + location.search + '#' + currentTab);
     renderTabs();
-    panel.focus();
   });
 
   panel.addEventListener('click', function (event) {
@@ -447,7 +423,8 @@
     if (!statusForm.reportValidity()) return;
     var previous = equipment.status;
     equipment.status = statusForm.elements.status.value;
-    if (equipment.status !== 'paused') equipment.previousStatus = equipment.status;
+    if (equipment.status === 'paused' || equipment.status === 'suspended') equipment.previousStatus = previous;
+    else delete equipment.previousStatus;
     addActivity('equipment_status', 'تغيير حالة المعدة من «' + (EQUIPMENT_STATUS[previous] || previous) + '» إلى «' + EQUIPMENT_STATUS[equipment.status] + '»');
     admin.saveState(state);
     closeStatus();
@@ -456,7 +433,7 @@
   });
 
   document.querySelector('[data-equipment-logout]').addEventListener('click', function () {
-    try { sessionStorage.removeItem(admin.AUTH_KEY); } catch (e) { /* لا شيء */ }
+    admin.clearAuth();
     location.replace('login.html');
   });
 })();

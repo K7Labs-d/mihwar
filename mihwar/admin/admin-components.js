@@ -16,6 +16,12 @@
     return Array.prototype.slice.call(arguments).filter(Boolean).join(' ');
   }
 
+  /* الروابط تأتي من بيانات يحرّرها المشغّل، فلا نسمح بمخطط قابل للتنفيذ
+     مثل javascript: أن يصل إلى href أو src. */
+  function safeUrl(value) {
+    return (window.MihwarData ? window.MihwarData.safeUrl(value) : String(value || ''));
+  }
+
   function StatusBadge(options) {
     var settings = options || {};
     return '<span class="' + escapeHTML(classNames('status-badge', 'owner-status', 'owner-status-' + (settings.tone || 'pending'), settings.className)) + '">' + escapeHTML(settings.label || 'غير محددة') + '</span>';
@@ -28,7 +34,7 @@
       (settings.icon ? '<span class="empty-state-icon" aria-hidden="true">' + escapeHTML(settings.icon) + '</span>' : '') +
       '<strong>' + escapeHTML(settings.title || 'لا توجد بيانات') + '</strong>' +
       (settings.description ? '<p>' + escapeHTML(settings.description) + '</p>' : '') +
-      (action && action.href ? '<a class="' + escapeHTML(classNames('btn', action.variant || 'btn-ghost')) + '" href="' + escapeHTML(action.href) + '">' + escapeHTML(action.label) + '</a>' : '') +
+      (action && safeUrl(action.href) ? '<a class="' + escapeHTML(classNames('btn', action.variant || 'btn-ghost')) + '" href="' + escapeHTML(safeUrl(action.href)) + '">' + escapeHTML(action.label) + '</a>' : '') +
       '</div>';
   }
 
@@ -66,7 +72,9 @@
     var tabs = Array.isArray(settings.tabs) ? settings.tabs : [];
     return '<div class="' + escapeHTML(classNames('entity-tabs', 'owner-tabs', settings.className)) + '" role="tablist" aria-label="' + escapeHTML(settings.ariaLabel || 'أقسام الملف') + '">' + tabs.map(function (tab) {
       var selected = tab.id === settings.active;
-      return '<button role="tab" aria-selected="' + String(selected) + '"' +
+      // tabindex متدحرج: التبويب المحدد وحده في مسار Tab، والبقية تُبلغ بالأسهم
+      return '<button type="button" role="tab" aria-selected="' + String(selected) + '"' +
+        ' tabindex="' + (selected ? '0' : '-1') + '"' +
         (settings.panelId ? ' aria-controls="' + escapeHTML(settings.panelId) + '"' : '') +
         ' data-entity-tab="' + escapeHTML(tab.id) + '">' + escapeHTML(tab.label) + '</button>';
     }).join('') + '</div>';
@@ -80,8 +88,8 @@
       var common = ' class="' + escapeHTML(classes) + '" data-quick-action="' + escapeHTML(action.id) + '"' +
         (action.disabled ? ' aria-disabled="true"' : '') +
         (action.title ? ' title="' + escapeHTML(action.title) + '"' : '');
-      if (action.href && !action.disabled) {
-        return '<a' + common + ' href="' + escapeHTML(action.href) + '"' +
+      if (safeUrl(action.href) && !action.disabled) {
+        return '<a' + common + ' href="' + escapeHTML(safeUrl(action.href)) + '"' +
           (action.target ? ' target="' + escapeHTML(action.target) + '"' : '') +
           (action.rel ? ' rel="' + escapeHTML(action.rel) + '"' : '') + '>' + escapeHTML(action.label) + '</a>';
       }
@@ -95,8 +103,8 @@
     var meta = Array.isArray(settings.meta) ? settings.meta.filter(Boolean) : [];
     var titleTag = settings.titleTag === 'h2' ? 'h2' : 'h1';
     var mediaClasses = escapeHTML(classNames('entity-avatar', 'owner-avatar', 'owner-page-avatar', settings.avatarClassName));
-    var media = settings.imageUrl
-      ? '<img class="' + mediaClasses + '" src="' + escapeHTML(settings.imageUrl) + '" alt="' + escapeHTML(settings.imageAlt || settings.title || '') + '" loading="eager">'
+    var media = safeUrl(settings.imageUrl)
+      ? '<img class="' + mediaClasses + '" src="' + escapeHTML(safeUrl(settings.imageUrl)) + '" alt="' + escapeHTML(settings.imageAlt || settings.title || '') + '" loading="eager">'
       : '<span class="' + mediaClasses + '" aria-hidden="true">' + escapeHTML(settings.avatar || 'م') + '</span>';
     return '<header class="' + escapeHTML(classNames('entity-page-header', 'owner-page-header', settings.className)) + '">' +
       '<div class="entity-page-identity owner-page-identity">' +
@@ -104,8 +112,8 @@
         '<div><div class="owner-profile-title-line"><' + titleTag + '>' + escapeHTML(settings.title || 'ملف') + '</' + titleTag + '>' + badges + '</div>' +
         (meta.length ? '<p>' + meta.map(function (item) {
           if (item && typeof item === 'object') {
-            return item.href
-              ? '<a class="entity-meta-link" href="' + escapeHTML(item.href) + '">' + escapeHTML(item.label || '') + '</a>'
+            return safeUrl(item.href)
+              ? '<a class="entity-meta-link" href="' + escapeHTML(safeUrl(item.href)) + '">' + escapeHTML(item.label || '') + '</a>'
               : '<span>' + escapeHTML(item.label || '') + '</span>';
           }
           return '<span>' + escapeHTML(item) + '</span>';
@@ -116,8 +124,42 @@
       '</header>';
   }
 
+  /* تنقّل التبويبات بالنقر وبلوحة المفاتيح — الأسهم معكوسة لأن الواجهة RTL.
+     يُربط مرة واحدة على الحاوية، فيبقى صالحاً بعد إعادة رسم التبويبات. */
+  function bindEntityTabs(host, onSelect) {
+    if (!host) return;
+
+    function tabsIn() {
+      return Array.prototype.slice.call(host.querySelectorAll('[data-entity-tab]'));
+    }
+
+    host.addEventListener('click', function (event) {
+      var tab = event.target.closest('[data-entity-tab]');
+      if (tab) onSelect(tab.dataset.entityTab);
+    });
+
+    host.addEventListener('keydown', function (event) {
+      var tab = event.target.closest('[data-entity-tab]');
+      if (!tab) return;
+      var tabs = tabsIn();
+      var index = tabs.indexOf(tab);
+      var next = null;
+      if (event.key === 'ArrowLeft') next = tabs[(index + 1) % tabs.length];
+      else if (event.key === 'ArrowRight') next = tabs[(index - 1 + tabs.length) % tabs.length];
+      else if (event.key === 'Home') next = tabs[0];
+      else if (event.key === 'End') next = tabs[tabs.length - 1];
+      if (!next) return;
+      event.preventDefault();
+      var id = next.dataset.entityTab;
+      onSelect(id);
+      var focusTarget = host.querySelector('[data-entity-tab="' + id.replace(/"/g, '\\"') + '"]');
+      if (focusTarget) focusTarget.focus();
+    });
+  }
+
   window.MihwarComponents = {
     PageHeader: PageHeader,
+    bindEntityTabs: bindEntityTabs,
     Breadcrumb: Breadcrumb,
     EntityTabs: EntityTabs,
     Timeline: Timeline,
