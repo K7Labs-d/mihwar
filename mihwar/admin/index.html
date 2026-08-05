@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="ar" dir="rtl" class="auth-pending">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>لوحة الإدارة — مِحور</title>
+  <meta name="description" content="لوحة إدارة الطلبات والمعدات وملاك المعدات في مِحور.">
+
+  <style>.auth-pending body { visibility: hidden; }</style>
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('mihwar-theme');
+        if (saved === 'dark' || saved === 'light') {
+          document.documentElement.setAttribute('data-theme', saved);
+        }
+        var auth = JSON.parse(sessionStorage.getItem('mihwar-admin-auth'));
+        if (!auth || auth.loggedIn !== true) {
+          location.replace('login.html');
+          return;
+        }
+        document.documentElement.classList.remove('auth-pending');
+      } catch (e) {
+        location.replace('login.html');
+      }
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Tajawal:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/styles.css">
+  <link rel="stylesheet" href="admin.css?v=order-1">
+  <script src="../assets/app.js" defer></script>
+  <script src="admin-components.js?v=order-1" defer></script>
+  <script src="admin.js?v=order-1" defer></script>
+</head>
+<body class="admin-page">
+  <a class="skip-link" href="#admin-main">تخطَّ إلى محتوى اللوحة</a>
+
+  <div class="admin-shell">
+    <aside class="admin-sidebar">
+      <a class="brand admin-brand" href="../index.html" aria-label="العودة إلى موقع مِحور">
+        <svg class="brand-mark" viewBox="0 0 48 48" aria-hidden="true">
+          <path d="M24 3 41.3 13v20L24 43 6.7 33V13z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
+          <circle cx="24" cy="23" r="7" fill="none" stroke="var(--primary)" stroke-width="3"/>
+          <circle cx="24" cy="23" r="1.8" fill="var(--primary)"/>
+        </svg>
+        <span>مِحور<small>لوحة الإدارة</small></span>
+      </a>
+
+      <nav class="admin-nav" aria-label="أقسام لوحة الإدارة">
+        <a href="#summary" aria-current="page"><span aria-hidden="true">🏠</span> الرئيسية</a>
+        <a href="#orders"><span aria-hidden="true">📦</span> الطلبات</a>
+        <a href="#equipment"><span aria-hidden="true">🚜</span> المعدات</a>
+        <a href="#owners"><span aria-hidden="true">👤</span> الملاك</a>
+        <a href="#customers"><span aria-hidden="true">👥</span> العملاء</a>
+        <a href="#settings"><span aria-hidden="true">⚙️</span> الإعدادات</a>
+      </nav>
+
+      <div class="sidebar-actions">
+        <button class="icon-btn" type="button" data-theme-toggle aria-label="التبديل إلى الوضع الليلي">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
+          </svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
+          </svg>
+        </button>
+        <button class="btn btn-ghost admin-logout" type="button" data-logout>تسجيل الخروج</button>
+      </div>
+    </aside>
+
+    <main class="admin-main" id="admin-main">
+      <header class="admin-topbar operations-topbar">
+        <div>
+          <span class="eyebrow">إدارة مِحور</span>
+          <h1>مركز العمليات</h1>
+          <p>اعرف ما يحتاج تدخلك الآن، وانتقل إلى السجل المطلوب مباشرة.</p>
+        </div>
+        <div class="global-search" data-global-search-shell>
+          <label class="sr-only" for="global-search">البحث في لوحة الإدارة</label>
+          <div class="global-search-input">
+            <span aria-hidden="true">⌕</span>
+            <input id="global-search" type="search" autocomplete="off" data-global-search aria-controls="global-search-results" aria-expanded="false" placeholder="ابحث عن مالك، عميل، معدة أو طلب">
+          </div>
+          <div class="global-search-results" id="global-search-results" data-global-search-results role="region" aria-live="polite" hidden></div>
+        </div>
+      </header>
+
+      <section class="admin-section" id="summary" aria-labelledby="summary-title">
+        <h2 class="sr-only" id="summary-title">مركز العمليات</h2>
+        <div class="operations-grid">
+          <article class="admin-panel attention-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="eyebrow">الأولوية الآن</span>
+                <h2>يحتاج انتباهك</h2>
+              </div>
+              <span class="attention-total" data-attention-total hidden></span>
+            </div>
+            <div class="attention-list" data-attention-list></div>
+          </article>
+
+          <article class="admin-panel quick-actions-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="eyebrow">اختصارات العمل</span>
+                <h2>الإجراءات السريعة</h2>
+              </div>
+            </div>
+            <div class="operations-actions">
+              <button type="button" data-add-equipment><span aria-hidden="true">🚜</span><strong>إضافة معدة</strong><small>تسجيل معدة جديدة</small></button>
+              <button type="button" data-add-owner><span aria-hidden="true">👤</span><strong>إضافة مالك</strong><small>إنشاء ملف مالك</small></button>
+              <button type="button" data-create-order><span aria-hidden="true">📦</span><strong>إنشاء طلب يدوي</strong><small>ربط عميل بمعدة</small></button>
+              <button type="button" data-send-message><span aria-hidden="true">✉️</span><strong>إرسال رسالة</strong><small>التواصل مع سجل موجود</small></button>
+            </div>
+          </article>
+
+          <article class="admin-panel operations-activity-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="eyebrow">من بيانات النظام</span>
+                <h2>النشاط الأخير</h2>
+              </div>
+              <p>أحدث الإجراءات المسجلة فعليًا.</p>
+            </div>
+            <div data-operations-activity></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="admin-panel admin-section" id="orders" aria-labelledby="orders-title">
+        <div class="panel-heading">
+          <div>
+            <span class="eyebrow">آخر النشاط</span>
+            <h2 id="orders-title">آخر الطلبات</h2>
+          </div>
+          <p>غيّر حالة أي طلب مباشرة من الجدول.</p>
+        </div>
+
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th scope="col">رقم الطلب</th>
+                <th scope="col">المستأجر</th>
+                <th scope="col">المعدة</th>
+                <th scope="col">التاريخ</th>
+                <th scope="col">الحالة</th>
+                <th scope="col">الإجراء</th>
+              </tr>
+            </thead>
+            <tbody data-orders-body></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="admin-panel admin-section" id="customers" aria-labelledby="customers-title">
+        <div class="panel-heading">
+          <div>
+            <span class="eyebrow">العملاء</span>
+            <h2 id="customers-title">معلومات العملاء</h2>
+          </div>
+          <p>بيانات التواصل والنشاط المسجلة في النموذج المحلي.</p>
+        </div>
+
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th scope="col">العميل</th>
+                <th scope="col">وسيلة التواصل</th>
+                <th scope="col">المدينة</th>
+                <th scope="col">الطلبات</th>
+                <th scope="col">الزيارات</th>
+                <th scope="col">آخر زيارة</th>
+              </tr>
+            </thead>
+            <tbody data-customers-body></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="admin-panel admin-section" id="conversations" aria-labelledby="conversations-title">
+        <div class="panel-heading">
+          <div>
+            <span class="eyebrow">التواصل</span>
+            <h2 id="conversations-title">المحادثات</h2>
+          </div>
+          <p>اطّلع على آخر الرسائل المرتبطة بطلبات المعدات.</p>
+        </div>
+
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th scope="col">العميل</th>
+                <th scope="col">المعدة</th>
+                <th scope="col">آخر رسالة</th>
+                <th scope="col">آخر تحديث</th>
+                <th scope="col">الإجراء</th>
+              </tr>
+            </thead>
+            <tbody data-conversations-body></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="admin-panel admin-section" id="equipment" aria-labelledby="equipment-title">
+        <div class="panel-heading panel-heading-action">
+          <div>
+            <span class="eyebrow">الكتالوج</span>
+            <h2 id="equipment-title">المعدات المدرجة وحالاتها</h2>
+          </div>
+          <button class="btn btn-primary" type="button" data-add-equipment>إضافة معدة</button>
+        </div>
+
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th scope="col">المعدة</th>
+                <th scope="col">المالك</th>
+                <th scope="col">المدينة</th>
+                <th scope="col">السعر اليومي</th>
+                <th scope="col">حالة العرض</th>
+                <th scope="col">الإجراءات</th>
+              </tr>
+            </thead>
+            <tbody data-equipment-body></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="admin-panel admin-section" id="owners" aria-labelledby="owners-title">
+        <div class="panel-heading owner-panel-heading">
+          <div>
+            <span class="eyebrow">إدارة العلاقات</span>
+            <h2 id="owners-title">ملاك المعدات</h2>
+          </div>
+          <p>إدارة ملفات الملاك ومعداتهم وطلباتهم من مكان واحد.</p>
+        </div>
+
+        <div class="owner-toolbar" aria-label="البحث وتصفية ملاك المعدات">
+          <div class="admin-field owner-search-field">
+            <label for="owner-search">البحث</label>
+            <input id="owner-search" type="search" data-owner-search placeholder="اسم المالك أو رقم التواصل">
+          </div>
+          <div class="admin-field">
+            <label for="owner-city-filter">المدينة</label>
+            <select id="owner-city-filter" data-owner-city>
+              <option value="all">كل المدن</option>
+            </select>
+          </div>
+          <div class="admin-field">
+            <label for="owner-verification-filter">حالة التحقق</label>
+            <select id="owner-verification-filter" data-owner-verification>
+              <option value="all">كل الحالات</option>
+              <option value="verified">موثق</option>
+              <option value="pending">بانتظار التحقق</option>
+              <option value="rejected">مرفوض</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th scope="col">المالك</th>
+                <th scope="col">وسيلة التواصل</th>
+                <th scope="col">المدينة</th>
+                <th scope="col">التحقق</th>
+                <th scope="col">عدد المعدات</th>
+                <th scope="col">عدد الطلبات</th>
+                <th scope="col">آخر نشاط</th>
+                <th scope="col">الإجراءات</th>
+              </tr>
+            </thead>
+            <tbody data-owners-body></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="admin-panel admin-section" id="settings" aria-labelledby="settings-title">
+        <div class="panel-heading">
+          <div>
+            <span class="eyebrow">النظام</span>
+            <h2 id="settings-title">الإعدادات</h2>
+          </div>
+          <p>إعدادات النسخة المحلية الحالية.</p>
+        </div>
+
+        <div class="settings-grid">
+          <div class="setting-row">
+            <div>
+              <strong>حفظ البيانات</strong>
+              <span>تُحفظ البيانات المدخلة على هذا الجهاز فقط.</span>
+            </div>
+            <span class="admin-badge admin-badge-paused">محلي</span>
+          </div>
+          <div class="setting-row">
+            <div>
+              <strong>الحساب الإداري</strong>
+              <span>إنهاء جلسة الإدارة الحالية والعودة إلى تسجيل الدخول.</span>
+            </div>
+            <button class="btn btn-ghost" type="button" data-logout>تسجيل الخروج</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog class="equipment-dialog" data-equipment-dialog aria-labelledby="equipment-dialog-title">
+    <form method="dialog" class="dialog-card" data-equipment-form>
+      <div class="dialog-heading">
+        <div>
+          <span class="eyebrow">بيانات المعدة</span>
+          <h2 id="equipment-dialog-title" data-equipment-dialog-title>إضافة معدة</h2>
+        </div>
+        <button class="dialog-close" type="button" data-close-dialog aria-label="إغلاق">×</button>
+      </div>
+
+      <input type="hidden" name="equipmentId">
+      <div class="dialog-grid">
+        <div class="admin-field dialog-wide">
+          <label for="equipment-name">اسم المعدة</label>
+          <input id="equipment-name" name="name" type="text" required>
+        </div>
+        <div class="admin-field">
+          <label for="equipment-owner">اسم المالك</label>
+          <input id="equipment-owner" name="ownerName" type="text" required>
+        </div>
+        <div class="admin-field">
+          <label for="equipment-category">الفئة</label>
+          <select id="equipment-category" name="category" required>
+            <option value="حفر">حفر</option>
+            <option value="تحميل">تحميل</option>
+            <option value="نقل">نقل</option>
+            <option value="رفع">رفع</option>
+          </select>
+        </div>
+        <div class="admin-field">
+          <label for="equipment-city">المدينة</label>
+          <select id="equipment-city" name="city" required>
+            <option value="الرياض">الرياض</option>
+            <option value="جدة">جدة</option>
+            <option value="الدمام">الدمام</option>
+          </select>
+        </div>
+        <div class="admin-field">
+          <label for="equipment-rate">السعر اليومي (ر.س)</label>
+          <input id="equipment-rate" name="dailyRate" type="number" min="1" step="1" inputmode="numeric" required>
+        </div>
+        <div class="admin-field dialog-wide">
+          <label for="equipment-status">حالة العرض</label>
+          <select id="equipment-status" name="status" required>
+            <option value="active">معروضة</option>
+            <option value="paused">موقوفة</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="dialog-actions">
+        <button class="btn btn-ghost" type="button" data-close-dialog>إلغاء</button>
+        <button class="btn btn-primary" type="submit">حفظ المعدة</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="equipment-dialog" data-owner-edit-dialog aria-labelledby="owner-edit-title">
+    <form method="dialog" class="dialog-card" data-owner-edit-form>
+      <div class="dialog-heading">
+        <div>
+          <span class="eyebrow">بيانات المالك</span>
+          <h2 id="owner-edit-title" data-owner-edit-title>تعديل ملف المالك</h2>
+        </div>
+        <button class="dialog-close" type="button" data-close-owner-edit aria-label="إغلاق">×</button>
+      </div>
+
+      <input type="hidden" name="ownerId">
+      <div class="dialog-grid">
+        <div class="admin-field dialog-wide">
+          <label for="owner-edit-name">الاسم</label>
+          <input id="owner-edit-name" name="name" type="text" required>
+        </div>
+        <div class="admin-field">
+          <label for="owner-edit-contact">رقم التواصل</label>
+          <input id="owner-edit-contact" name="contact" type="tel" inputmode="tel">
+        </div>
+        <div class="admin-field">
+          <label for="owner-edit-city">المدينة</label>
+          <input id="owner-edit-city" name="city" type="text" required>
+        </div>
+        <div class="admin-field dialog-wide">
+          <label for="owner-edit-verification">حالة التحقق</label>
+          <select id="owner-edit-verification" name="verification" required>
+            <option value="verified">موثق</option>
+            <option value="pending">بانتظار التحقق</option>
+            <option value="rejected">مرفوض</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="dialog-actions">
+        <button class="btn btn-ghost" type="button" data-close-owner-edit>إلغاء</button>
+        <button class="btn btn-primary" type="submit" data-owner-edit-submit>حفظ التعديلات</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="equipment-dialog" data-manual-order-dialog aria-labelledby="manual-order-title">
+    <form method="dialog" class="dialog-card" data-manual-order-form>
+      <div class="dialog-heading">
+        <div>
+          <span class="eyebrow">إجراء سريع</span>
+          <h2 id="manual-order-title">إنشاء طلب يدوي</h2>
+        </div>
+        <button class="dialog-close" type="button" data-close-manual-order aria-label="إغلاق">×</button>
+      </div>
+      <div class="form-empty-note" data-manual-order-empty hidden></div>
+      <div class="dialog-grid">
+        <div class="admin-field">
+          <label for="manual-order-customer">العميل</label>
+          <select id="manual-order-customer" name="customerId" required></select>
+        </div>
+        <div class="admin-field">
+          <label for="manual-order-equipment">المعدة</label>
+          <select id="manual-order-equipment" name="equipmentId" required></select>
+        </div>
+        <div class="admin-field">
+          <label for="manual-order-date">تاريخ الطلب</label>
+          <input id="manual-order-date" name="date" type="date" required>
+        </div>
+        <div class="admin-field">
+          <label for="manual-order-status">الحالة</label>
+          <select id="manual-order-status" name="status" required>
+            <option value="new">جديد</option>
+          </select>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <button class="btn btn-ghost" type="button" data-close-manual-order>إلغاء</button>
+        <button class="btn btn-primary" type="submit" data-manual-order-submit>إنشاء الطلب</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="equipment-dialog" data-message-dialog aria-labelledby="message-title">
+    <form method="dialog" class="dialog-card" data-message-form>
+      <div class="dialog-heading">
+        <div>
+          <span class="eyebrow">إجراء سريع</span>
+          <h2 id="message-title">إرسال رسالة</h2>
+        </div>
+        <button class="dialog-close" type="button" data-close-message aria-label="إغلاق">×</button>
+      </div>
+      <div class="form-empty-note" data-message-empty hidden></div>
+      <div class="dialog-grid">
+        <div class="admin-field dialog-wide">
+          <label for="message-recipient">المستلم</label>
+          <select id="message-recipient" name="recipient" required></select>
+        </div>
+        <div class="admin-field dialog-wide">
+          <label for="message-body">نص الرسالة</label>
+          <textarea id="message-body" name="message" rows="5" required></textarea>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <button class="btn btn-ghost" type="button" data-close-message>إلغاء</button>
+        <button class="btn btn-primary" type="submit" data-message-submit>إرسال</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="equipment-dialog conversation-dialog" data-conversation-dialog aria-labelledby="conversation-dialog-title">
+    <div class="dialog-card conversation-card">
+      <div class="dialog-heading">
+        <div>
+          <span class="eyebrow">سجل المحادثة</span>
+          <h2 id="conversation-dialog-title" data-conversation-title>المحادثة</h2>
+          <p class="conversation-meta" data-conversation-meta></p>
+        </div>
+        <button class="dialog-close" type="button" data-close-conversation aria-label="إغلاق المحادثة">×</button>
+      </div>
+
+      <div class="conversation-messages" data-conversation-messages></div>
+
+      <div class="dialog-actions">
+        <button class="btn btn-ghost" type="button" data-close-conversation>إغلاق</button>
+      </div>
+    </div>
+  </dialog>
+
+  <div class="admin-toast" data-admin-toast role="status" aria-live="polite" hidden></div>
+</body>
+</html>
