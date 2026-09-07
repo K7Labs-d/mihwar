@@ -11,7 +11,7 @@ dist-server/
 .env.local
 work/
 audit.vite.config.mjs
-data/
+/data/
 *.sqlite
 *.sqlite-wal
 *.sqlite-shm
