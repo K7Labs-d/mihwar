@@ -1,8 +1,17 @@
-# SDCC stuff
-*.lnk
-*.lst
-*.map
-*.mem
-*.rel
-*.rst
-*.sym
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+
+dist-server/
+.env.local
+work/
+audit.vite.config.mjs
+data/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm

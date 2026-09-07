@@ -1,0 +1,27 @@
+احذف هذه الملفات من المستودع القديم عند تطبيق نسخة الصفحة الواحدة:
+
+bun.lock
+src/context/AppContext.tsx
+src/data/mockData.ts
+src/types/equipment.ts
+src/utils/pricing.ts
+src/components/rfq/RFQBoard.tsx
+src/components/advisor/AIAdvisorModal.tsx
+src/components/marketplace/HeroSection.tsx
+src/components/admin/AdminDashboard.tsx
+src/components/dashboard/RenterDashboard.tsx
+src/components/dashboard/OwnerDashboard.tsx
+src/components/broker/EscrowSecurityInfo.tsx
+src/components/contract/DigitalContractModal.tsx
+src/components/chat/BrokerChatModal.tsx
+src/components/booking/BookingWizardModal.tsx
+src/components/marketplace/EquipmentCatalog.tsx
+src/components/marketplace/EquipmentDetailModal.tsx
+src/components/inspection/DigitalInspectionModal.tsx
+src/components/layout/Footer.tsx
+src/components/layout/Header.tsx
+src/components/layout/PageErrorBoundary.tsx
+server/validation.ts
+OPERATIONS_AR.md
+VERIFICATION.md
+CHANGES_AR.md
