@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowRight, Eye, EyeOff, LockKeyhole, UserRound } from 'lucide-react';
+import { pageHref } from '../../data/productPages';
 
 type Client = { id: string; name: string; email: string; createdAt: string };
 
@@ -75,9 +76,9 @@ export function ClientLogin() {
   const field = 'w-full rounded-xl border border-slate-700 bg-[#080d18] px-4 py-3 text-sm text-white outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/15 disabled:opacity-60';
   const primary = 'w-full rounded-xl bg-gradient-to-l from-amber-400 to-amber-500 px-4 py-3 font-bold text-slate-950 transition hover:brightness-110 disabled:opacity-50 disabled:cursor-wait';
 
-  return <section className="min-h-screen px-5 py-8 sm:py-12" dir="rtl">
+  return <section className="px-5 py-8 sm:py-12" dir="rtl">
     <div className="mx-auto max-w-md">
-      <a href="/" className="mb-8 inline-flex items-center gap-2 text-sm text-slate-300 hover:text-amber-400"><ArrowRight size={17} />العودة إلى محور</a>
+      <a href={pageHref('')} className="mb-8 inline-flex items-center gap-2 text-sm text-slate-300 hover:text-amber-400"><ArrowRight size={17} />العودة إلى محور</a>
       <div className="rounded-3xl border border-amber-500/25 bg-[#0a0f1d] p-6 shadow-2xl sm:p-8">
         <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-400/40 bg-amber-400/10 text-amber-400"><UserRound size={28} /></div>
         <h1 className="mb-2 text-2xl font-extrabold text-white">{user ? 'حساب العميل' : registration ? 'إنشاء حساب عميل' : 'تسجيل دخول العميل'}</h1>
@@ -88,6 +89,10 @@ export function ClientLogin() {
             <div><dt className="mb-1 text-slate-400">الاسم</dt><dd className="break-words text-white">{user.name}</dd></div>
             <div><dt className="mb-1 text-slate-400">البريد الإلكتروني</dt><dd dir="ltr" className="break-all text-right text-white">{user.email}</dd></div>
           </dl>
+          <nav className="client-destinations" aria-label="متابعة العمل في محور">
+            <a className="quiet-button" href={pageHref('broker-registration')}>تسجيل وسيط جديد</a>
+            <a className="quiet-button" href={pageHref('broker-management')}>إدارة الوسطاء</a>
+          </nav>
           <button className={primary} onClick={logout} disabled={busy}>{busy ? 'جارٍ تسجيل الخروج…' : 'تسجيل الخروج'}</button>
         </div> : <>
           <p className="mb-6 text-sm leading-7 text-slate-400">{registration ? 'أدخل بياناتك لإنشاء حسابك في محور.' : 'أدخل بريدك الإلكتروني وكلمة المرور للوصول إلى حسابك.'}</p>

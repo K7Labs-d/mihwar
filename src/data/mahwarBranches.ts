@@ -15,7 +15,7 @@ export const MAHWAR_BRANCHES: MahwarBranch[] = [
     angle: -90, // 12 o'clock
     cardTitle: 'ابدأ بطلبك',
     cardSubtitle: 'حدد احتياجك بكل سهولة',
-    cardDescription: 'أدخل مواصفات المعدة المطلوبة، الموقع الجغرافي للمشروع، وفترة التأجير لتصلك عروض أسعار تنافسية من كبرى الأساطيل.',
+    cardDescription: 'مساحة لتنظيم احتياجك ومتابعة طلباتك بين أطراف العملية.',
     colorAccent: '#f59e0b',
   },
   {
@@ -24,9 +24,9 @@ export const MAHWAR_BRANCHES: MahwarBranch[] = [
     label: 'الوسيط',
     iconName: 'users',
     angle: -18, // ~2 o'clock
-    cardTitle: 'منصة الوساطة والضمان',
-    cardSubtitle: 'حماية مالية وعقود رقمية ملزمة',
-    cardDescription: 'نظام ضمان بنكي محايد (Escrow) يحجز مبالغ الإيجار ولا يتم الإفراج عنها إلا بعد اكتمال الفحص واستلام المعدة بالموقع.',
+    cardTitle: 'الوسيط',
+    cardSubtitle: 'إدارة علاقات الوسطاء وتوسيع الفرص المشتركة',
+    cardDescription: 'تسجيل بيانات الوسطاء والوصول إلى وظائف هذا الفرع من مكان واحد.',
     colorAccent: '#fbbf24',
   },
   {
@@ -35,9 +35,9 @@ export const MAHWAR_BRANCHES: MahwarBranch[] = [
     label: 'العرض',
     iconName: 'clipboard-check',
     angle: 54, // ~4 o'clock
-    cardTitle: 'عروض تنافسية معتمدة',
-    cardSubtitle: 'استلم عروض أسعار مباشرة من الملاك',
-    cardDescription: 'مقارنة شفافة لأسعار الإيجار اليومي والشهري، فحص كفاءة المشغلين المعتمدين، وتأكيد التوفر الميداني الفوري.',
+    cardTitle: 'متابعة العروض',
+    cardSubtitle: 'تنظيم العروض المرتبطة بطلباتك',
+    cardDescription: 'مساحة لعرض تفاصيل العروض ومراجعتها بين الأطراف.',
     colorAccent: '#f97316',
   },
   {
@@ -46,9 +46,9 @@ export const MAHWAR_BRANCHES: MahwarBranch[] = [
     label: 'التنفيذ',
     iconName: 'settings',
     angle: 126, // ~8 o'clock
-    cardTitle: 'التنفيذ والفحص الميداني',
-    cardSubtitle: 'تسليم موثق ومحاضر فحص تقنية معتمدة',
-    cardDescription: 'توثيق حالة المعدة وساعات التشغيل بمحاضر استلام وتسليم رقمية مصورة ومتوافقة مع معايير السلامة المهنية.',
+    cardTitle: 'متابعة التنفيذ',
+    cardSubtitle: 'تنسيق خطوات التنفيذ بين الأطراف',
+    cardDescription: 'مساحة لمتابعة خطوات العملية وما يرتبط بها من تفاصيل.',
     colorAccent: '#f59e0b',
   },
   {
@@ -92,13 +92,13 @@ export const MAHWAR_STEPS: StepDefinition[] = [
   {
     step: '05',
     title: 'التفاعل مع الفروع',
-    description: 'يظهر وصف مختصر لكل فرع عند المرور عليه',
+    description: 'تظهر لوحة وظائف الفرع عند اختياره',
     targetState: 'branch_hover',
   },
   {
     step: '06',
     title: 'إغلاق المحور',
-    description: 'يمكن العودة للإغلاق عبر زر في الأسفل أو الضغط خارج الدائرة',
+    description: 'يمكن إغلاق المحور عبر المركز أو زر الإغلاق',
     targetState: 'closing',
   },
 ];

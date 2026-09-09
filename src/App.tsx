@@ -1,15 +1,20 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { MotionConfig } from 'motion/react';
 import { MahwarHero } from './components/mahwar/MahwarHero';
+import { ProductNavigation } from './components/mahwar/ProductNavigation';
+import { getPage, resolvePage, type Page } from './data/productPages';
 const ClientLogin = lazy(() => import('./components/client/ClientLogin').then(module => ({ default: module.ClientLogin })));
+const currentPage = () => resolvePage(window.location.hash);
+const navigate = (page: Page) => { window.location.hash = page; };
 
 export default function App() {
-  const [clientPage, setClientPage] = useState(() => window.location.hash === '#client');
+  const [page, setPage] = useState(currentPage);
   useEffect(() => {
     const clearOldRoute = () => {
-      const client = window.location.hash === '#client';
-      setClientPage(client);
-      if (!client && window.location.hash) window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      const route = currentPage();
+      setPage(route);
+      document.title = route ? `${getPage(route).title} | محور` : 'منظومة محور التفاعلية';
+      if (!route && window.location.hash) window.history.replaceState(null, '', window.location.pathname + window.location.search);
       window.scrollTo(0, 0);
     };
     clearOldRoute();
@@ -18,10 +23,14 @@ export default function App() {
   }, []);
 
   return <MotionConfig reducedMotion="user">
-    <main id="main-content" className="min-h-screen bg-[#05070e] text-slate-100 overflow-x-hidden" dir="rtl">
+    <div className="mahwar-experience" dir="rtl">
+      <a className="skip-navigation" href="#main-content" onClick={event => { event.preventDefault(); document.getElementById('main-content')?.focus(); }}>تجاوز التنقل إلى المحتوى</a>
+      <ProductNavigation page={page} />
+    <main id="main-content" tabIndex={-1} className="min-w-0 text-slate-100">
       <Suspense fallback={<p role="status" className="p-10 text-center text-slate-400">جارٍ التحميل…</p>}>
-        {clientPage ? <ClientLogin /> : <MahwarHero onClientLogin={() => { window.location.hash = 'client'; }} />}
+        {page === 'client' ? <ClientLogin /> : <MahwarHero key={page} page={page} onNavigate={navigate} onClientLogin={() => navigate('client')} />}
       </Suspense>
     </main>
+    </div>
   </MotionConfig>;
 }
