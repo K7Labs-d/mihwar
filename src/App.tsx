@@ -4,7 +4,8 @@ import { MahwarHero } from './components/mahwar/MahwarHero';
 import { ProductNavigation } from './components/mahwar/ProductNavigation';
 import { getPage, resolvePage, type Page } from './data/productPages';
 const ClientLogin = lazy(() => import('./components/client/ClientLogin').then(module => ({ default: module.ClientLogin })));
-const currentPage = () => resolvePage(window.location.hash);
+const MahwarShowcase = lazy(() => import('./components/showcase/MahwarShowcase').then(module => ({ default: module.MahwarShowcase })));
+const currentPage = (): Page | 'showcase' => window.location.hash === '#showcase' ? 'showcase' : resolvePage(window.location.hash);
 const navigate = (page: Page) => { window.location.hash = page; };
 
 export default function App() {
@@ -13,7 +14,7 @@ export default function App() {
     const clearOldRoute = () => {
       const route = currentPage();
       setPage(route);
-      document.title = route ? `${getPage(route).title} | محور` : 'منظومة محور التفاعلية';
+      document.title = route === 'showcase' ? 'محور | رؤية تتحرّك' : route ? `${getPage(route).title} | محور` : 'منظومة محور التفاعلية';
       if (!route && window.location.hash) window.history.replaceState(null, '', window.location.pathname + window.location.search);
       window.scrollTo(0, 0);
     };
@@ -21,6 +22,8 @@ export default function App() {
     window.addEventListener('hashchange', clearOldRoute);
     return () => window.removeEventListener('hashchange', clearOldRoute);
   }, []);
+
+  if (page === 'showcase') return <MotionConfig reducedMotion="user"><Suspense fallback={<div className="min-h-screen bg-black" />}><MahwarShowcase /></Suspense></MotionConfig>;
 
   return <MotionConfig reducedMotion="user">
     <div className="mahwar-experience" dir="rtl">

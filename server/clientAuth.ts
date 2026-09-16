@@ -7,6 +7,9 @@ import { createBrokerRequests } from './brokerRequests.ts';
 import { ensureBrokerReviewPermission } from './accountPermissions.ts';
 import { createBrokerReview } from './brokerReview.ts';
 import { createClientRequests } from './clientRequests.ts';
+import { runProductMigrations } from './migrations.ts';
+import { createLessorProfiles } from './lessorProfiles.ts';
+import { createEquipment } from './equipment.ts';
 
 type User = { id: string; name: string; email: string; created_at: string; can_review_brokers: number };
 const digest = (value: string) => createHash('sha256').update(value).digest('hex');
@@ -163,7 +166,10 @@ export function createClientAuth({ databasePath, origin, now = Date.now }: { dat
   });
   router.use('/broker-requests', createBrokerRequests({ db, userIdFrom: req => sessionUser(req)?.id, now }));
   router.use('/requests', createClientRequests({ db, userIdFrom: req => sessionUser(req)?.id, now }));
+  try { runProductMigrations(db, now); } catch (error) { db.close(); throw error; }
   router.use('/broker-review', createBrokerReview({ db, userFrom: req => sessionUser(req), now }));
+  router.use('/lessor-profile', createLessorProfiles({ db, userIdFrom: req => sessionUser(req)?.id }));
+  router.use('/equipment', createEquipment({ db, userIdFrom: req => sessionUser(req)?.id, now }));
   router.use((error: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     const status = error?.type === 'entity.too.large' ? 413 : error?.type === 'entity.parse.failed' ? 400 : 500;
     res.status(status).json({ error: status === 413 ? 'حجم الطلب أكبر من المسموح.' : status === 400 ? 'صيغة الطلب غير صحيحة.' : 'تعذر إكمال الطلب. حاول مرة أخرى.' });

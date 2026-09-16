@@ -55,12 +55,14 @@
  .request-list-controls .gold-button { width:100%; }
 }
 .header-caption { font-size:13px; color:#a7abad; }
+.mh-showcase-link { margin:21px auto 0; display:inline-flex; align-items:center; gap:9px; border:1px solid #c99b434d; color:#e9bd73; background:#d8a73f0b; padding:9px 18px; border-radius:30px; font-size:12px; }
+.mh-showcase-link:hover { border-color:#efb85c; background:#d8a73f18; }
 .mahwar-content { max-width:1440px; margin:auto; padding:32px clamp(16px,3vw,40px) 24px; }
 .experience-heading { text-align:center; margin:0 auto 14px; }
 .eyebrow { color:var(--accent); font-size:12px; margin-bottom:12px; letter-spacing:.02em; }
 .experience-heading h1 { font-weight:900; font-size:clamp(27px,3.3vw,46px); line-height:1.5; }
 .experience-heading em { font-style:normal; color:var(--accent); }
-.experience-heading > p:last-child { margin:8px 0 0; color:#b2b5b9; font-size:clamp(13px,1.2vw,17px); line-height:1.8; }
+.experience-heading > p:not(.eyebrow) { margin:8px 0 0; color:#b2b5b9; font-size:clamp(13px,1.2vw,17px); line-height:1.8; }
 .mahwar-workspace { display:grid; align-items:center; justify-content:center; grid-template-columns:minmax(0,660px); gap:32px; direction:ltr; }
 .mahwar-workspace.has-panel { grid-template-columns:minmax(0,1fr) minmax(0,1.1fr); }
 .mahwar-workspace > * { min-width:0; direction:rtl; }
@@ -206,7 +208,7 @@
  .mahwar-content { padding-top:24px; }
  .experience-heading { margin-bottom:2px; }
  .experience-heading h1 { font-size:27px; }
- .experience-heading > p:last-child { font-size:12px; }
+ .experience-heading > p:not(.eyebrow) { font-size:12px; }
  .branch-panel { padding:20px 16px; border-radius:19px; }
  .panel-heading { gap:8px; }
  .panel-title { gap:11px; }
