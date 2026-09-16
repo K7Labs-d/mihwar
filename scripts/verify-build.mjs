@@ -56,7 +56,11 @@ try {
     assert.equal((await get(route)).status, 404, route);
   }
   assert.equal((await get('/api/client/me')).status, 401);
-  console.log('Production check passed: home, assets, client auth, health, and removed routes.');
+  const market = await get('/api/marketplace/equipment');
+  assert.equal(market.status, 200);
+  assert.deepEqual(await market.json(), { equipment: [], page: 1, pageSize: 20, total: 0 });
+  assert.equal((await get('/api/marketplace/equipment/not-an-id')).status, 404);
+  console.log('Production check passed: home, assets, client auth, public marketplace, health, and removed routes.');
 } finally {
   if (child.exitCode === null) child.kill('SIGTERM');
   await closed;

@@ -12,6 +12,7 @@ export function ProductNavigation({ page }: { page: Page }) {
     </header>
     <nav className="product-navigation" aria-label="أقسام محور">
       <a href={pageHref('')} aria-current={page === '' ? 'page' : undefined}>المحور</a>
+      <a href={pageHref('marketplace')} aria-current={page === 'marketplace' ? 'page' : undefined}>سوق المعدات</a>
       {MAHWAR_BRANCHES.map(branch => <a key={branch.id} href={pageHref(branch.id as Page)} aria-current={current.branchId === branch.id ? (page === branch.id ? 'page' : 'location') : undefined}>{branch.label}</a>)}
     </nav>
     {current.branchId === 'broker' && <nav className="broker-navigation" aria-label="تأجير معداتي">
