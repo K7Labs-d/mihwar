@@ -19,6 +19,7 @@ const clientAuth = createClientAuth({
   origin: process.env.AUTH_ORIGIN || 'http://localhost:' + (process.env.PORT || 3000),
 });
 app.use('/api/client', clientAuth.router);
+app.use('/api/marketplace/equipment', clientAuth.marketplaceRouter);
 app.get('/api/health', (_req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   res.json({ status: 'ok', mode: 'client-auth', version: '0.3.0' });

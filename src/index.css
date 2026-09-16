@@ -57,6 +57,8 @@
 .header-caption { font-size:13px; color:#a7abad; }
 .mh-showcase-link { margin:21px auto 0; display:inline-flex; align-items:center; gap:9px; border:1px solid #c99b434d; color:#e9bd73; background:#d8a73f0b; padding:9px 18px; border-radius:30px; font-size:12px; }
 .mh-showcase-link:hover { border-color:#efb85c; background:#d8a73f18; }
+.home-actions { display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap; margin-top:20px; }
+.home-actions .mh-showcase-link { margin:0; }
 .mahwar-content { max-width:1440px; margin:auto; padding:32px clamp(16px,3vw,40px) 24px; }
 .experience-heading { text-align:center; margin:0 auto 14px; }
 .eyebrow { color:var(--accent); font-size:12px; margin-bottom:12px; letter-spacing:.02em; }

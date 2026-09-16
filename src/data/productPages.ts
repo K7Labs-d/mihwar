@@ -1,6 +1,7 @@
 // Keep existing route IDs stable while adapting the lessor branch from the blueprint.
 export const PRODUCT_PAGES = [
   { id: '', branchId: null, title: 'منظومة محور التفاعلية', description: 'منظومة متكاملة تربط أطراف العملية في مكان واحد' },
+  { id: 'marketplace', branchId: null, title: 'سوق المعدات', description: 'تصفح معدات المؤجرين المعتمدين وقارن مواصفاتها وأسعارها' },
   { id: 'request', branchId: 'request', title: 'الطلب', description: 'تنظيم احتياجك ومتابعة طلباتك بين أطراف العملية' },
   { id: 'broker', branchId: 'broker', title: 'تأجير معداتي', description: 'التسجيل كمؤجر وإدارة معداتك من حسابك الحالي' },
   { id: 'offer', branchId: 'offer', title: 'العرض', description: 'مراجعة العروض المرتبطة بطلباتك ومتابعة تفاصيلها' },
@@ -19,5 +20,7 @@ export const BROKER_PAGES = PRODUCT_PAGES.filter(page => page.branchId === 'brok
 export const getPage = (id: Page) => PRODUCT_PAGES.find(page => page.id === id)!;
 export const pageHref = (id: Page) => id ? `#${id}` : '#';
 export function resolvePage(hash: string): Page {
+  const path = hash.replace(/^#/, '').split('?')[0];
+  if (path === 'marketplace' || path.startsWith('marketplace/')) return 'marketplace';
   return PRODUCT_PAGES.find(page => page.id === hash.replace(/^#/, ''))?.id ?? '';
 }

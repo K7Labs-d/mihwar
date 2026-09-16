@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowRight, Play, Users } from 'lucide-react';
+import { ArrowRight, Play, Search, Users } from 'lucide-react';
 import { MahwarState, MahwarBranch } from '../../types/mahwar';
 import { MAHWAR_BRANCHES } from '../../data/mahwarBranches';
 import { MahwarWheel } from './MahwarWheel';
@@ -23,7 +23,7 @@ export const MahwarHero = ({ onClientLogin, page, onNavigate }: { onClientLogin:
         <p className="eyebrow">محور — منظومة متكاملة</p>
         <h1>{page ? info.title : <>منظومة <em>محور</em> التفاعلية</>}</h1>
         <p>{info.description}</p>
-        {!page && <a href="#showcase" className="mh-showcase-link"><Play size={14} /> شاهد رحلة محور</a>}
+        {!page && <div className="home-actions"><a href={pageHref('marketplace')} className="gold-button"><Search size={16} /> تصفح المعدات</a><a href="#showcase" className="mh-showcase-link"><Play size={14} /> شاهد رحلة محور</a></div>}
       </div>
       <div className={`mahwar-workspace ${activeBranch ? 'has-panel' : ''} ${registering ? 'is-registering' : ''}`}>
         <div className="wheel-context">
