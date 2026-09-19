@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowRight, ChevronLeft, FileText, Plus, RefreshCw } from 'lucide-react';
 import { loadRequest, loadRequests, saveRequest, RequestApiError, type ClientRequest, type RequestList } from '../../utils/requestApi';
 import { requestLimits, validateRequest, type RequestDraft, type RequestErrors } from '../../utils/requestForm';
+import { RequestConversation } from './RequestConversation';
 
 const dateLabel = (date: string) => new Intl.DateTimeFormat('ar-SA-u-ca-gregory', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(date));
 const failure = (error: unknown) => error instanceof RequestApiError ? error : new RequestApiError('تعذر إكمال الطلب. أعد المحاولة.', 0);
@@ -88,6 +89,7 @@ export function ClientRequests({ onClientLogin }: { onClientLogin: () => void })
           <div><dt>موقع الاحتياج</dt><dd>{request.location}</dd></div><div><dt>الكمية</dt><dd>{request.quantity}</dd></div>
           <div><dt>تاريخ الإنشاء</dt><dd><time dateTime={request.createdAt}>{dateLabel(request.createdAt)}</time></dd></div><div><dt>آخر تحديث</dt><dd><time dateTime={request.updatedAt}>{dateLabel(request.updatedAt)}</time></dd></div>
         </dl>
+        <RequestConversation key={request.id} requestId={request.id} onAccessLost={issue => { setError(issue); setRequest(null); }} />
       </div> : list && <>
         {list.requests.length === 0 ? <div className="empty-state"><FileText size={38} /><h3>{list.total ? 'لا توجد طلبات في هذه الصفحة' : 'لا توجد طلبات للعرض بعد'}</h3><p className="muted">{list.total ? 'ارجع إلى الصفحة السابقة لعرض طلباتك.' : 'ابدأ بتحديد احتياجك. ستجد طلباتك وحالتها هنا بعد حفظها.'}</p><button className="gold-button" onClick={create}><Plus size={18} />{list.total ? 'إنشاء طلب جديد' : 'إنشاء أول طلب'}</button></div>
           : <><div className="request-list-controls"><p className="muted">طلباتك المحفوظة: {list.total}</p><button className="gold-button" onClick={create}><Plus size={18} /> إنشاء طلب جديد</button></div><div className="branch-actions">{list.requests.map(item => <button key={item.id} className="branch-action request-list-item" onClick={() => { setSuccess(''); setSelectedId(item.id); setView('detail'); }} aria-label={'فتح تفاصيل الطلب: ' + item.title}><span className="action-icon"><FileText size={24} /></span><span className="action-copy"><strong>{item.title}</strong><small>{item.location} · الكمية: {item.quantity}</small><small><time dateTime={item.createdAt}>{dateLabel(item.createdAt)}</time></small></span><span className="request-status">مفتوح</span><ChevronLeft size={18} /></button>)}</div></>}

@@ -1,0 +1,50 @@
+.admin-requests { max-width: 1100px; margin: 0 auto; padding: 32px 24px 64px; }
+.inbox-heading, .inbox-results, .reply-footer, .message-meta { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+.inbox-heading { margin-bottom: 28px; }
+.inbox-heading h1 { font-size: clamp(26px, 4vw, 36px); font-weight: 800; margin: 8px 0; }
+.inbox-heading .eyebrow, .request-conversation h3 { display: flex; align-items: center; gap: 8px; }
+.inbox-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 24px 0; }
+.inbox-stats > div { border: 1px solid #c5a66130; background: #101724; padding: 20px; border-radius: 16px; display: grid; gap: 10px; }
+.inbox-stats span { font-size: 13px; color: #b9c2d0; }
+.inbox-stats strong { font-size: 30px; color: #e5c17a; }
+.inbox-filters { display: flex; align-items: end; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+.inbox-search { flex: 1 1 300px; min-width: 0; }
+.inbox-search > div { display: flex; gap: 8px; }
+.inbox-filters label, .conversation-form label { display: block; color: #cbd5e1; font-size: 14px; margin-bottom: 8px; }
+.inbox-filters input, .inbox-filters select, .conversation-form textarea { background: #080e19; color: #eef2f7; border: 1px solid #354052; border-radius: 10px; padding: 11px 14px; min-width: 0; width: 100%; }
+.inbox-filters input:focus, .inbox-filters select:focus, .conversation-form textarea:focus { outline: 2px solid #d8b873; outline-offset: 2px; }
+.inbox-results { font-size: 12px; margin: 16px 0; }
+.inbox-list { display: grid; gap: 10px; }
+.inbox-item { width: 100%; display: flex; align-items: center; gap: 16px; text-align: start; padding: 20px; border-radius: 14px; border: 1px solid #2c3545; background: #101724; transition: border-color .15s; }
+.inbox-item:hover, .inbox-item:focus-visible { border-color: #d8b873; }
+.inbox-item-copy { flex: 1; min-width: 0; display: grid; gap: 7px; overflow-wrap: anywhere; }
+.inbox-item-copy strong { font-size: 16px; color: #f0f3f9; }
+.inbox-item-copy span, .inbox-item-copy time { color: #9aa8bd; font-size: 12px; }
+.inbox-badge { flex-shrink: 0; padding: 6px 10px; border: 1px solid #477d7850; background: #23464040; color: #9bd6c6; border-radius: 999px; font-size: 12px; }
+.inbox-badge.needs-reply { color: #e9c98b; background: #b8882120; border-color: #b8882150; }
+.inbox-detail-card { padding: 24px; background: #101724; border: 1px solid #354052; border-radius: 16px; margin: 20px 0; overflow-wrap: anywhere; }
+.inbox-detail-card h2 { font-size: 24px; margin: 8px 0 20px; font-weight: 700; }
+.inbox-email { text-align: start; overflow-wrap: anywhere; }
+.request-conversation { margin-top: 24px; padding-top: 24px; border-top: 1px solid #354052; min-width: 0; }
+.request-conversation > .muted { font-size: 13px; margin: 10px 0 20px; line-height: 1.8; }
+.conversation-empty { text-align: center; display: grid; justify-items: center; gap: 10px; padding: 24px; color: #9aa8bd; }
+.conversation-messages { list-style: none; display: grid; gap: 14px; padding: 0; margin: 18px 0; }
+.conversation-message { padding: 16px 18px; background: #111b2b; border: 1px solid #324154; border-radius: 14px; min-width: 0; }
+.conversation-message.from-admin { background: #211e16; border-color: #b8985445; }
+.message-meta { font-size: 12px; color: #aab5c5; margin-bottom: 10px; }
+.from-admin .message-meta strong { color: #e7c98e; }
+.conversation-message p { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.9; font-size: 14px; color: #e2e8f0; }
+.conversation-form { margin-top: 24px; }
+.conversation-form textarea { resize: vertical; line-height: 1.8; }
+.reply-footer { margin-top: 12px; font-size: 12px; }
+@media (max-width: 600px) {
+  .admin-requests { padding: 24px 14px 40px; }
+  .inbox-stats { gap: 8px; }
+  .inbox-stats > div { padding: 14px 10px; }
+  .inbox-stats span { font-size: 11px; }
+  .inbox-stats strong { font-size: 24px; }
+  .inbox-item { padding: 16px 12px; gap: 10px; flex-wrap: wrap; }
+  .inbox-item-copy { flex-basis: calc(100% - 36px); }
+  .inbox-item > svg { margin-inline-start: auto; }
+  .inbox-detail-card { padding: 18px 14px; }
+}

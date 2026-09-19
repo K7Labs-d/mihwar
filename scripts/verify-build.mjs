@@ -56,6 +56,8 @@ try {
     assert.equal((await get(route)).status, 404, route);
   }
   assert.equal((await get('/api/client/me')).status, 401);
+  assert.equal((await get('/api/client/request-inbox')).status, 401);
+  assert.equal((await get('/api/client/request-conversations/missing/messages')).status, 401);
   console.log('Production check passed: home, assets, client auth, health, and removed routes.');
 } finally {
   if (child.exitCode === null) child.kill('SIGTERM');

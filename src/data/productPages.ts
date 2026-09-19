@@ -1,5 +1,6 @@
 // Only sections already present in the wheel and the broker branch belong here.
 export const PRODUCT_PAGES = [
+  { id: 'admin-requests', branchId: null, title: 'إدارة الطلبات', description: 'استقبال طلبات العملاء والرد عليها' },
   { id: '', branchId: null, title: 'منظومة محور التفاعلية', description: 'منظومة متكاملة تربط أطراف العملية في مكان واحد' },
   { id: 'request', branchId: 'request', title: 'الطلب', description: 'تنظيم احتياجك ومتابعة طلباتك بين أطراف العملية' },
   { id: 'broker', branchId: 'broker', title: 'الوسيط', description: 'تسجيل بيانات الوسطاء والوصول إلى وظائف هذا الفرع من مكان واحد' },
