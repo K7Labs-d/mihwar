@@ -4,11 +4,12 @@ import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { randomBytes, randomUUID, scrypt, createHash, timingSafeEqual } from 'node:crypto';
 import { createBrokerRequests } from './brokerRequests.ts';
-import { ensureBrokerReviewPermission } from './accountPermissions.ts';
+import { ensureBrokerReviewPermission, ensureRequestManagementPermission } from './accountPermissions.ts';
+import { createRequestInbox } from './requestInbox.ts';
 import { createBrokerReview } from './brokerReview.ts';
 import { createClientRequests } from './clientRequests.ts';
 
-type User = { id: string; name: string; email: string; created_at: string; can_review_brokers: number };
+type User = { id: string; name: string; email: string; created_at: string; can_review_brokers: number; can_manage_requests: number };
 const digest = (value: string) => createHash('sha256').update(value).digest('hex');
 const SESSION_MS = 7 * 86400000;
 const PASSWORD_OPTIONS = { N: 32768, r: 8, p: 1, maxmem: 64 * 1024 * 1024 };
@@ -36,6 +37,7 @@ export function createClientAuth({ databasePath, origin, now = Date.now }: { dat
     CREATE TABLE IF NOT EXISTS client_auth_limits (key TEXT PRIMARY KEY, count INTEGER NOT NULL, expires_at INTEGER NOT NULL);
   `);
   ensureBrokerReviewPermission(db);
+  ensureRequestManagementPermission(db);
   let activeHashes = 0;
   const router = express.Router();
   const cookieName = 'mahwar_client_session';
@@ -44,7 +46,7 @@ export function createClientAuth({ databasePath, origin, now = Date.now }: { dat
     const raw = req.headers.cookie?.split(';').map(part => part.trim()).find(part => part.startsWith(cookieName + '='))?.slice(cookieName.length + 1);
     return raw && /^[a-f0-9]{64}$/.test(raw) ? raw : null;
   };
-  const publicUser = (user: User) => ({ id: user.id, name: user.name, email: user.email, createdAt: user.created_at, permissions: { reviewBrokers: user.can_review_brokers === 1 } });
+  const publicUser = (user: User) => ({ id: user.id, name: user.name, email: user.email, createdAt: user.created_at, permissions: { reviewBrokers: user.can_review_brokers === 1, manageRequests: user.can_manage_requests === 1 } });
   const cleanup = () => {
     db.prepare('DELETE FROM client_sessions WHERE expires_at <= ?').run(now());
     db.prepare('DELETE FROM client_auth_limits WHERE expires_at <= ?').run(now());
@@ -114,7 +116,7 @@ export function createClientAuth({ databasePath, origin, now = Date.now }: { dat
       const salt = randomBytes(16);
       passwordHash = 'scrypt$' + salt.toString('hex') + '$' + (await derive(input.password, salt)).toString('hex');
     } finally { activeHashes--; }
-    const user: User = { id: randomUUID(), name, email: input.email, created_at: new Date(now()).toISOString(), can_review_brokers: 0 };
+    const user: User = { id: randomUUID(), name, email: input.email, created_at: new Date(now()).toISOString(), can_review_brokers: 0, can_manage_requests: 0 };
     if (db.prepare('SELECT id FROM client_users WHERE email=?').get(input.email)) return res.status(409).json({ error: 'تعذر إنشاء الحساب بهذا البريد. جرّب تسجيل الدخول.' });
     db.exec('BEGIN');
     try {
@@ -147,7 +149,7 @@ export function createClientAuth({ databasePath, origin, now = Date.now }: { dat
 
   const sessionUser = (req: express.Request) => {
     const token = tokenFrom(req);
-    return token ? db.prepare(`SELECT u.id,u.name,u.email,u.created_at,u.can_review_brokers FROM client_users u
+    return token ? db.prepare(`SELECT u.id,u.name,u.email,u.created_at,u.can_review_brokers,u.can_manage_requests FROM client_users u
       JOIN client_sessions s ON s.user_id=u.id WHERE s.token_hash=? AND s.expires_at>?`).get(digest(token), now()) as User | undefined : undefined;
   };
   router.get('/me', (req, res) => {
@@ -163,6 +165,9 @@ export function createClientAuth({ databasePath, origin, now = Date.now }: { dat
   });
   router.use('/broker-requests', createBrokerRequests({ db, userIdFrom: req => sessionUser(req)?.id, now }));
   router.use('/requests', createClientRequests({ db, userIdFrom: req => sessionUser(req)?.id, now }));
+  const inbox = createRequestInbox({ db, userFrom: sessionUser, now });
+  router.use('/request-inbox', inbox.adminRouter);
+  router.use('/request-conversations', inbox.clientRouter);
   router.use('/broker-review', createBrokerReview({ db, userFrom: req => sessionUser(req), now }));
   router.use((error: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     const status = error?.type === 'entity.too.large' ? 413 : error?.type === 'entity.parse.failed' ? 400 : 500;

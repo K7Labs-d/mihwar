@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowRight, Eye, EyeOff, LockKeyhole, UserRound } from 'lucide-react';
 import { pageHref } from '../../data/productPages';
 
-type Client = { id: string; name: string; email: string; createdAt: string };
+type Client = { id: string; name: string; email: string; createdAt: string; permissions?: { manageRequests?: boolean } };
 
 export function ClientLogin() {
   const [mode, setMode] = useState<'login' | 'register'>('login');
@@ -90,6 +90,8 @@ export function ClientLogin() {
             <div><dt className="mb-1 text-slate-400">البريد الإلكتروني</dt><dd dir="ltr" className="break-all text-right text-white">{user.email}</dd></div>
           </dl>
           <nav className="client-destinations" aria-label="متابعة العمل في محور">
+            <a className="quiet-button" href={pageHref('request')}>طلباتي والردود</a>
+            {user.permissions?.manageRequests && <a className="gold-button" href={pageHref('admin-requests')}>إدارة الطلبات</a>}
             <a className="quiet-button" href={pageHref('broker-registration')}>تسجيل وسيط جديد</a>
             <a className="quiet-button" href={pageHref('broker-management')}>إدارة الوسطاء</a>
           </nav>
