@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { MessageSquare, RefreshCw, Send } from 'lucide-react';
 import { inboxError, loadMessages, requestDate, sendMessage, type RequestMessage } from '../../utils/requestInboxApi';
+import { applyConversationMessages } from '../../utils/conversationMessages';
 import type { RequestApiError } from '../../utils/requestApi';
 import './request-inbox.css';
 
@@ -41,8 +42,8 @@ export function RequestConversation({ requestId, admin = false, onAccessLost }: 
         const data = await loadMessages(requestId, admin, !initial && latest.current ? { after: latest.current } : undefined);
         if (!active) return;
         setError(null);
-        if (initial || !latest.current) { setMessages(data.messages); setEarlier(data.hasMore); }
-        else setMessages(current => Array.from(new Map([...current, ...data.messages].map(item => [item.id, item])).values()).sort((a, b) => a.sequence - b.sequence));
+        setMessages(current => applyConversationMessages(current, data.messages, initial));
+        if (initial || !latest.current) setEarlier(data.hasMore);
         latest.current = Math.max(latest.current, ...data.messages.map(item => item.sequence));
       } catch (failure) {
         if (!active) return;
@@ -79,7 +80,7 @@ export function RequestConversation({ requestId, admin = false, onAccessLost }: 
       const message = await sendMessage(requestId, admin, body, submission.current.key);
       if (!alive.current) return;
       // Don't move the polling cursor here: another party may have replied before this message.
-      setMessages(current => Array.from(new Map([...current, message].map(item => [item.id, item])).values()).sort((a, b) => a.sequence - b.sequence));
+      setMessages(current => applyConversationMessages(current, [message]));
       setDraft(''); submission.current = null;
       setNotice(admin ? 'تم إرسال الرد وحفظه. يظهر الآن للعميل داخل طلبه.' : 'تم إرسال رسالتك إلى إدارة محور.');
     } catch (failure) { if (alive.current) report(failure); }
