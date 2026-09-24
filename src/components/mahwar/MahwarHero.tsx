@@ -26,9 +26,9 @@ export const MahwarHero = ({ onClientLogin, page, onNavigate }: { onClientLogin:
       </div>
       <div className={`mahwar-workspace ${activeBranch ? 'has-panel' : ''} ${registering ? 'is-registering' : ''}`}>
         <div className="wheel-context">
-          {registering && <button className="quiet-button context-back" onClick={brokerBack}><ArrowRight size={18} /> العودة إلى الوسيط</button>}
+          {registering && <button className="quiet-button context-back" onClick={brokerBack}><ArrowRight size={18} /> العودة إلى المؤجر</button>}
           <MahwarWheel currentState={currentState} onStateChange={setCurrentState} activeBranchId={activeBranchId} onBranchSelect={select} interactionLocked={registering} />
-          {registering && <div className="context-caption"><Users size={26} /><h2>إضافة وسيط جديد</h2><p>أكمل بياناتك خطوة بخطوة</p></div>}
+          {registering && <div className="context-caption"><Users size={26} /><h2>إضافة مؤجر جديد</h2><p>أكمل بياناتك خطوة بخطوة</p></div>}
         </div>
         {activeBranch && (registering
           ? <BrokerRequestPanel registration onBack={brokerBack} onClientLogin={onClientLogin} />

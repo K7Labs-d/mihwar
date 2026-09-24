@@ -1,6 +1,7 @@
 import express from 'express';
 import type { DatabaseSync } from 'node:sqlite';
 import { publicBrokerRequest, type BrokerRow } from './brokerRequests.ts';
+import { createApprovedLessorProfile } from './lessorProfiles.ts';
 
 type Reviewer = { id: string; can_review_brokers: number };
 type ReviewRow = BrokerRow & { user_id: string; owner_name: string; owner_email: string; reviewer_name: string | null };
@@ -48,12 +49,20 @@ export function createBrokerReview({ db, userFrom, now }: { db: DatabaseSync; us
     if (!row) return res.status(404).json({ error: 'طلب الوسيط غير موجود.' });
     const reviewerId = res.locals.reviewerId as string;
     if (row.user_id === reviewerId) return res.status(403).json({ error: 'لا يمكنك مراجعة طلبك الشخصي.' });
-    // Compare-and-set persists all decision fields together. Exactly one competing decision can win.
-    const updated = db.prepare(`UPDATE broker_requests SET status=?, decided_at=?, decided_by=?, rejection_reason=?
-      WHERE id=? AND status='pending' AND user_id<>?`).run(body.status, new Date(now()).toISOString(), reviewerId, body.status === 'rejected' ? reason : null, row.id, reviewerId);
-    const current = find(row.id)!;
-    if (!updated.changes) return res.status(409).json({ error: 'حُسم هذا الطلب مسبقًا. تم استرجاع القرار المحفوظ.', request: reviewRequest(current), canDecide: false });
-    return res.json({ request: reviewRequest(current), canDecide: false });
+    // Decision and durable lessor identity commit together. Exactly one competing decision can win.
+    db.exec('BEGIN IMMEDIATE');
+    try {
+      const updated = db.prepare(`UPDATE broker_requests SET status=?, decided_at=?, decided_by=?, rejection_reason=?
+        WHERE id=? AND status='pending' AND user_id<>?`).run(body.status, new Date(now()).toISOString(), reviewerId, body.status === 'rejected' ? reason : null, row.id, reviewerId);
+      const current = find(row.id)!;
+      if (updated.changes && body.status === 'approved') createApprovedLessorProfile(db, current);
+      db.exec('COMMIT');
+      if (!updated.changes) return res.status(409).json({ error: 'حُسم هذا الطلب مسبقًا. تم استرجاع القرار المحفوظ.', request: reviewRequest(current), canDecide: false });
+      return res.json({ request: reviewRequest(current), canDecide: false });
+    } catch (error) {
+      db.exec('ROLLBACK');
+      throw error;
+    }
   });
   return router;
 }
