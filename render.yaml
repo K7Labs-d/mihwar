@@ -1,0 +1,37 @@
+# Render deployment configuration for the existing Mihwar application.
+# Review the paid service and disk charges in Render before approving creation.
+# Deployment docs: https://render.com/docs/blueprint-spec
+#
+# A new disk starts empty. This does NOT upload the SQLite database on your laptop.
+# Persistent storage is not a substitute for tested, independent SQLite backups.
+# For a custom domain, set AUTH_ORIGIN to its exact HTTPS origin in Render.
+# No credentials or administrator accounts are created by this Blueprint.
+services:
+  - type: web
+    name: mihwar
+    runtime: node
+    plan: 0.5c-512mb
+    region: frankfurt
+    branch: main
+    numInstances: 1
+    # Keep later releases manual until the initial pilot has been verified.
+    autoDeployTrigger: "off"
+    buildCommand: npm ci --include=dev && npm run build
+    # Derive the public HTTPS origin at startup; retain a custom origin if set.
+    # Fail instead of silently using localhost when the Render URL is missing.
+    startCommand: >-
+      sh -c 'export AUTH_ORIGIN="${AUTH_ORIGIN:-${RENDER_EXTERNAL_URL:?RENDER_EXTERNAL_URL is required}}"; exec npm start'
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: AUTH_DB_PATH
+        value: /var/data/clients.sqlite
+    disk:
+      name: mihwar-data
+      mountPath: /var/data
+      sizeGB: 1
