@@ -1,6 +1,6 @@
 import type { BrokerRequest } from './brokerApi';
 
-export type ReviewRequest = BrokerRequest & { owner: { id: string; name: string; email: string }; decidedBy: { id: string; name: string | null } | null };
+export type ReviewRequest = BrokerRequest & { owner: { id: string; name: string; email: string }; decidedBy: { id: string; name: string | null } | null; identityIssue?: string | null };
 export type ReviewDetail = { request: ReviewRequest; canDecide: boolean };
 export type ReviewPage = { requests: { id: string; status: BrokerRequest['status']; name: string; createdAt: string }[]; page: number; pageSize: number; total: number };
 export class ReviewApiError extends Error {

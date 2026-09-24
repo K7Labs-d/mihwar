@@ -76,10 +76,23 @@ export function createEquipment({ db, userIdFrom, now }: { db: DatabaseSync; use
     if (typeof version !== 'number' || !Number.isSafeInteger(version) || version < 1 || version > 2147483646) return res.status(400).json({ error: 'نسخة المعدة غير صالحة. أعد فتح التفاصيل.' });
     const validated = validateEquipmentInput(input);
     if (!validated.data) return res.status(400).json({ error: validated.errors.form ?? 'راجع بيانات المعدة قبل الحفظ.', fieldErrors: validated.errors });
-    // Ownership and the version are included in the write, so competing edits cannot overwrite each other.
-    const row = db.prepare(`UPDATE equipment SET name=?,category=?,description=?,location=?,hourly_rate_halalas=?,daily_rate_halalas=?,operator_mode=?,availability=?,status=?,version=version+1,updated_at=?
-      WHERE id=? AND lessor_profile_id=? AND version=? RETURNING *`).get(...businessValues(validated.data), new Date(now()).toISOString(), req.params.id, lessorId, version) as EquipmentRow | undefined;
-    if (!row) return res.status(409).json({ error: 'عُدّلت المعدة من جلسة أخرى. أعد فتح التفاصيل ثم راجع تعديلك.' });
+    const values = businessValues(validated.data);
+    let row: EquipmentRow | undefined;
+    let current: EquipmentRow | undefined;
+    // Keep the conditional write and retry confirmation atomic across database connections.
+    db.exec('BEGIN IMMEDIATE');
+    try {
+      row = db.prepare(`UPDATE equipment SET name=?,category=?,description=?,location=?,hourly_rate_halalas=?,daily_rate_halalas=?,operator_mode=?,availability=?,status=?,version=version+1,updated_at=?
+        WHERE id=? AND lessor_profile_id=? AND version=? RETURNING *`).get(...values, new Date(now()).toISOString(), req.params.id, lessorId, version) as EquipmentRow | undefined;
+      if (!row) {
+        current = find(req.params.id, lessorId);
+        // A lost success response may be retried only at the immediate next version with identical normalized data.
+        if (current?.version === version + 1 && businessValues(publicEquipment(current)).every((value, index) => value === values[index])) row = current;
+      }
+      db.exec('COMMIT');
+    } catch (error) { db.exec('ROLLBACK'); throw error; }
+    if (!row && !current) return missing(res);
+    if (!row) return res.status(409).json({ error: 'تختلف النسخة المحفوظة عن هذا التعديل. أعد فتح التفاصيل وراجع البيانات قبل المحاولة مجددًا.' });
     return res.json({ equipment: publicEquipment(row) });
   });
   router.all('/', (_req, res) => res.set('Allow', 'GET, POST').status(405).json({ error: 'هذا الإجراء غير متاح.' }));

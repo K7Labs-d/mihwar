@@ -36,8 +36,11 @@ export function validateEquipmentInput(input: unknown): { data?: EquipmentInput;
   const text = (key: 'name' | 'description' | 'location', min: number, max: number, label: string) => {
     const raw = body[key];
     const value = typeof raw === 'string' ? raw.replace(/\r\n/g, '\n').trim().normalize('NFC') : '';
+    // SQLite length() counts Unicode code points; keep the existing conservative UTF-16 upper bounds.
+    const length = Array.from(value).length;
     const controls = key === 'description' ? /[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/ : /[\x00-\x1f\x7f]/;
-    if (typeof raw !== 'string' || raw.length > max || value.length < min || value.length > max || controls.test(raw)) errors[key] = `${label} من ${min} إلى ${max} حرفًا.`;
+    // Reject lone surrogate halves rather than silently replacing them when SQLite receives UTF-8.
+    if (typeof raw !== 'string' || raw.length > max || length < min || value.length > max || controls.test(raw) || /[\uD800-\uDFFF]/u.test(raw)) errors[key] = `${label} من ${min} إلى ${max} حرفًا.`;
     return value;
   };
   const data: EquipmentInput = {

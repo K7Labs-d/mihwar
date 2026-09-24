@@ -1,5 +1,20 @@
 import type { DatabaseSync } from 'node:sqlite';
-import { createApprovedLessorProfile } from './lessorProfiles.ts';
+import { createApprovedLessorProfile, readLessorIdentity, type ApprovedApplication } from './lessorProfiles.ts';
+
+function reconcileApprovedProfiles(db: DatabaseSync): string[] {
+  const missing = db.prepare(`SELECT b.id,b.user_id,b.details,b.created_at,b.decided_at FROM broker_requests b
+    WHERE b.status='approved' AND NOT EXISTS (
+      SELECT 1 FROM lessor_profiles p WHERE p.application_id=b.id AND p.user_id=b.user_id
+    )`).all() as ApprovedApplication[];
+  const deferred: string[] = [];
+  for (const row of missing) {
+    // Preserve invalid legacy applications verbatim. Do not invent a replacement name or approval.
+    // Only known identity validation failures are deferred; storage/constraint errors still roll back.
+    if (!readLessorIdentity(row.details)) deferred.push(row.id);
+    else createApprovedLessorProfile(db, row);
+  }
+  return deferred;
+}
 
 // Existing account/application bootstraps remain intact. All new product schema changes are numbered.
 const migrations = [
@@ -18,8 +33,7 @@ const migrations = [
           updated_at TEXT NOT NULL,
           FOREIGN KEY(application_id,user_id) REFERENCES broker_requests(id,user_id) ON DELETE RESTRICT
         );`);
-      const approved = db.prepare("SELECT id,user_id,details,created_at,decided_at FROM broker_requests WHERE status='approved'").all();
-      for (const row of approved) createApprovedLessorProfile(db, row as { id: string; user_id: string; details: string; created_at: string; decided_at: string | null });
+      reconcileApprovedProfiles(db);
     },
   },
   {
@@ -54,11 +68,7 @@ const migrations = [
     apply(db: DatabaseSync) {
       // Older releases could approve applications after migrations 1/2 had already run.
       // Preserve existing profiles and audit history; create only the missing approved identities.
-      const missing = db.prepare(`SELECT b.id,b.user_id,b.details,b.created_at,b.decided_at FROM broker_requests b
-        WHERE b.status='approved' AND NOT EXISTS (
-          SELECT 1 FROM lessor_profiles p WHERE p.application_id=b.id AND p.user_id=b.user_id
-        )`).all();
-      for (const row of missing) createApprovedLessorProfile(db, row as { id: string; user_id: string; details: string; created_at: string; decided_at: string | null });
+      reconcileApprovedProfiles(db);
     },
   },
 ];
@@ -66,6 +76,7 @@ const migrations = [
 export function runProductMigrations(db: DatabaseSync, now: () => number = Date.now) {
   // The lock covers the ledger check too, so simultaneous server starts cannot apply a migration twice.
   db.exec('BEGIN IMMEDIATE');
+  let deferred: string[] = [];
   try {
     db.exec(`CREATE TABLE IF NOT EXISTS schema_migrations(version INTEGER PRIMARY KEY,name TEXT NOT NULL,applied_at TEXT NOT NULL);`);
     const applied = db.prepare('SELECT version,name FROM schema_migrations ORDER BY version').all();
@@ -78,9 +89,12 @@ export function runProductMigrations(db: DatabaseSync, now: () => number = Date.
       migration.apply(db);
       db.prepare('INSERT INTO schema_migrations(version,name,applied_at) VALUES (?,?,?)').run(migration.version, migration.name, new Date(now()).toISOString());
     }
+    // Revisit deferred identities after an authorized correction without rerunning numbered migrations.
+    deferred = reconcileApprovedProfiles(db);
     db.exec('COMMIT');
   } catch (error) {
     db.exec('ROLLBACK');
     throw error;
   }
+  if (deferred.length) console.warn('LESSOR_IDENTITY_REQUIRES_CORRECTION: approved applications awaiting identity correction:', deferred.join(', '));
 }

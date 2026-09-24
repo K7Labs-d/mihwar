@@ -1,7 +1,7 @@
 import express from 'express';
 import type { DatabaseSync } from 'node:sqlite';
 import { publicBrokerRequest, type BrokerRow } from './brokerRequests.ts';
-import { createApprovedLessorProfile } from './lessorProfiles.ts';
+import { createApprovedLessorProfile, InvalidLessorIdentityError, readLessorIdentity, lessorIdentityIssue } from './lessorProfiles.ts';
 
 type Reviewer = { id: string; can_review_brokers: number };
 type ReviewRow = BrokerRow & { user_id: string; owner_name: string; owner_email: string; reviewer_name: string | null };
@@ -10,6 +10,7 @@ const selection = `SELECT b.*, u.name AS owner_name, u.email AS owner_email, rev
 const reviewRequest = (row: ReviewRow) => ({
   ...publicBrokerRequest(row), owner: { id: row.user_id, name: row.owner_name, email: row.owner_email },
   decidedBy: row.decided_by ? { id: row.decided_by, name: row.reviewer_name } : null,
+  identityIssue: readLessorIdentity(row.details) ? null : lessorIdentityIssue,
 });
 
 export function createBrokerReview({ db, userFrom, now }: { db: DatabaseSync; userFrom: (req: express.Request) => Reviewer | undefined; now: () => number }) {
@@ -61,6 +62,7 @@ export function createBrokerReview({ db, userFrom, now }: { db: DatabaseSync; us
       return res.json({ request: reviewRequest(current), canDecide: false });
     } catch (error) {
       db.exec('ROLLBACK');
+      if (error instanceof InvalidLessorIdentityError) return res.status(422).json({ code: 'LESSOR_IDENTITY_REQUIRES_CORRECTION', error: error.message + ' يمكن رفض الطلب مع توضيح السبب ليعيد صاحبه تقديم بيانات صحيحة.' });
       throw error;
     }
   });
