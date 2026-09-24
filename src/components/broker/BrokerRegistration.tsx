@@ -4,7 +4,7 @@ import { emptyBrokerDraft, validateBrokerStep, workValues, type BrokerDraft, typ
 import { BrokerApiError, brokerRequestApi, type BrokerRequest } from '../../utils/brokerApi';
 import { BrokerRequestDetails } from './BrokerRequestDetails';
 
-const steps = ['بيانات الوسيط', 'مجال العمل', 'المستندات', 'المراجعة والإرسال'];
+const steps = ['بيانات المؤجر', 'مجال العمل', 'المستندات', 'المراجعة والإرسال'];
 
 export function BrokerRegistration({ onBack, onClientLogin }: { onBack: () => void; onClientLogin?: () => void }) {
   const [draft, setDraft] = useState<BrokerDraft>({ ...emptyBrokerDraft });
@@ -62,21 +62,21 @@ export function BrokerRegistration({ onBack, onClientLogin }: { onBack: () => vo
   </div>;
 
   if (saved) return <section className="branch-panel registration-panel" data-branch-panel>
-    <h2 ref={heading} tabIndex={-1} className="sr-only">طلب تسجيل الوسيط المحفوظ</h2>
+    <h2 ref={heading} tabIndex={-1} className="sr-only">طلب تسجيل المؤجر المحفوظ</h2>
     <BrokerRequestDetails request={saved} message={notice} />
-    <button className="gold-button" onClick={onBack}><ArrowRight size={18} /> العودة إلى الوسيط</button>
+    <button className="gold-button" onClick={onBack}><ArrowRight size={18} /> العودة إلى المؤجر</button>
   </section>;
 
   return <section className="branch-panel registration-panel" aria-labelledby="registration-heading" data-branch-panel>
-    <div className="panel-title"><Users size={38} /><div><h2 id="registration-heading" ref={heading} tabIndex={-1}>إضافة وسيط جديد</h2><p>{steps[step]} <span className="step-count">— الخطوة {step + 1} من 4</span></p></div></div>
-    <ol className="registration-steps" aria-label="خطوات تسجيل الوسيط">{steps.map((title, index) => <li key={title} className={index === step ? 'current' : index < step ? 'done' : ''}><button type="button" disabled={index > step} aria-current={index === step ? 'step' : undefined} onClick={() => goTo(index)}><span className="step-number">{index < step ? <Check size={15} /> : index + 1}</span><span>{title}</span></button></li>)}</ol>
+    <div className="panel-title"><Users size={38} /><div><h2 id="registration-heading" ref={heading} tabIndex={-1}>إضافة مؤجر جديد</h2><p>{steps[step]} <span className="step-count">— الخطوة {step + 1} من 4</span></p></div></div>
+    <ol className="registration-steps" aria-label="خطوات تسجيل المؤجر">{steps.map((title, index) => <li key={title} className={index === step ? 'current' : index < step ? 'done' : ''}><button type="button" disabled={index > step} aria-current={index === step ? 'step' : undefined} onClick={() => goTo(index)}><span className="step-number">{index < step ? <Check size={15} /> : index + 1}</span><span>{title}</span></button></li>)}</ol>
     <form ref={form} onSubmit={submit} noValidate aria-busy={busy}>
       <fieldset disabled={busy} className="broker-fieldset">
       <div className="form-surface">
         <h3>{step === 0 ? 'البيانات الأساسية' : steps[step]}</h3>
         {step === 0 && <div className="broker-fields">
           <div className="form-field"><label htmlFor="broker-entity">نوع الجهة <span className="required-mark">*</span></label><select id="broker-entity" value={draft.entity} onChange={event => change('entity', event.target.value)}><option value="individual">فرد</option><option value="company">شركة / مؤسسة</option></select></div>
-          {field('name', 'اسم الوسيط', { required: true, placeholder: 'أدخل اسم الوسيط', autoComplete: 'name' })}
+          {field('name', 'اسم المؤجر', { required: true, placeholder: 'أدخل اسم المؤجر', autoComplete: 'name' })}
           {draft.entity === 'individual' ? field('identity', 'رقم الهوية / الإقامة', { required: true, maxLength: 10, dir: 'ltr' }) : field('commercial', 'رقم السجل التجاري', { required: true, maxLength: 10, dir: 'ltr' })}
           {field('phone', 'رقم الجوال', { required: true, type: 'tel', dir: 'ltr', placeholder: '05XXXXXXXX', maxLength: 20, autoComplete: 'tel' })}
           {field('email', 'البريد الإلكتروني', { required: true, type: 'email', dir: 'ltr', maxLength: 254, autoComplete: 'email' })}
@@ -88,9 +88,9 @@ export function BrokerRegistration({ onBack, onClientLogin }: { onBack: () => vo
           <p className="local-note"><Info size={18} /> لا يتم اختيار أو رفع أي ملف في هذه المرحلة. ستُحفظ بيانات النموذج فقط.</p>
         </div>}
         {step === 3 && <div className="review-content">
-          <div className="review-title"><h4>بيانات الوسيط</h4><button type="button" className="text-button" onClick={() => goTo(0)}><Pencil size={15} /> تعديل البيانات</button></div>
+          <div className="review-title"><h4>بيانات المؤجر</h4><button type="button" className="text-button" onClick={() => goTo(0)}><Pencil size={15} /> تعديل البيانات</button></div>
           <dl className="review-grid">{[
-            ['نوع الجهة', draft.entity === 'individual' ? 'فرد' : 'شركة / مؤسسة'], ['اسم الوسيط', draft.name],
+            ['نوع الجهة', draft.entity === 'individual' ? 'فرد' : 'شركة / مؤسسة'], ['اسم المؤجر', draft.name],
             [draft.entity === 'individual' ? 'رقم الهوية / الإقامة' : 'رقم السجل التجاري', draft.entity === 'individual' ? draft.identity : draft.commercial],
             ['رقم الجوال', draft.phone], ['البريد الإلكتروني', draft.email], ['العنوان', draft.address || 'لم يُضف'],
           ].map(([label, value]) => <div key={label}><dt>{label}</dt><dd dir="auto">{value}</dd></div>)}</dl>
@@ -98,7 +98,7 @@ export function BrokerRegistration({ onBack, onClientLogin }: { onBack: () => vo
           <dl className="review-grid"><div><dt>مجالات العمل</dt><dd>{workValues(draft.domains).join('، ')}</dd></div><div><dt>مناطق العمل</dt><dd>{workValues(draft.regions).join('، ')}</dd></div></dl>
           <div className="review-title"><h4>المستندات</h4><button type="button" className="text-button" onClick={() => goTo(2)}><Pencil size={15} /> تعديل المستندات</button></div>
           <p className="muted">لم تُرفق مستندات؛ الرفع غير متاح حاليًا.</p>
-          <p className="local-note"><Info size={18} /> عند الإرسال سيُحفظ الطلب في حسابك بحالة «قيد المراجعة». لن يتم اعتماد الوسيط تلقائيًا.</p>
+          <p className="local-note"><Info size={18} /> عند الإرسال سيُحفظ الطلب في حسابك بحالة «قيد المراجعة». لن يتم اعتماد المؤجر تلقائيًا.</p>
         </div>}
       </div>
       <div className="registration-controls"><button className="gold-button" type="submit">{busy ? 'جارٍ حفظ الطلب…' : step === 3 ? 'إرسال طلب التسجيل' : 'الخطوة التالية'}{step === 3 ? <Check size={18} /> : <ArrowLeft size={18} />}</button>{step > 0 && <button className="quiet-button" type="button" onClick={() => goTo(step - 1)}><ArrowRight size={17} /> السابق</button>}<button className="text-button cancel-button" type="button" onClick={onBack}>إلغاء</button></div>

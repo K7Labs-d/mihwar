@@ -3,6 +3,7 @@ import { FileText, Info } from 'lucide-react';
 import { BrokerRegistration } from './BrokerRegistration';
 import { BrokerApiError, brokerRequestApi, type BrokerRequest } from '../../utils/brokerApi';
 import { BrokerRequestDetails } from './BrokerRequestDetails';
+import { pageHref } from '../../data/productPages';
 
 export function BrokerRequestPanel({ registration = false, onBack, onRegister, onClientLogin }: { registration?: boolean; onBack: () => void; onRegister?: () => void; onClientLogin?: () => void }) {
   const [request, setRequest] = useState<BrokerRequest | null>(null);
@@ -18,11 +19,12 @@ export function BrokerRequestPanel({ registration = false, onBack, onRegister, o
   }, [attempt]);
   if (!loading && !error && registration && (!request || (request.status === 'rejected' && resubmitting))) return <BrokerRegistration onBack={onBack} onClientLogin={onClientLogin} />;
   return <section className={registration ? 'branch-panel registration-panel' : ''} data-branch-panel>
-    {loading ? <div className="empty-state" role="status"><FileText size={32} /><p>جارٍ تحميل طلب الوسيط…</p></div>
+    {loading ? <div className="empty-state" role="status"><FileText size={32} /><p>جارٍ تحميل طلب المؤجر…</p></div>
       : error ? <div className="empty-state"><Info size={32} /><p role="alert">{error.message}</p>{error.status === 401 ? <button className="gold-button" onClick={onClientLogin}>تسجيل دخول العميل</button> : <button className="gold-button" onClick={() => setAttempt(value => value + 1)}>إعادة المحاولة</button>}</div>
       : request ? <BrokerRequestDetails request={request} />
-      : <div className="empty-state"><FileText size={40} /><h3>لا يوجد طلب وسيط في حسابك</h3><p className="muted">سيظهر طلبك هنا بعد إرساله.</p><button className="gold-button" onClick={onRegister}>تسجيل وسيط جديد</button></div>}
+      : <div className="empty-state"><FileText size={40} /><h3>لا يوجد طلب مؤجر في حسابك</h3><p className="muted">سيظهر طلبك هنا بعد إرساله.</p><button className="gold-button" onClick={onRegister}>تسجيل مؤجر جديد</button></div>}
+    {!loading && !error && request?.status === 'approved' && <a className="gold-button" href={pageHref('equipment')}>الانتقال إلى معداتي</a>}
     {!loading && !error && registration && request?.status === 'rejected' && <button className="gold-button" onClick={() => setResubmitting(true)}>تقديم طلب جديد</button>}
-    <button className="quiet-button" onClick={onBack}>العودة إلى وظائف الوسيط</button>
+    <button className="quiet-button" onClick={onBack}>العودة إلى وظائف المؤجر</button>
   </section>;
 }

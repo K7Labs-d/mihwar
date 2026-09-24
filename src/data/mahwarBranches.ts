@@ -21,12 +21,12 @@ export const MAHWAR_BRANCHES: MahwarBranch[] = [
   {
     id: 'broker',
     number: 2,
-    label: 'الوسيط',
+    label: 'المؤجر',
     iconName: 'users',
     angle: -18, // ~2 o'clock
-    cardTitle: 'الوسيط',
-    cardSubtitle: 'إدارة علاقات الوسطاء وتوسيع الفرص المشتركة',
-    cardDescription: 'تسجيل بيانات الوسطاء والوصول إلى وظائف هذا الفرع من مكان واحد.',
+    cardTitle: 'تأجير معداتي',
+    cardSubtitle: 'التسجيل والاعتماد وإدارة المعدات',
+    cardDescription: 'أكمل تسجيلك كمؤجر، ثم أضف معداتك وحدد أسعارها وتوفرها.',
     colorAccent: '#fbbf24',
   },
   {

@@ -1,0 +1,29 @@
+.equipment-profile { display:flex; gap:12px; align-items:center; padding:15px; margin-bottom:20px; border:1px solid #b1802538; border-radius:12px; background:#c08d3607; }
+.equipment-profile > svg { color:var(--accent); flex:none; }
+.equipment-profile strong { font-size:14px; overflow-wrap:anywhere; }
+.equipment-profile p { font-size:12px; color:#aeb5ba; margin-top:5px; }
+.equipment-state { display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border-radius:20px; font-size:11px; border:1px solid #747e8555; color:#bcc3c9; white-space:nowrap; }
+.equipment-state[data-state="available"] { color:#b8dfbb; border-color:#568d5b66; background:#65a77b08; }
+.equipment-state[data-state="unavailable"] { color:#e5bc70; border-color:#b1802555; }
+.equipment-list-item { flex-wrap:wrap; }
+.equipment-list-item .action-copy { flex:1; overflow-wrap:anywhere; }
+.equipment-list-item .equipment-state { margin-inline-start:64px; }
+.equipment-rates { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:20px 0; }
+.equipment-rate { border:1px solid #ffffff12; border-radius:12px; background:#ffffff03; padding:16px; }
+.equipment-rate dt { color:#a5aaaf; font-size:12px; margin-bottom:8px; }
+.equipment-rate dd { color:#ffcf77; font-size:17px; font-weight:700; overflow-wrap:anywhere; }
+.equipment-form fieldset { min-width:0; }
+.equipment-form .field-hint { margin-bottom:0; }
+.equipment-form button:disabled,.lessor-equipment button:disabled { opacity:.5; cursor:default; }
+.equipment-intro { margin:12px 0 18px; }
+.equipment-form .registration-controls { margin-top:0; }
+.equipment-detail-actions { display:flex; flex-wrap:wrap; gap:12px; margin:18px 0; }
+@media(max-width:600px) {
+ .equipment-list-item .action-icon { display:none; }
+ .equipment-list-item .action-copy { flex-basis:calc(100% - 30px); }
+ .equipment-list-item .equipment-state { margin-inline-start:0; }
+ .equipment-rates { gap:8px; }
+ .equipment-rate { padding:12px 10px; }
+ .equipment-rate dd { font-size:14px; }
+ .equipment-detail-actions > button { width:100%; }
+}

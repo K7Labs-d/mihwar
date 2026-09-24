@@ -46,7 +46,7 @@ export function BrokerReviewPanel({ onBack, onClientLogin }: { onBack: () => voi
     } finally { submitting.current = false; setBusy(false); }
   };
   return <div className="broker-review" aria-busy={loading || busy}>
-    <div className="review-title"><h3 ref={heading} tabIndex={-1}>{selected ? 'مراجعة طلب الوسيط' : 'مراجعة جميع طلبات الوسطاء'}</h3><button className="quiet-button" disabled={busy || loading} onClick={() => setRevision(value => value + 1)}><RefreshCw size={16} /> تحديث</button></div>
+    <div className="review-title"><h3 ref={heading} tabIndex={-1}>{selected ? 'مراجعة طلب المؤجر' : 'مراجعة جميع طلبات المؤجرين'}</h3><button className="quiet-button" disabled={busy || loading} onClick={() => setRevision(value => value + 1)}><RefreshCw size={16} /> تحديث</button></div>
     {!selected && <div className="form-field review-filter"><label htmlFor="review-status">حالة الطلبات</label><select id="review-status" value={status} onChange={event => { setStatus(event.target.value); setPage(1); }}><option value="all">جميع الحالات</option>{Object.entries(brokerStatusLabel).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>}
     {error && <div className="local-note" role="alert">{error.message}{error.status === 401 && <button className="text-button" onClick={onClientLogin}>تسجيل الدخول</button>}</div>}
     {loading ? <div className="empty-state" role="status">جارٍ تحميل الطلبات…</div>
@@ -65,6 +65,6 @@ export function BrokerReviewPanel({ onBack, onClientLogin }: { onBack: () => voi
         {listing.requests.length ? <div className="branch-actions review-request-list">{listing.requests.map(request => <button key={request.id} className="branch-action" onClick={() => setSelected(request.id)}><FileText size={24} /><span className="action-copy"><strong>{request.name}</strong><small>{new Date(request.createdAt).toLocaleString('ar-SA')}</small></span><span className={`request-badge status-${request.status}`}>{brokerStatusLabel[request.status]}</span></button>)}</div> : <div className="empty-state"><FileText size={36} /><p>لا توجد طلبات بهذه الحالة.</p></div>}
         {listing.total > listing.pageSize && <div className="registration-controls"><button className="quiet-button" disabled={page === 1} onClick={() => setPage(value => value - 1)}>السابق</button><span className="muted">صفحة {page} من {Math.ceil(listing.total / listing.pageSize)}</span><button className="quiet-button" disabled={page * listing.pageSize >= listing.total} onClick={() => setPage(value => value + 1)}>التالي</button></div>}
       </>}
-    <button className="quiet-button review-back" disabled={busy} onClick={() => selected ? setSelected(null) : onBack()}><ArrowRight size={17} />{selected ? 'العودة إلى قائمة الطلبات' : 'العودة إلى وظائف الوسيط'}</button>
+    <button className="quiet-button review-back" disabled={busy} onClick={() => selected ? setSelected(null) : onBack()}><ArrowRight size={17} />{selected ? 'العودة إلى قائمة الطلبات' : 'العودة إلى وظائف المؤجر'}</button>
   </div>;
 }

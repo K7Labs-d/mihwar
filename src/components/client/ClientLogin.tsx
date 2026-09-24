@@ -81,7 +81,7 @@ export function ClientLogin() {
       <a href={pageHref('')} className="mb-8 inline-flex items-center gap-2 text-sm text-slate-300 hover:text-amber-400"><ArrowRight size={17} />العودة إلى محور</a>
       <div className="rounded-3xl border border-amber-500/25 bg-[#0a0f1d] p-6 shadow-2xl sm:p-8">
         <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-400/40 bg-amber-400/10 text-amber-400"><UserRound size={28} /></div>
-        <h1 className="mb-2 text-2xl font-extrabold text-white">{user ? 'حساب العميل' : registration ? 'إنشاء حساب عميل' : 'تسجيل دخول العميل'}</h1>
+        <h1 className="mb-2 text-2xl font-extrabold text-white">{user ? 'حسابي' : registration ? 'إنشاء حساب' : 'تسجيل الدخول'}</h1>
         {error && <p role="alert" className="my-4 rounded-xl border border-red-400/30 bg-red-400/10 p-3 text-sm leading-7 text-red-200">{error}</p>}
         {loading ? <p role="status" className="py-8 text-slate-400">جارٍ التحقق من تسجيل الدخول…</p> : user ? <div className="space-y-5 pt-4">
           <p role="status" className="text-amber-300">أهلًا {user.name}، أنت مسجّل الدخول.</p>
@@ -92,8 +92,9 @@ export function ClientLogin() {
           <nav className="client-destinations" aria-label="متابعة العمل في محور">
             <a className="quiet-button" href={pageHref('request')}>طلباتي والردود</a>
             {user.permissions?.manageRequests && <a className="gold-button" href={pageHref('admin-requests')}>إدارة الطلبات</a>}
-            <a className="quiet-button" href={pageHref('broker-registration')}>تسجيل وسيط جديد</a>
-            <a className="quiet-button" href={pageHref('broker-management')}>إدارة الوسطاء</a>
+            <a className="quiet-button" href={pageHref('equipment')}>معداتـي</a>
+            <a className="quiet-button" href={pageHref('broker-registration')}>التسجيل كمؤجر</a>
+            <a className="quiet-button" href={pageHref('broker-management')}>طلبات الاعتماد</a>
           </nav>
           <button className={primary} onClick={logout} disabled={busy}>{busy ? 'جارٍ تسجيل الخروج…' : 'تسجيل الخروج'}</button>
         </div> : <>
