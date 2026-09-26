@@ -18,7 +18,7 @@ export default function App() {
     const clearOldRoute = () => {
       const route = currentPage();
       setPage(route);
-      document.title = route ? `${getPage(route).title} | محور` : 'منظومة محور التفاعلية';
+      document.title = route ? `${getPage(route).title} | محور` : 'منظومة محور المتكاملة';
       if (!route && window.location.hash) window.history.replaceState(null, '', window.location.pathname + window.location.search);
       window.scrollTo(0, 0);
     };
