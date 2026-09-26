@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
-import { Users, User, FileText, ClipboardCheck, Settings, Handshake, ChartNoAxesColumn, ChevronLeft, X, Tractor } from 'lucide-react';
+import { Users, User, FileText, ClipboardCheck, Settings, Handshake, ChartNoAxesColumn, ChevronLeft, X, Tractor, CalendarDays, Wallet } from 'lucide-react';
 import type { MahwarBranch } from '../../types/mahwar';
 import { BrokerManagement } from '../broker/BrokerManagement';
 import { BROKER_PAGES, getPage, pageHref, type Page } from '../../data/productPages';
@@ -8,7 +8,7 @@ import { isOverviewPage, SectionOverview } from './SectionOverview';
 import { ClientRequests } from '../request/ClientRequests';
 import { LessorEquipment } from '../lessor/LessorEquipment';
 
-const actionIcons = { 'broker-registration': Users, equipment: Tractor, 'broker-management': FileText, 'broker-opportunities': Handshake, 'broker-reports': ChartNoAxesColumn, 'broker-settings': Settings };
+const actionIcons = { 'broker-registration': Users, equipment: Tractor, 'broker-management': FileText, 'broker-opportunities': Handshake, 'broker-reports': ChartNoAxesColumn, 'broker-settings': Settings, 'broker-offers': ClipboardCheck, 'broker-bookings': CalendarDays, 'lessor-payouts': Wallet };
 const icons = { 'file-text': FileText, users: Users, 'clipboard-check': ClipboardCheck, settings: Settings, user: User };
 
 export function BranchPanel({ branch, page, onClose, onRegister, onClientLogin, onBrokerBack }: { branch: MahwarBranch; page: Page; onClose: () => void; onRegister: () => void; onClientLogin: () => void; onBrokerBack: () => void }) {
@@ -26,7 +26,7 @@ export function BranchPanel({ branch, page, onClose, onRegister, onClientLogin, 
       : page === 'broker-management' ? <BrokerManagement onBack={onBrokerBack} onRegister={onRegister} onClientLogin={onClientLogin} />
       : isOverviewPage(page) ? <SectionOverview page={page} />
       : branch.id === 'broker' ? <div className="branch-actions">{BROKER_PAGES.map(({ id, title, description }, index) => {
-        const ActionIcon = actionIcons[id as keyof typeof actionIcons];
+        const ActionIcon = actionIcons[id as keyof typeof actionIcons] ?? FileText;
         return <a key={id} href={pageHref(id)} className={`branch-action ${index === 0 ? 'primary-action' : ''}`}><span className="action-icon"><ActionIcon size={27} aria-hidden="true" /></span><span className="action-copy"><strong>{title}</strong><small>{description}</small></span><ChevronLeft size={21} aria-hidden="true" /></a>;
       })}</div> : null}
   </motion.aside>;

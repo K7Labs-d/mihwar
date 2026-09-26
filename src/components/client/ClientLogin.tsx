@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowRight, Eye, EyeOff, LockKeyhole, UserRound } from 'lucide-react';
 import { pageHref } from '../../data/productPages';
 
-type Client = { id: string; name: string; email: string; createdAt: string; permissions?: { manageRequests?: boolean } };
+type Client = { id: string; name: string; email: string; createdAt: string; permissions?: { manageRequests?: boolean; reviewBrokers?: boolean } };
 
 export function ClientLogin() {
   const [mode, setMode] = useState<'login' | 'register'>('login');
@@ -91,10 +91,16 @@ export function ClientLogin() {
           </dl>
           <nav className="client-destinations" aria-label="متابعة العمل في محور">
             <a className="quiet-button" href={pageHref('request')}>طلباتي والردود</a>
+            {(user.permissions?.manageRequests === true || user.permissions?.reviewBrokers === true) && <a className="gold-button" href={pageHref('admin')}>الإدارة والتشغيل</a>}
             {user.permissions?.manageRequests && <a className="gold-button" href={pageHref('admin-requests')}>إدارة الطلبات</a>}
             <a className="quiet-button" href={pageHref('equipment')}>معداتـي</a>
             <a className="quiet-button" href={pageHref('broker-registration')}>التسجيل كمؤجر</a>
             <a className="quiet-button" href={pageHref('broker-management')}>طلبات الاعتماد</a>
+            <a className="quiet-button" href={pageHref('bookings')}>حجوزاتي</a>
+            <a className="quiet-button" href={pageHref('payments')}>المدفوعات والمستحقات</a>
+            <a className="quiet-button" href={pageHref('notifications')}>الإشعارات</a>
+            <a className="quiet-button" href={pageHref('documents')}>المستندات</a>
+            <a className="quiet-button" href={pageHref('reviews')}>التقييمات</a>
           </nav>
           <button className={primary} onClick={logout} disabled={busy}>{busy ? 'جارٍ تسجيل الخروج…' : 'تسجيل الخروج'}</button>
         </div> : <>
