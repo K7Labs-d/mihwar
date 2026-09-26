@@ -21,7 +21,7 @@ export const MahwarHero = ({ onClientLogin, page, onNavigate }: { onClientLogin:
     <div className="mahwar-content">
       <div className="experience-heading">
         <p className="eyebrow">محور — منظومة متكاملة</p>
-        <h1>{page ? info.title : <>منظومة <em>محور</em> التفاعلية</>}</h1>
+        <h1>{page ? info.title : <>منظومة <em>محور</em> المتكاملة</>}</h1>
         <p>{info.description}</p>
       </div>
       <div className={`mahwar-workspace ${activeBranch ? 'has-panel' : ''} ${registering ? 'is-registering' : ''}`}>
