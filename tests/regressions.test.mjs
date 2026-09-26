@@ -4,6 +4,8 @@ import { createTimeline } from '../src/utils/timeline.ts';
 
 process.env.NODE_ENV = 'production';
 process.env.AUTH_DB_PATH = ':memory:';
+process.env.RESEND_API_KEY = 'test-only-key';
+process.env.LOGIN_EMAIL_FROM = 'login@example.com';
 const { startServer } = await import('../server.ts');
 const server = await startServer(0, '127.0.0.1', { frontend: false });
 const base = 'http://127.0.0.1:' + server.address().port;

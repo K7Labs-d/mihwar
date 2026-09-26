@@ -6,17 +6,24 @@ import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import type { Server } from 'node:http';
 import { createClientAuth } from './server/clientAuth.ts';
+import { createLoginEmailSender } from './server/loginEmail.ts';
 
 const filename = fileURLToPath(import.meta.url);
 const moduleDir = path.dirname(filename);
 const projectRoot = path.basename(moduleDir) === 'dist-server' ? path.dirname(moduleDir) : moduleDir;
 dotenv.config({ path: [path.join(projectRoot, '.env.local'), path.join(projectRoot, '.env')], quiet: true });
+const emailKey = process.env.RESEND_API_KEY;
+const emailFrom = process.env.LOGIN_EMAIL_FROM;
+if (process.env.NODE_ENV === 'production' && (!emailKey || !emailFrom)) {
+  throw new Error('Email login requires RESEND_API_KEY and LOGIN_EMAIL_FROM in production.');
+}
 
 export const app = express();
 app.disable('x-powered-by');
 const clientAuth = createClientAuth({
   databasePath: process.env.AUTH_DB_PATH === ':memory:' ? ':memory:' : path.resolve(projectRoot, process.env.AUTH_DB_PATH || 'data/clients.sqlite'),
   origin: process.env.AUTH_ORIGIN || 'http://localhost:' + (process.env.PORT || 3000),
+  sendLoginCode: emailKey && emailFrom ? createLoginEmailSender(emailKey, emailFrom) : undefined,
 });
 app.use('/api/client', clientAuth.router);
 app.get('/api/health', (_req, res) => {
