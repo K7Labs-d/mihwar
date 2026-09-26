@@ -483,7 +483,19 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
               <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-32 h-20 bg-gradient-to-b from-white/15 to-transparent rounded-full blur-sm pointer-events-none" />
 
               {/* Padlock Icon Assembly (Shackle lifts & rotates on unlock!) */}
-              <div className="relative mb-2 flex flex-col items-center">
+              <motion.div
+                animate={{
+                  y: isPressing ? 3 : 0,
+                  scale: isPressing ? 0.92 : isShackleOpen ? 1.03 : 1,
+                }}
+                transition={{
+                  type: 'spring',
+                  stiffness: isPressing ? 620 : 430,
+                  damping: isPressing ? 32 : 20,
+                  mass: 0.55,
+                }}
+                className="relative mb-2 flex flex-col items-center origin-center"
+              >
                 {/* Padlock Shackle (Top Arc) */}
                 <motion.div
                   animate={{
@@ -508,7 +520,7 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
                   {/* Keyhole Slit */}
                   <div className="w-1.5 h-2.5 bg-slate-950 rounded-full" />
                 </div>
-              </div>
+              </motion.div>
 
               {/* "محور" Typography and Logo Aperture Emblem */}
               <div className="flex items-center gap-2">
