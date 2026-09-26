@@ -6,11 +6,18 @@ export type BrokerErrors = Partial<Record<keyof BrokerDraft | 'documents', strin
 export const emptyBrokerDraft: BrokerDraft = { entity: 'individual', name: '', identity: '', commercial: '', phone: '', email: '', address: '', domains: '', regions: '' };
 export const normalizeDigits = (value: string) => value.replace(/[٠-٩۰-۹]/g, digit => String(digit.charCodeAt(0) - (digit >= '۰' ? 1776 : 1632)));
 export const workValues = (value: string) => [...new Set(value.split(/[\n,،]/).map(item => item.trim()).filter(Boolean))];
+export function isValidBrokerName(value: string): boolean {
+  const normalized = value.trim().normalize('NFC');
+  // Match SQLite's minimum in Unicode code points, after the exact normalization used for storage.
+  // Retain the existing UTF-16 upper bound and reject malformed text rather than changing it on write.
+  return [...normalized].length >= 2 && value.length <= 80 && normalized.length <= 80
+    && !/[\x00-\x1f\x7f]/.test(value) && !/[\uD800-\uDFFF]/u.test(value);
+}
 export function validateBrokerStep(draft: BrokerDraft, step: number): BrokerErrors {
   const errors: BrokerErrors = {};
   if (step === 0) {
     if (!['individual', 'company'].includes(draft.entity)) errors.entity = 'اختر نوع الجهة.';
-    if (draft.name.trim().length < 2 || draft.name.trim().length > 80) errors.name = 'أدخل اسمًا من حرفين إلى 80 حرفًا.';
+    if (!isValidBrokerName(draft.name)) errors.name = 'أدخل اسمًا من حرفين إلى 80 حرفًا.';
     if (draft.entity === 'individual' && !/^[12]\d{9}$/.test(normalizeDigits(draft.identity.trim()))) errors.identity = 'أدخل رقم هوية أو إقامة من 10 أرقام يبدأ بـ1 أو 2.';
     if (draft.entity === 'company' && !/^\d{10}$/.test(normalizeDigits(draft.commercial.trim()))) errors.commercial = 'أدخل رقم سجل تجاري من 10 أرقام.';
     if (!/^(?:\+966|00966|966|0)?5\d{8}$/.test(normalizeDigits(draft.phone).replace(/[\s-]/g, ''))) errors.phone = 'أدخل رقم جوال سعودي صحيحًا، مثل 05XXXXXXXX.';

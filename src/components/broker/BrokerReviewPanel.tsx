@@ -52,6 +52,7 @@ export function BrokerReviewPanel({ onBack, onClientLogin }: { onBack: () => voi
     {loading ? <div className="empty-state" role="status">جارٍ تحميل الطلبات…</div>
       : selected && detail ? <>
         <BrokerRequestDetails request={detail.request} message={message} />
+        {detail.request.identityIssue && <p className="local-note" role="alert">{detail.request.identityIssue}</p>}
         <dl className="review-grid review-account"><div><dt>صاحب الحساب</dt><dd>{detail.request.owner.name}</dd></div><div><dt>بريد الحساب</dt><dd dir="auto">{detail.request.owner.email}</dd></div>{detail.request.decidedBy && <div><dt>اتخذ القرار</dt><dd>{detail.request.decidedBy.name || detail.request.decidedBy.id}</dd></div>}</dl>
         {detail.canDecide ? <fieldset className="broker-fieldset review-decision" disabled={busy || uncertain}>
           <div className="form-field"><label htmlFor="rejection-reason">سبب الرفض (مطلوب عند الرفض)</label><textarea id="rejection-reason" ref={reasonInput} rows={3} maxLength={1000} value={reason} onChange={event => setReason(event.target.value)} /></div>
