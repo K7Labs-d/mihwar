@@ -2,10 +2,10 @@ import { ArrowLeft, ClipboardCheck, FileText, Settings, Handshake, ChartNoAxesCo
 import { getPage, pageHref, type Page } from '../../data/productPages';
 
 const sections = {
-  offer: { icon: ClipboardCheck, heading: 'العروض المرتبطة بطلباتك', empty: 'لا توجد عروض للعرض بعد', description: 'استقبال العروض ومراجعة تفاصيلها قيد الإكمال. ستظهر هنا العروض الخاصة بطلباتك عند تفعيل الميزة.', columns: ['العرض', 'الطلب المرتبط', 'الحالة'], related: ['request', 'execution'] },
-  execution: { icon: Settings, heading: 'خطوات التنفيذ', empty: 'لا توجد عمليات تنفيذ للعرض بعد', description: 'متابعة تقدم العمل قيد الإكمال. ستظهر خطوات تنفيذ طلباتك هنا عند تفعيل الميزة.', columns: ['العملية', 'الخطوة الحالية', 'الحالة'], related: ['offer', 'request'] },
-  'broker-opportunities': { icon: Handshake, heading: 'فرص التعاون', empty: 'لا توجد فرص مشتركة للعرض بعد', description: 'إتاحة فرص التعاون وربطها بالمؤجرين قيد الإكمال. تسجيل مؤجر لا ينشئ فرصة تعاون تلقائيًا.', columns: ['الفرصة', 'المؤجر', 'الحالة'], related: ['broker-management', 'broker-registration'] },
-  'broker-reports': { icon: ChartNoAxesColumn, heading: 'تقارير أداء المؤجرين', empty: 'لا توجد تقارير أداء متاحة بعد', description: 'حساب مؤشرات الأداء وإعداد التقارير قيد الإكمال. يمكنك الآن متابعة حالة طلبات المؤجرين من طلبات الاعتماد.', columns: ['التقرير', 'الفترة', 'الحالة'], related: ['broker-management', 'broker-opportunities'] },
+  offer: { icon: ClipboardCheck, heading: 'العروض المرتبطة بطلباتك', empty: 'لا توجد بيانات عروض متاحة للعرض بعد', description: 'استقبال العروض ومراجعة تفاصيلها قيد الإكمال. يمكنك استعراض صفحات الرحلة دون اختيار عرض فعلي.', columns: ['العرض', 'الطلب المرتبط', 'الحالة'], related: ['request', 'offer-details', 'offer-comparison', 'offer-selection'] },
+  execution: { icon: Settings, heading: 'خطوات التنفيذ', empty: 'لا توجد بيانات تنفيذ متاحة للعرض بعد', description: 'ربط التنفيذ بالحجز ومتابعة تقدمه قيد الإكمال. الصفحات التالية لاستعراض الرحلة فقط.', columns: ['العملية', 'الخطوة الحالية', 'الحالة'], related: ['bookings', 'execution-details', 'completion', 'reviews'] },
+  'broker-opportunities': { icon: Handshake, heading: 'الطلبات المناسبة لمعداتك', empty: 'لا توجد بيانات فرص متاحة للعرض بعد', description: 'مطابقة احتياجات المستأجرين مع معداتك قيد الإكمال؛ لا تُعرض طلبات العملاء الخاصة هنا.', columns: [], related: ['equipment', 'offer-create', 'broker-offers'] },
+  'broker-reports': { icon: ChartNoAxesColumn, heading: 'الأرباح والتقارير', empty: 'لا توجد بيانات تقارير متاحة للعرض بعد', description: 'ربط تقارير التأجير بالحجوزات والمستحقات قيد الإكمال. لا تُحسب أرباح أو إحصاءات قبل توفر بيانات فعلية.', columns: [], related: ['broker-bookings', 'lessor-payouts', 'settlements'] },
   'broker-settings': { icon: Settings, heading: 'إعدادات فرع المؤجر', empty: 'لا توجد إعدادات متاحة للتعديل بعد', description: 'إعدادات فرع المؤجر قيد الإكمال. بيانات حسابك متاحة في حسابي، وحالة طلبك في طلبات الاعتماد.', columns: [], related: ['client', 'broker-management'] },
 } satisfies Record<string, { icon: typeof FileText; heading: string; empty: string; description: string; columns: string[]; related: Page[] }>;
 
@@ -22,7 +22,7 @@ export function SectionOverview({ page }: { page: OverviewPage }) {
       <thead><tr>{section.columns.map(column => <th scope="col" key={column}>{column}</th>)}</tr></thead>
       <tbody><tr><td colSpan={section.columns.length}><div className="empty-state"><Icon size={38} aria-hidden="true" /><h3>{section.empty}</h3><p className="muted">{section.description}</p></div></td></tr></tbody>
     </table></div> : <div className="empty-state settings-empty"><Icon size={38} aria-hidden="true" /><h3>{section.empty}</h3><p className="muted">{section.description}</p></div>}
-    <nav className="related-pages" aria-label="أقسام مرتبطة">
+    <nav className="related-pages" aria-label="استعراض الصفحات المرتبطة">
       {section.related.map(id => <a key={id} className="quiet-button" href={pageHref(id)}>{getPage(id).title}<ArrowLeft size={16} aria-hidden="true" /></a>)}
     </nav>
   </div>;

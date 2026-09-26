@@ -1,0 +1,57 @@
+.product-page-shell { width:100%; padding-bottom:48px; }
+.product-page { width:100%; max-width:1440px; margin:auto; padding:32px clamp(16px,3vw,40px) 48px; }
+.product-page > .related-pages:first-child { margin-top:0; }
+.product-page > .related-pages:first-child a { flex:0 1 auto; }
+.product-page-header { margin:28px 0; max-width:760px; }
+.product-page-header .eyebrow { margin-bottom:8px; }
+.product-page-header h1 { font-size:clamp(25px,3.3vw,36px); font-weight:850; line-height:1.55; overflow-wrap:anywhere; }
+.product-page-header h1 + p { margin-top:8px; }
+.product-surface { min-width:0; padding:28px; border:1px solid #34322a; border-radius:24px; background:linear-gradient(130deg,#101418cf,#0a0d10e8); }
+.product-surface > .empty-state h2 { font-size:clamp(18px,2vw,23px); font-weight:750; line-height:1.7; overflow-wrap:anywhere; }
+.product-surface > .empty-state p { max-width:570px; }
+.product-surface > .section-summary h2 { font-size:16px; font-weight:750; line-height:1.8; }
+.product-surface .related-pages a { flex:1 1 180px; text-align:center; flex-wrap:wrap; overflow-wrap:anywhere; }
+.product-surface .related-pages a[aria-current="page"] { border-color:#b27e2d88; background:#ffb21a0a; color:var(--accent); }
+.product-page-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; margin:8px 0 28px; }
+.product-page-heading > div { min-width:0; max-width:760px; }
+.product-page-heading .eyebrow { margin-bottom:8px; }
+.product-page-heading h1 { font-size:clamp(25px,3.3vw,36px); font-weight:850; line-height:1.55; overflow-wrap:anywhere; scroll-margin-top:24px; }
+.product-page-heading h1 + p { margin-top:8px; }
+.product-page-heading .feature-status { flex:none; margin-top:10px; }
+.product-page-layout { display:grid; grid-template-columns:minmax(0,1fr) minmax(240px,300px); gap:24px; align-items:start; }
+.product-page-layout > * { min-width:0; }
+.product-page-body { box-shadow:none; }
+.product-page-empty { min-height:270px; padding:30px 18px 36px; }
+.product-page-empty h2 { font-size:clamp(18px,2vw,23px); font-weight:750; line-height:1.7; overflow-wrap:anywhere; }
+.product-page-empty p { max-width:570px; }
+.product-related { padding-top:22px; border-top:1px solid var(--line); }
+.product-related h2,.product-journey h2 { font-size:14px; font-weight:750; line-height:1.8; }
+.product-related .related-pages { margin-top:14px; }
+.product-related .quiet-button { flex:1 1 150px; justify-content:space-between; text-align:start; }
+.product-related .quiet-button span { min-width:0; overflow-wrap:anywhere; }
+.product-related .quiet-button svg { flex:none; color:var(--accent); }
+.product-journey { padding:23px 20px; border:1px solid var(--line); border-radius:20px; background:#ffffff02; }
+.product-journey > p { margin-top:8px; font-size:12px; }
+.product-journey ol { list-style:none; padding:0; margin:18px 0 0; display:grid; gap:6px; }
+.product-journey a { display:flex; justify-content:space-between; align-items:center; gap:12px; min-height:46px; padding:10px 12px; border:1px solid transparent; border-radius:10px; font-size:13px; line-height:1.8; color:#b4bac0; }
+.product-journey a span { min-width:0; overflow-wrap:anywhere; }
+.product-journey a svg { flex:none; }
+.product-journey a:hover { color:#ffd078; border-color:#b27e2d55; background:#ffffff03; }
+.product-journey a[aria-current="page"] { color:var(--accent); background:#ffb21a0a; border-color:#b27e2d55; }
+@media (max-width:900px) {
+  .product-page-layout { grid-template-columns:minmax(0,1fr); gap:18px; }
+  .product-journey ol { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (max-width:600px) {
+  .product-page-header { margin:22px 0; }
+  .product-page > .related-pages:first-child a,.product-surface .related-pages a { flex-basis:100%; }
+  .product-surface { padding:20px 16px; border-radius:18px; }
+  .product-surface > .empty-state { padding:22px 0; }
+  .product-page-heading { flex-direction:column; gap:12px; margin-bottom:20px; }
+  .product-page-heading .feature-status { margin-top:0; }
+  .product-page-body { padding:20px 16px; border-radius:18px; }
+  .product-page-empty { min-height:250px; padding:22px 0 28px; }
+  .product-related .quiet-button { flex-basis:100%; }
+  .product-journey { padding:20px 16px; border-radius:18px; }
+  .product-journey ol { grid-template-columns:minmax(0,1fr); }
+}

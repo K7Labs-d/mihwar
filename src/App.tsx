@@ -3,8 +3,12 @@ import { MotionConfig } from 'motion/react';
 import { MahwarHero } from './components/mahwar/MahwarHero';
 import { ProductNavigation } from './components/mahwar/ProductNavigation';
 import { getPage, resolvePage, type Page } from './data/productPages';
+import { isShellPage } from './data/pageShells';
+import './components/product/product-pages.css';
 const ClientLogin = lazy(() => import('./components/client/ClientLogin').then(module => ({ default: module.ClientLogin })));
 const AdminRequests = lazy(() => import('./components/request/AdminRequests').then(module => ({ default: module.AdminRequests })));
+const ProductPageShell = lazy(() => import('./components/product/ProductPageShell').then(module => ({ default: module.ProductPageShell })));
+const AdminOverview = lazy(() => import('./components/product/AdminOverview').then(module => ({ default: module.AdminOverview })));
 const currentPage = () => resolvePage(window.location.hash);
 const navigate = (page: Page) => { window.location.hash = page; };
 
@@ -29,7 +33,11 @@ export default function App() {
       <ProductNavigation page={page} />
     <main id="main-content" tabIndex={-1} className="min-w-0 text-slate-100">
       <Suspense fallback={<p role="status" className="p-10 text-center text-slate-400">جارٍ التحميل…</p>}>
-        {page === 'client' ? <ClientLogin /> : page === 'admin-requests' ? <AdminRequests /> : <MahwarHero key={page} page={page} onNavigate={navigate} onClientLogin={() => navigate('client')} />}
+        {page === 'client' ? <ClientLogin />
+          : page === 'admin-requests' ? <AdminRequests />
+          : page === 'admin' || page.startsWith('admin-') ? <AdminOverview key={page} page={page} />
+          : isShellPage(page) ? <ProductPageShell key={page} page={page} />
+          : <MahwarHero key={page} page={page} onNavigate={navigate} onClientLogin={() => navigate('client')} />}
       </Suspense>
     </main>
     </div>
