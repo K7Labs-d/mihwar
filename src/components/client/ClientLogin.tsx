@@ -14,6 +14,8 @@ export function ClientLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmation, setConfirmation] = useState('');
+  const [challenge, setChallenge] = useState('');
+  const [code, setCode] = useState('');
   const [visible, setVisible] = useState(false);
   const submitting = useRef(false);
   const registration = mode === 'register';
@@ -53,10 +55,33 @@ export function ClientLogin() {
     setBusy(true);
     try {
       const data = await send(mode, registration ? { name, email, password } : { email, password });
-      if (!data.user?.id) throw new Error('تعذر التحقق من الحساب.');
-      setUser(data.user);
+      if (!registration && data.challenge) {
+        setChallenge(data.challenge);
+        setCode('');
+      } else {
+        if (!data.user?.id) throw new Error('تعذر التحقق من الحساب.');
+        setUser(data.user);
+      }
       setPassword('');
       setConfirmation('');
+    } catch (failure) {
+      setError(failure instanceof Error && failure.name !== 'TimeoutError' && failure.name !== 'TypeError'
+        ? failure.message : 'تعذر الاتصال بالخادم. حاول مرة أخرى.');
+    } finally { submitting.current = false; setBusy(false); }
+  }
+
+  async function verify(event: React.FormEvent) {
+    event.preventDefault();
+    if (submitting.current) return;
+    submitting.current = true;
+    setBusy(true);
+    setError('');
+    try {
+      const data = await send('login/verify', { challenge, code });
+      if (!data.user?.id) throw new Error('تعذر التحقق من الحساب.');
+      setUser(data.user);
+      setChallenge('');
+      setCode('');
     } catch (failure) {
       setError(failure instanceof Error && failure.name !== 'TimeoutError' && failure.name !== 'TypeError'
         ? failure.message : 'تعذر الاتصال بالخادم. حاول مرة أخرى.');
@@ -81,7 +106,7 @@ export function ClientLogin() {
       <a href={pageHref('')} className="mb-8 inline-flex items-center gap-2 text-sm text-slate-300 hover:text-amber-400"><ArrowRight size={17} />العودة إلى محور</a>
       <div className="rounded-3xl border border-amber-500/25 bg-[#0a0f1d] p-6 shadow-2xl sm:p-8">
         <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-400/40 bg-amber-400/10 text-amber-400"><UserRound size={28} /></div>
-        <h1 className="mb-2 text-2xl font-extrabold text-white">{user ? 'حسابي' : registration ? 'إنشاء حساب' : 'تسجيل الدخول'}</h1>
+        <h1 className="mb-2 text-2xl font-extrabold text-white">{user ? 'حسابي' : challenge ? 'رمز الدخول' : registration ? 'إنشاء حساب' : 'تسجيل الدخول'}</h1>
         {error && <p role="alert" className="my-4 rounded-xl border border-red-400/30 bg-red-400/10 p-3 text-sm leading-7 text-red-200">{error}</p>}
         {loading ? <p role="status" className="py-8 text-slate-400">جارٍ التحقق من تسجيل الدخول…</p> : user ? <div className="space-y-5 pt-4">
           <p role="status" className="text-amber-300">أهلًا {user.name}، أنت مسجّل الدخول.</p>
@@ -103,7 +128,15 @@ export function ClientLogin() {
             <a className="quiet-button" href={pageHref('reviews')}>التقييمات</a>
           </nav>
           <button className={primary} onClick={logout} disabled={busy}>{busy ? 'جارٍ تسجيل الخروج…' : 'تسجيل الخروج'}</button>
-        </div> : <>
+        </div> : challenge ? <>
+          <p className="mb-6 text-sm leading-7 text-slate-400">أرسلنا رمزًا من 6 أرقام إلى بريدك الإلكتروني. صالح لمدة 5 دقائق.</p>
+          <form onSubmit={verify} className="space-y-4">
+            <label htmlFor="client-code" className="block text-sm text-slate-200">رمز التحقق</label>
+            <input id="client-code" name="one-time-code" type="text" inputMode="numeric" pattern="[0-9]{6}" autoComplete="one-time-code" dir="ltr" required maxLength={6} className={field} value={code} onChange={event => setCode(event.target.value.replace(/[^0-9]/g, '').slice(0, 6))} disabled={busy} />
+            <button type="submit" className={primary} disabled={busy}>{busy ? 'جارٍ التحقق…' : 'تأكيد الدخول'}</button>
+          </form>
+          <button type="button" className="mt-5 text-sm text-amber-400 hover:underline" disabled={busy} onClick={() => { setChallenge(''); setCode(''); setError(''); }}>إعادة تسجيل الدخول للحصول على رمز جديد</button>
+        </> : <>
           <p className="mb-6 text-sm leading-7 text-slate-400">{registration ? 'أدخل بياناتك لإنشاء حسابك في محور.' : 'أدخل بريدك الإلكتروني وكلمة المرور للوصول إلى حسابك.'}</p>
           <form onSubmit={submit} className="space-y-4">
             <fieldset disabled={busy} className="space-y-4">

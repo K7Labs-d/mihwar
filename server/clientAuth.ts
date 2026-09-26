@@ -20,7 +20,7 @@ const derive = (password: string, salt: Buffer) => new Promise<Buffer>((resolve,
   scrypt(password, salt, 64, PASSWORD_OPTIONS, (error, key) => error ? reject(error) : resolve(key));
 });
 
-export function createClientAuth({ databasePath, origin, now = Date.now }: { databasePath: string; origin: string; now?: () => number }) {
+export function createClientAuth({ databasePath, origin, now = Date.now, sendLoginCode }: { databasePath: string; origin: string; now?: () => number; sendLoginCode?: (email: string, code: string) => Promise<void> }) {
   const site = new URL(origin);
   if (site.protocol !== 'https:' && !['localhost', '127.0.0.1', '[::1]'].includes(site.hostname)) {
     throw new Error('AUTH_ORIGIN must use HTTPS outside localhost.');
@@ -38,6 +38,11 @@ export function createClientAuth({ databasePath, origin, now = Date.now }: { dat
     );
     CREATE INDEX IF NOT EXISTS client_session_user ON client_sessions(user_id);
     CREATE TABLE IF NOT EXISTS client_auth_limits (key TEXT PRIMARY KEY, count INTEGER NOT NULL, expires_at INTEGER NOT NULL);
+    CREATE TABLE IF NOT EXISTS client_login_challenges (
+      token_hash TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES client_users(id) ON DELETE CASCADE,
+      code_hash TEXT NOT NULL, expires_at INTEGER NOT NULL, attempts INTEGER NOT NULL DEFAULT 0
+    );
+    CREATE INDEX IF NOT EXISTS client_login_challenge_user ON client_login_challenges(user_id);
   `);
   ensureBrokerReviewPermission(db);
   ensureRequestManagementPermission(db);
@@ -53,6 +58,7 @@ export function createClientAuth({ databasePath, origin, now = Date.now }: { dat
   const cleanup = () => {
     db.prepare('DELETE FROM client_sessions WHERE expires_at <= ?').run(now());
     db.prepare('DELETE FROM client_auth_limits WHERE expires_at <= ?').run(now());
+    db.prepare('DELETE FROM client_login_challenges WHERE expires_at <= ?').run(now());
   };
   const limited = (key: string, max: number, duration: number) => {
     const hashed = digest(key);
@@ -146,9 +152,63 @@ export function createClientAuth({ databasePath, origin, now = Date.now }: { dat
       valid = timingSafeEqual(actual, Buffer.from(expected, 'hex')) && !!user;
     } finally { activeHashes--; }
     if (!valid || !user) return res.status(401).json({ error: 'البريد الإلكتروني أو كلمة المرور غير صحيحة.' });
-    issueSession(req, res, user.id);
-    return res.json({ user: publicUser(user) });
+    if (!sendLoginCode) {
+      issueSession(req, res, user.id);
+      return res.json({ user: publicUser(user) });
+    }
+    if (limited('login-code:' + user.id, 3, 900000)) {
+      res.setHeader('Retry-After', '900');
+      return res.status(429).json({ error: 'تم إرسال رموز كثيرة. حاول بعد 15 دقيقة.' });
+    }
+    const challenge = randomBytes(32).toString('hex');
+    const code = String(randomBytes(4).readUInt32BE() % 1000000).padStart(6, '0');
+    const tokenHash = digest(challenge);
+    db.exec('BEGIN');
+    try {
+      db.prepare('DELETE FROM client_login_challenges WHERE user_id=?').run(user.id);
+      db.prepare('INSERT INTO client_login_challenges(token_hash,user_id,code_hash,expires_at) VALUES (?,?,?,?)')
+        .run(tokenHash, user.id, digest(challenge + ':' + code), now() + 300000);
+      db.exec('COMMIT');
+    } catch (error) { db.exec('ROLLBACK'); throw error; }
+    try { await sendLoginCode(user.email, code); }
+    catch {
+      db.prepare('DELETE FROM client_login_challenges WHERE token_hash=?').run(tokenHash);
+      return res.status(503).json({ error: 'تعذر إرسال الرمز إلى بريدك. حاول مرة أخرى لاحقًا.' });
+    }
+    return res.status(202).json({ challenge, expiresIn: 300 });
   }));
+
+  router.post('/login/verify', (req, res) => {
+    cleanup();
+    if (limited('verify:' + (req.ip || 'unknown'), 30, 900000)) {
+      res.setHeader('Retry-After', '900');
+      return res.status(429).json({ error: 'محاولات كثيرة. حاول مرة أخرى لاحقًا.' });
+    }
+    const { challenge, code } = req.body || {};
+    if (typeof challenge !== 'string' || !/^[a-f0-9]{64}$/.test(challenge) || typeof code !== 'string' || !/^\d{6}$/.test(code)) {
+      return res.status(400).json({ error: 'أدخل الرمز المكون من 6 أرقام.' });
+    }
+    const tokenHash = digest(challenge);
+    const row = db.prepare('SELECT user_id,code_hash,expires_at,attempts FROM client_login_challenges WHERE token_hash=?')
+      .get(tokenHash) as { user_id: string; code_hash: string; expires_at: number; attempts: number } | undefined;
+    if (!row || row.expires_at <= now() || row.attempts >= 5) return res.status(401).json({ error: 'الرمز غير صحيح أو انتهت صلاحيته. أعد تسجيل الدخول.' });
+    const valid = timingSafeEqual(Buffer.from(row.code_hash, 'hex'), Buffer.from(digest(challenge + ':' + code), 'hex'));
+    if (!valid) {
+      db.prepare('UPDATE client_login_challenges SET attempts=attempts+1 WHERE token_hash=?').run(tokenHash);
+      return res.status(401).json({ error: 'الرمز غير صحيح أو انتهت صلاحيته. أعد تسجيل الدخول.' });
+    }
+    db.exec('BEGIN');
+    try {
+      const consumed = db.prepare('DELETE FROM client_login_challenges WHERE token_hash=? AND expires_at>? AND attempts<5 RETURNING user_id')
+        .get(tokenHash, now()) as { user_id: string } | undefined;
+      if (!consumed) { db.exec('ROLLBACK'); return res.status(401).json({ error: 'الرمز غير صحيح أو انتهت صلاحيته. أعد تسجيل الدخول.' }); }
+      const user = db.prepare('SELECT id,name,email,created_at,can_review_brokers,can_manage_requests FROM client_users WHERE id=?')
+        .get(consumed.user_id) as User;
+      issueSession(req, res, user.id);
+      db.exec('COMMIT');
+      return res.json({ user: publicUser(user) });
+    } catch (error) { db.exec('ROLLBACK'); throw error; }
+  });
 
   const sessionUser = (req: express.Request) => {
     const token = tokenFrom(req);

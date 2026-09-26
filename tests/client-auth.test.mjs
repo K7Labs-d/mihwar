@@ -10,8 +10,8 @@ import { createClientAuth } from '../server/clientAuth.ts';
 
 const origin = 'https://mahwar.example';
 const account = { name: 'عميل الاختبار', email: 'client@example.com', password: 'unique-test-password-123' };
-async function start(databasePath = ':memory:', now = Date.now) {
-  const auth = createClientAuth({ databasePath, origin, now });
+async function start(databasePath = ':memory:', now = Date.now, sendLoginCode) {
+  const auth = createClientAuth({ databasePath, origin, now, sendLoginCode });
   const app = express();
   app.use('/api/client', auth.router);
   const server = app.listen(0, '127.0.0.1');
@@ -114,4 +114,61 @@ test('expired sessions cannot authenticate', async () => {
     timestamp += 7 * 86400000 + 1;
     assert.equal((await service.get('/me', Cookie)).status, 401);
   } finally { await service.close(); }
+});
+
+test('email code is required for every login, expires, and cannot be replayed', async () => {
+  let timestamp = Date.now();
+  const messages = [];
+  const directory = mkdtempSync(join(tmpdir(), 'mahwar-auth-test-'));
+  const databasePath = join(directory, 'clients.sqlite');
+  let service;
+  try {
+    service = await start(databasePath, () => timestamp, async (email, code) => messages.push({ email, code }));
+    const registered = await service.post('/register', account);
+    const initialCookie = cookie(registered);
+    await service.post('/logout', {}, { Cookie: initialCookie });
+    const begin = await service.post('/login', { email: account.email, password: account.password });
+    assert.equal(begin.status, 202);
+    assert.equal(begin.headers.get('set-cookie'), null);
+    const { challenge } = await begin.json();
+    assert.match(challenge, /^[a-f0-9]{64}$/);
+    assert.equal(messages.length, 1);
+    assert.equal(messages[0].email, account.email);
+    assert.equal((await service.get('/me')).status, 401);
+    assert.equal((await service.post('/login/verify', { challenge, code: '000000' })).status, 401);
+    const verified = await service.post('/login/verify', { challenge, code: messages[0].code });
+    assert.equal(verified.status, 200);
+    assert.equal((await service.get('/me', cookie(verified))).status, 200);
+    assert.equal((await service.post('/login/verify', { challenge, code: messages[0].code })).status, 401);
+    const again = await service.post('/login', { email: account.email, password: account.password });
+    assert.equal(again.status, 202);
+    assert.equal(messages.length, 2);
+    const next = (await again.json()).challenge;
+    timestamp += 300001;
+    assert.equal((await service.post('/login/verify', { challenge: next, code: messages[1].code })).status, 401);
+  } finally {
+    await service?.close();
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test('delivery errors fail closed and five incorrect codes lock the challenge', async () => {
+  const messages = [];
+  const service = await start(':memory:', Date.now, async (_email, code) => messages.push(code));
+  try {
+    await service.post('/register', account);
+    const begin = await service.post('/login', account);
+    const { challenge } = await begin.json();
+    const invalid = messages[0] === '111111' ? '222222' : '111111';
+    for (let i = 0; i < 5; i++) assert.equal((await service.post('/login/verify', { challenge, code: invalid })).status, 401);
+    assert.equal((await service.post('/login/verify', { challenge, code: messages[0] })).status, 401);
+    assert.equal((await service.post('/login/verify', { challenge, code: invalid }, { Origin: 'https://attacker.example' })).status, 403);
+  } finally { await service.close(); }
+  const failing = await start(':memory:', Date.now, async () => { throw new Error('mail unavailable'); });
+  try {
+    await failing.post('/register', account);
+    const response = await failing.post('/login', account);
+    assert.equal(response.status, 503);
+    assert.equal(response.headers.get('set-cookie'), null);
+  } finally { await failing.close(); }
 });

@@ -7,7 +7,8 @@ import { tmpdir } from 'node:os';
 // Launch the actual production entry point from a different directory.
 const child = spawn(process.execPath, [fileURLToPath(new URL('./start.mjs', import.meta.url))], {
   cwd: tmpdir(),
-  env: { ...process.env, PORT: '0', HOST: '127.0.0.1', AUTH_DB_PATH: ':memory:' },
+  env: { ...process.env, PORT: '0', HOST: '127.0.0.1', AUTH_DB_PATH: ':memory:',
+    RESEND_API_KEY: 'test-only-key', LOGIN_EMAIL_FROM: 'login@example.com' },
   stdio: ['ignore', 'pipe', 'pipe'],
 });
 const closed = once(child, 'close');
