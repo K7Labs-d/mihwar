@@ -381,6 +381,33 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
         {/* ======================================================== */}
         <div className="relative z-20 flex items-center justify-center mahwar-core">
           
+          {/* Reactive lock illumination: preview branch only, no shape changes */}
+          <motion.div
+            aria-hidden="true"
+            animate={{
+              scale: state === 'pressing' ? 0.82 : state === 'unlocking' ? 1.42 : isBranchesVisible ? 1.28 : state === 'closing' ? 0.95 : 1,
+              opacity: state === 'pressing' ? 0.95 : state === 'unlocking' ? 1 : isBranchesVisible ? 0.72 : state === 'closing' ? 0.38 : 0.34,
+            }}
+            transition={{
+              type: 'spring',
+              stiffness: state === 'pressing' ? 520 : 260,
+              damping: state === 'pressing' ? 30 : 24,
+              mass: 0.6,
+            }}
+            className="absolute w-[210px] sm:w-[235px] h-[210px] sm:h-[235px] rounded-full pointer-events-none bg-[radial-gradient(circle,rgba(251,191,36,0.34)_0%,rgba(245,158,11,0.18)_38%,rgba(245,158,11,0.04)_64%,transparent_76%)] blur-xl"
+          />
+
+          <motion.div
+            aria-hidden="true"
+            animate={{
+              scale: state === 'pressing' ? 0.88 : state === 'unlocking' ? 1.3 : isBranchesVisible ? 1.18 : 1,
+              opacity: state === 'unlocking' ? 0.92 : isBranchesVisible ? 0.48 : state === 'pressing' ? 0.52 : 0.16,
+              rotate: isBranchesVisible ? 18 : 0,
+            }}
+            transition={{ duration: reducedMotion ? 0 : 0.42, ease: 'easeOut' }}
+            className="absolute w-[250px] sm:w-[275px] h-[250px] sm:h-[275px] rounded-full pointer-events-none bg-[conic-gradient(from_0deg,transparent_0deg,rgba(251,191,36,0.35)_2deg,transparent_5deg,transparent_85deg,rgba(245,158,11,0.28)_90deg,transparent_95deg,transparent_175deg,rgba(251,191,36,0.32)_180deg,transparent_185deg,transparent_265deg,rgba(245,158,11,0.28)_270deg,transparent_275deg)] blur-[2px]"
+          />
+          
           {/* Segmented Mechanical Aperture Ring (Rotates and expands) */}
           <motion.div
             animate={{
