@@ -5,6 +5,7 @@ import { ProductNavigation } from './components/mahwar/ProductNavigation';
 import { getPage, resolvePage, type Page } from './data/productPages';
 import { isShellPage } from './data/pageShells';
 import './components/product/product-pages.css';
+const LiveMap = lazy(() => import('./components/live/LiveMap').then(module => ({ default: module.LiveMap })));
 const ClientLogin = lazy(() => import('./components/client/ClientLogin').then(module => ({ default: module.ClientLogin })));
 const AdminRequests = lazy(() => import('./components/request/AdminRequests').then(module => ({ default: module.AdminRequests })));
 const ProductPageShell = lazy(() => import('./components/product/ProductPageShell').then(module => ({ default: module.ProductPageShell })));
@@ -33,7 +34,8 @@ export default function App() {
       <ProductNavigation page={page} />
     <main id="main-content" tabIndex={-1} className="min-w-0 text-slate-100">
       <Suspense fallback={<p role="status" className="p-10 text-center text-slate-400">جارٍ التحميل…</p>}>
-        {page === 'client' ? <ClientLogin />
+        {page === 'live-map' ? <LiveMap />
+          : page === 'client' ? <ClientLogin />
           : page === 'admin-requests' ? <AdminRequests />
           : page === 'admin' || page.startsWith('admin-') ? <AdminOverview key={page} page={page} />
           : isShellPage(page) ? <ProductPageShell key={page} page={page} />

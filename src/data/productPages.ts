@@ -13,6 +13,7 @@ export const PRODUCT_PAGES = [
   { id: 'broker-opportunities', branchId: 'broker', title: 'الفرص المشتركة', description: 'الطلبات المناسبة لمعداتك وفرص تقديم العروض' },
   { id: 'broker-reports', branchId: 'broker', title: 'الأرباح والتقارير', description: 'متابعة التقارير المرتبطة بتأجير معداتك' },
   { id: 'broker-settings', branchId: 'broker', title: 'الإعدادات', description: 'إعدادات فرع المؤجر' },
+  { id: 'live-map', branchId: null, title: 'الخريطة الحية', description: 'محاكاة بصرية لحركة الطلب والمعروض ومسار المعاملة' },
   { id: 'marketplace', branchId: null, title: 'سوق المعدات', description: 'تصفح المعدات والبحث والتصفية للوصول إلى المعدة المناسبة' },
   { id: 'equipment-details', branchId: null, title: 'تفاصيل المعدة', description: 'مواصفات المعدة وتسعيرها وموقعها وتوفرها وخيار المشغل' },
   { id: 'direct-rental', branchId: null, title: 'طلب استئجار مباشر', description: 'مسار الاستئجار بعد اختيار معدة من السوق' },
@@ -45,7 +46,7 @@ export const PRODUCT_PAGES = [
 export type Page = typeof PRODUCT_PAGES[number]['id'];
 export const getPage = (id: Page) => PRODUCT_PAGES.find(page => page.id === id)!;
 export const pageHref = (id: Page) => id ? `#${id}` : '#';
-export const PRIMARY_PAGES = ['', 'marketplace', 'request', 'broker', 'offer', 'bookings', 'payments', 'execution', 'client'] as const satisfies readonly Page[];
+export const PRIMARY_PAGES = ['', 'live-map', 'marketplace', 'request', 'broker', 'offer', 'bookings', 'payments', 'execution', 'client'] as const satisfies readonly Page[];
 export const SECTION_PAGES = {
   marketplace: ['marketplace', 'equipment-details', 'direct-rental'],
   request: ['request', 'offer', 'offer-comparison'],
