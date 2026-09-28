@@ -29,7 +29,7 @@ export default function App() {
   }, []);
 
   return <MotionConfig reducedMotion="user">
-    <div className="mahwar-experience" dir="rtl">
+    <div className={page === 'live-map' ? 'mahwar-experience mahwar-experience--live-map' : 'mahwar-experience'} dir="rtl">
       <a className="skip-navigation" href="#main-content" onClick={event => { event.preventDefault(); document.getElementById('main-content')?.focus(); }}>تجاوز التنقل إلى المحتوى</a>
       <ProductNavigation page={page} />
     <main id="main-content" tabIndex={-1} className="min-w-0 text-slate-100">

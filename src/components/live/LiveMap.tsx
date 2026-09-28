@@ -1,27 +1,96 @@
-import {useState} from'react';
-import{Activity,Clock3,Crosshair,MapPinned,Radio,ShieldCheck}from'lucide-react';
-import'./live-map.css';
-type Kind='demand'|'supply'|'operation';
-type Node={id:string;kind:Kind;x:number;y:number;city:string;title:string;meta:string};
-const N:Node[]=[
-{id:'REQ-8F21',kind:'demand',x:48,y:47,city:'الرياض',title:'طلب معدة',meta:'حفار جنزير · 3 أيام · بدون مشغل'},
-{id:'EQ-104',kind:'supply',x:38,y:38,city:'الرياض',title:'معدة متاحة',meta:'مطابقة مبدئية لنوع المعدة'},
-{id:'EQ-217',kind:'supply',x:59,y:37,city:'الرياض',title:'معدة متاحة',meta:'مطابقة مبدئية للموقع'},
-{id:'EQ-331',kind:'supply',x:57,y:59,city:'الخرج',title:'معدة متاحة',meta:'ضمن نطاق المحاكاة'},
-{id:'OP-19',kind:'operation',x:27,y:68,city:'جدة',title:'عملية',meta:'مثال بصري لمسار التنفيذ'},
-{id:'REQ-2A10',kind:'demand',x:72,y:67,city:'الدمام',title:'طلب احتياج',meta:'مثال محاكاة غير تشغيلي'}];
-const L:Record<Kind,string>={demand:'الطلب',supply:'المعروض',operation:'التنفيذ'};
-export function LiveMap(){
-const[mode,setMode]=useState<'pulse'|'operations'>('pulse'),[focus,setFocus]=useState<'all'|Kind>('all'),[active,setActive]=useState<Node>(N[0]),[time,setTime]=useState(68);
-const visible=N.filter(n=>focus==='all'||n.kind===focus),main=N[0],matches=N.slice(1,4);
-return <section className="lm" aria-label="محاكاة خريطة محور الحية">
-<header className="lm-head"><div><p className="lm-k"><Radio size={14}/> MIHWAR / LIVE MAP</p><h1>السوق وهو <em>يتنفس.</em></h1><p>طبقة بصرية تربط الطلب بالمعدة ثم بالمعاملة. البيانات الظاهرة محاكاة تصميمية وليست عمليات حقيقية.</p></div><div className="lm-mode"><button className={mode==='pulse'?'on':''} onClick={()=>setMode('pulse')}>MARKET PULSE</button><button className={mode==='operations'?'on':''} onClick={()=>setMode('operations')}>OPERATION MODE</button></div></header>
-<div className="lm-stage"><aside><div className="lm-signal"><Activity size={15}/> SIGNAL</div>{(['all','demand','supply','operation']as const).map(k=><button key={k} className={focus===k?'on':''} onClick={()=>setFocus(k)}><i className={'dot '+k}/>{k==='all'?'الكل':L[k]}</button>)}<div className="lm-safe"><ShieldCheck size={15}/><span>SIMULATION<small>لا بيانات تشغيلية مصطنعة</small></span></div></aside>
-<div className="lm-map"><div className="lm-grid"/><div className="lm-land"><span>SAUDI ARABIA</span></div>
-<svg viewBox="0 0 100 100" preserveAspectRatio="none">{matches.map((n,i)=><line key={n.id} x1={main.x} y1={main.y} x2={n.x} y2={n.y} className={mode==='pulse'?'hot':''} style={{animationDelay:i*.18+'s'}}/>)}</svg>
-{visible.map(n=><button key={n.id} className={'lm-node '+n.kind+(active.id===n.id?' selected':'')} style={{left:n.x+'%',top:n.y+'%'}} onClick={()=>setActive(n)}><b/><i/><span><strong>{n.id}</strong><small>{n.city}</small></span></button>)}
-<div className="lm-caption"><Crosshair size={15}/>{mode==='pulse'?'DEMAND → MATCH → EQUIPMENT':'REQUEST → BOOKING → EXECUTION'}</div>
-<article className="lm-dna"><p>TRANSACTION DNA</p><h2>{active.id}</h2><div><MapPinned size={14}/>{active.city}</div><h3>{active.title}</h3><p>{active.meta}</p><ol>{['REQUEST','MATCH','EQUIPMENT','BOOKING','EXECUTION'].map((x,i)=><li key={x}><span>{x}</span><b>0{i+1}</b></li>)}</ol><small>ما بعد EQUIPMENT رؤية مستهدفة للمنتج، وليس حالة تشغيل مكتملة.</small></article>
-</div></div>
-<footer className="lm-time"><div><Clock3 size={14}/> MIHWAR TIME MACHINE</div><input type="range" min="0" max="100" value={time} onChange={e=>setTime(+e.target.value)}/><b>{String(Math.floor(8+time*.15)).padStart(2,'0')}:{String((time*7)%60).padStart(2,'0')}</b><span>SIMULATION / DESIGN PROTOTYPE</span></footer>
-</section>}
+import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { ArrowUpRight, Pause, Play, Radio, RotateCcw } from 'lucide-react';
+import { DEFAULT_REQUEST, FILTERS, getNode, PHASE_LABELS, sceneAt, TIMING, visibleNodes, type MapMode, type SignalFilter, type SimulationNode } from './liveMapSimulation';
+import { useLiveMapTimeline } from './useLiveMapTimeline';
+import { MapScene } from './MapScene';
+import { TransactionSheet } from './TransactionSheet';
+import './live-map.css';
+
+export function LiveMap() {
+  const [mode, setMode] = useState<MapMode>('pulse');
+  const [filter, setFilter] = useState<SignalFilter>('all');
+  const [requestId, setRequestId] = useState(DEFAULT_REQUEST);
+  const [selected, setSelected] = useState(DEFAULT_REQUEST);
+  const [dismissed, setDismissed] = useState(false);
+  const [size, setSize] = useState({ width: 1000, height: 650 });
+  const field = useRef<HTMLDivElement>(null);
+  const replayButton = useRef<HTMLButtonElement>(null);
+  const clock = useLiveMapTimeline();
+  useLayoutEffect(() => {
+    const element = field.current;
+    if (!element) return;
+    const update = () => setSize({ width: Math.max(1, element.clientWidth), height: Math.max(1, element.clientHeight) });
+    update();
+    const observer = new ResizeObserver(update); observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+  const scene = sceneAt(clock.elapsed, requestId);
+  const nodes = visibleNodes(scene, mode, filter);
+  const active = getNode(selected) ?? scene.request;
+  const sheetVisible = scene.ready && !dismissed && nodes.some(node => node.id === active.id);
+  const empty = scene.candidates.length === 0 && scene.elapsed >= TIMING.reveal[0];
+  const narrative = empty ? { title: 'احتياج ينتظر معدة مناسبة', caption: 'لا توجد معدة متاحة من هذا النوع في المحاكاة.' } : PHASE_LABELS[scene.phase];
+  const selectNode = (node: SimulationNode) => {
+    setSelected(node.id); setDismissed(false);
+    if (node.kind === 'demand') { setRequestId(node.id); setFilter('all'); clock.replay(); }
+  };
+  const replay = () => {
+    setRequestId(DEFAULT_REQUEST); setSelected(DEFAULT_REQUEST); setFilter('all'); setDismissed(false); clock.replay();
+  };
+  const chooseFilter = (next: SignalFilter) => {
+    if (next === 'unmatched') selectNode(getNode('REQ-2A10')!);
+    if (next === 'operation') { setSelected('OP-19'); setDismissed(false); clock.seek(TIMING.duration); }
+    setFilter(next);
+  };
+  const changeMode = (next: MapMode) => {
+    setMode(next); setFilter('all'); setDismissed(false);
+    if (active.kind === 'operation') setSelected(requestId);
+  };
+  const closeSheet = () => {
+    setDismissed(true);
+    (field.current?.querySelector<HTMLButtonElement>(`[data-node="${selected}"]`) ?? replayButton.current)?.focus({ preventScroll: true });
+  };
+  return <section className="lm" aria-label="خريطة محور التفاعلية — محاكاة" data-phase={scene.phase} data-playing={clock.playing}
+    onKeyDown={event => { if (event.key === 'Escape' && sheetVisible) { event.preventDefault(); closeSheet(); } }}>
+    <header className="lm-heading">
+      <div><p className="lm-eyebrow"><Radio className="lm-icon" aria-hidden="true" /><span dir="ltr">MIHWAR / LIVE MAP</span></p>
+        <h1>الطلب يبدأ بنقطة.<span> ومحور يصنع الاتصال.</span></h1>
+      </div>
+      <div className="lm-modes" role="group" aria-label="وضع الخريطة" dir="ltr">
+        <button type="button" aria-pressed={mode === 'pulse'} onClick={() => changeMode('pulse')}>MARKET PULSE</button>
+        <button type="button" aria-pressed={mode === 'operations'} onClick={() => changeMode('operations')}>OPERATIONS</button>
+      </div>
+    </header>
+    <div ref={field} className="lm-map" data-sheet={sheetVisible ? 'open' : 'closed'} data-mode={mode}>
+      <MapScene scene={scene} nodes={nodes} selected={selected} width={size.width} height={size.height} onSelect={selectNode} />
+      <div className="lm-map-top"><span className="lm-field-label" dir="ltr">RIYADH / <span>SCHEMATIC</span></span>
+        <span className="lm-simulation"><i aria-hidden="true" />محاكاة تفاعلية · لا بيانات تشغيلية</span></div>
+      <div className="lm-filters" role="group" aria-label="تصفية الإشارات">
+        {FILTERS.filter(item => mode === 'operations' || !['unmatched', 'operation'].includes(item.id)).map(item =>
+          <button type="button" key={item.id} aria-pressed={filter === item.id} onClick={() => chooseFilter(item.id)}>
+            <i className={`lm-filter-dot lm-filter-dot--${item.id}`} aria-hidden="true" />{item.label}</button>)}
+      </div>
+      {mode === 'operations' && <p className="lm-operations-note">{filter === 'unmatched' ? 'الطلبات التي لم تجد معدة في السيناريو' : 'اختر إشارة لفحص العلاقة أو حالة التنفيذ التجريبية'}</p>}
+      <div className="lm-narrative" role="status" aria-live="polite" aria-atomic="true">
+        <p className="lm-narrative-code" dir="ltr">{empty ? 'NO ELIGIBLE EQUIPMENT' : scene.ready ? 'DEMAND CONNECTED TO EQUIPMENT' : 'REQUEST → SEARCH → CONNECT'}</p>
+        <h2>{narrative.title}</h2><p>{narrative.caption}</p>
+      </div>
+      {sheetVisible && <TransactionSheet key={active.id} node={active} scene={scene} onClose={closeSheet} onSelect={selectNode} />}
+      {scene.ready && dismissed && nodes.some(node => node.id === active.id) && <button type="button" className="lm-reopen" onClick={() => setDismissed(false)}>
+        تفاصيل العلاقة<ArrowUpRight className="lm-icon" aria-hidden="true" /></button>}
+      <div className="lm-time" role="group" aria-label="التحكم بزمن المحاكاة" dir="ltr">
+        <button ref={replayButton} type="button" className="lm-icon-button" onClick={replay} aria-label="إعادة تشغيل المحاكاة"><RotateCcw className="lm-icon" aria-hidden="true" /></button>
+        <button type="button" className="lm-icon-button lm-play" onClick={() => { setDismissed(false); clock.toggle(); }}
+          aria-label={clock.playing ? 'إيقاف المحاكاة مؤقتًا' : 'تشغيل المحاكاة'}>
+          {clock.playing ? <Pause className="lm-icon" aria-hidden="true" /> : <Play className="lm-icon" aria-hidden="true" />}</button>
+        <div className="lm-time-track"><label htmlFor="lm-time-range">TIME MACHINE <span>SIMULATION</span></label>
+          <input id="lm-time-range" type="range" min="0" max={TIMING.duration} step="50" value={Math.round(clock.elapsed)}
+            aria-label="الخط الزمني للمحاكاة" aria-valuetext={`${(clock.elapsed / 1000).toFixed(1)} ثانية من 6 ثوانٍ`}
+            style={{ '--lm-progress': `${clock.elapsed / TIMING.duration * 100}%` } as CSSProperties}
+            onChange={event => { setDismissed(false); clock.seek(Number(event.target.value)); }} /></div>
+        <output className="lm-time-readout" htmlFor="lm-time-range">{(clock.elapsed / 1000).toFixed(1)}<small> / 6s</small></output>
+      </div>
+    </div>
+    <p className="lm-footnote">توزيع مكاني توضيحي، لا مواقع معدات فعلية. {clock.reduced ? 'تقليل الحركة مفعّل؛ يمكنك استعراض المراحل بالشريط الزمني.' : 'اسحب الزمن لتشاهد العلاقة تتكوّن، أو اضغط إشارة لاستكشافها.'}</p>
+  </section>;
+}
