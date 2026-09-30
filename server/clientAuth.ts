@@ -106,7 +106,7 @@ export function createClientAuth({ databasePath, origin, now = Date.now }: { dat
   const credentials = (body: any) => {
     if (!body || typeof body.email !== 'string' || typeof body.password !== 'string') return null;
     const email = body.email.trim().toLowerCase();
-    if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || body.password.length < 12 || body.password.length > 128) return null;
+    if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || body.password.length < 8 || body.password.length > 128) return null;
     return { email, password: body.password as string };
   };
 
@@ -114,7 +114,7 @@ export function createClientAuth({ databasePath, origin, now = Date.now }: { dat
     if (req.body && Object.keys(req.body).some(key => !['name', 'email', 'password'].includes(key))) return res.status(400).json({ error: 'أرسل بيانات التسجيل فقط؛ لا يمكن تحديد صلاحيات الحساب.' });
     const input = credentials(req.body);
     const name = typeof req.body?.name === 'string' ? req.body.name.trim().normalize('NFC') : '';
-    if (!input || name.length < 2 || name.length > 80 || /[\x00-\x1f\x7f]/.test(name)) return res.status(400).json({ error: 'أدخل اسمًا صحيحًا وبريدًا صالحًا وكلمة مرور من 12 إلى 128 حرفًا.' });
+    if (!input || name.length < 2 || name.length > 80 || /[\x00-\x1f\x7f]/.test(name)) return res.status(400).json({ error: 'أدخل اسمًا صحيحًا وبريدًا صالحًا وكلمة مرور من 8 إلى 128 حرفًا.' });
     activeHashes++;
     let passwordHash: string;
     try {
@@ -134,7 +134,7 @@ export function createClientAuth({ databasePath, origin, now = Date.now }: { dat
 
   router.post(['/login', '/admin-login'], wrap(async (req, res) => {
     const input = credentials(req.body);
-    if (!input) return res.status(400).json({ error: 'أدخل بريدًا صالحًا وكلمة مرور من 12 إلى 128 حرفًا.' });
+    if (!input) return res.status(400).json({ error: 'أدخل بريدًا صالحًا وكلمة مرور من 8 إلى 128 حرفًا.' });
     if (limited('email:' + input.email, 10, 900000)) {
       res.setHeader('Retry-After', '900');
       return res.status(429).json({ error: 'محاولات كثيرة. حاول مرة أخرى لاحقًا.' });
