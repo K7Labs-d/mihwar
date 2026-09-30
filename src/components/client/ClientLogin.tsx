@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth, authAction } from './AuthContext';
+import { adminLandingPage } from '../../utils/adminAccess';
 
 export function ClientLogin({ admin = false }: { admin?: boolean }) {
   const { user, setUser } = useAuth();
@@ -54,7 +55,7 @@ export function ClientLogin({ admin = false }: { admin?: boolean }) {
           ? 'تم إنشاء الحساب. اختر دورك للمتابعة.'
           : 'تم تسجيل الدخول.',
       );
-      if (admin) window.location.hash = 'admin';
+      if (admin) window.location.hash = adminLandingPage(data.user);
     });
   }
   const feedback = (

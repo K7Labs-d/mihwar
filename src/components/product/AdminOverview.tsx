@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { getPage, type Page } from '../../data/productPages';
 import { useAuth } from '../client/AuthContext';
+import { canAccessAdminPage } from '../../utils/adminAccess';
 import { AdminRequests } from '../request/AdminRequests';
 import { BrokerReviewPanel } from '../broker/BrokerReviewPanel';
 import { equipmentCategories } from '../../utils/equipmentForm';
@@ -36,12 +37,16 @@ async function read(route: string) {
 }
 export function AdminOverview({ page }: { page: Page }) {
   const { user } = useAuth();
-  if (!user?.adminSession || !user.permissions.platformAdmin)
+  const permittedDestinations = destinations.filter((destination) =>
+    canAccessAdminPage(user, destination.id),
+  );
+  const canOpenPage = permittedDestinations.some((destination) => destination.id === page);
+  if (!user?.adminSession || !canOpenPage)
     return (
       <section className="figma-content">
         <div className="figma-card empty-state">
           <h1>غير مصرح</h1>
-          <p>هذه اللوحة خاصة بمالك المنصة.</p>
+          <p>لا يملك حسابك صلاحية الوصول إلى هذه الصفحة الإدارية.</p>
           <a className="quiet-button" href="#client">
             العودة إلى حسابي
           </a>
@@ -55,7 +60,7 @@ export function AdminOverview({ page }: { page: Page }) {
         <aside className="figma-card admin-sidebar">
           <h2>الإدارة</h2>
           <nav aria-label="الإدارة">
-            {destinations.map((d) => (
+            {permittedDestinations.map((d) => (
               <a
                 key={d.id}
                 className="quiet-button"
@@ -87,7 +92,7 @@ export function AdminOverview({ page }: { page: Page }) {
               <div className="figma-card">
                 <BrokerReviewPanel
                   onBack={() => {
-                    window.location.hash = 'admin';
+                    window.location.hash = permittedDestinations[0]?.id ?? 'client';
                   }}
                 />
               </div>

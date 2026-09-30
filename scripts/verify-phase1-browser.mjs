@@ -295,6 +295,38 @@ try {
       width,
     );
   }
+  // Existing delegated administrators retain their permitted workspaces without owner access.
+  for (const [permission, landing, heading] of [
+    ['can_manage_requests', 'admin-requests', 'صندوق الطلبات'],
+    ['can_review_brokers', 'admin-lessors', 'راجع الجهة قبل منح أهلية التأجير'],
+  ]) {
+    const delegated = await browser.newContext();
+    const delegatedPage = await delegated.newPage();
+    delegatedPage.on('pageerror', (e) => errors.push(e.message));
+    const email = permission + '@example.com';
+    const registered = await delegated.request.post(base + '/api/client/register', {
+      data: {name: 'مفوض اختبار', email, password: 'browser-test-password-123'},
+    });
+    assert.equal(registered.status(), 201);
+    const delegateId = (await registered.json()).user.id;
+    const delegateDb = new DatabaseSync(database);
+    delegateDb.prepare('UPDATE client_users SET ' + permission + '=1 WHERE id=?').run(delegateId);
+    delegateDb.close();
+    await delegatedPage.goto(base + '/#admin-login');
+    await delegatedPage.locator('#client-email').fill(email);
+    await delegatedPage.locator('#client-password').fill('browser-test-password-123');
+    await delegatedPage.getByRole('button', {name: 'تسجيل الدخول', exact: true}).click();
+    await delegatedPage.waitForURL('**/#' + landing);
+    await delegatedPage.getByRole('heading', {name: heading, exact: true}).waitFor();
+    assert.equal(await delegatedPage.locator('.admin-sidebar a[href="#admin-users"]').count(), 0);
+    assert.equal((await delegated.request.get(base + '/api/client/admin/users')).status(), 403);
+    await delegatedPage.goto(base + '/#admin');
+    await delegatedPage.getByRole('heading', {name: 'غير مصرح', exact: true}).waitFor();
+    await delegatedPage.goBack();
+    await delegatedPage.getByRole('heading', {name: heading, exact: true}).waitFor();
+    await delegated.close();
+    report.push('Delegated ' + permission + ': correct landing, scoped sidebar, owner denial and browser Back passed.');
+  }
   assert.deepEqual(errors, []);
   report.push(
     'UI registration, renter choice, lessor activation, blocked publishing/offers, separate admin login, rejection/correction/approval, equipment review, audit, logout/deep-link gate and no public admin links passed.',
