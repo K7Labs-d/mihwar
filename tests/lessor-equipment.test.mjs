@@ -1,3 +1,4 @@
+import { removePhase1Schema, legacyUsers, legacySessions } from './helpers/legacy-schema.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import express from 'express';
@@ -71,7 +72,7 @@ async function start(databasePath, now = Date.now) {
 function grant(databasePath, account) {
   // This helper only receives an isolated temporary database created above.
   assert.equal(basename(dirname(databasePath)).startsWith('mahwar-lessor-equipment-test-'), true);
-  inspect(databasePath, db => assert.equal(db.prepare('UPDATE client_users SET can_review_brokers=1 WHERE id=?').run(account.user.id).changes, 1));
+  inspect(databasePath, db => { assert.equal(db.prepare('UPDATE client_users SET can_review_brokers=1 WHERE id=?').run(account.user.id).changes, 1); db.prepare('UPDATE client_sessions SET admin_scope=1 WHERE user_id=?').run(account.user.id); });
 }
 
 async function setupApproved(service, databasePath) {
@@ -97,13 +98,13 @@ test('numbered migrations backfill approved lessors exactly once and preserve le
       db.prepare('INSERT INTO broker_requests VALUES (?,?,?,?,?,?,?,?)').run('old-approval', 'legacy-owner', 'approved', JSON.stringify(application), timestamp, '2026-09-02T00:00:00.000Z', 'legacy-reviewer', null);
       db.prepare('INSERT INTO broker_requests VALUES (?,?,?,?,?,?,?,?)').run('old-pending', 'legacy-pending', 'pending', JSON.stringify(application), timestamp, null, null, null);
     });
-    const before = inspect(temporary.path, db => ({ users: db.prepare('SELECT * FROM client_users ORDER BY id').all(), sessions: db.prepare('SELECT * FROM client_sessions').all(), applications: db.prepare('SELECT * FROM broker_requests ORDER BY id').all() }));
+    const before = inspect(temporary.path, db => ({ users: db.prepare('SELECT * FROM client_users ORDER BY id').all(), sessions: db.prepare('SELECT ' + legacySessions + ' FROM client_sessions').all(), applications: db.prepare('SELECT * FROM broker_requests ORDER BY id').all() }));
     service = await start(temporary.path);
     const first = inspect(temporary.path, db => {
-      assert.deepEqual(db.prepare('SELECT * FROM client_users ORDER BY id').all().map(user => ({ ...user })), before.users.map(user => ({ ...user, can_manage_requests: 0 })));
-      assert.deepEqual(db.prepare('SELECT * FROM client_sessions').all(), before.sessions);
+      assert.deepEqual(db.prepare('SELECT ' + legacyUsers + ' FROM client_users ORDER BY id').all().map(user => ({ ...user })), before.users.map(user => ({ ...user, can_manage_requests: 0 })));
+      assert.deepEqual(db.prepare('SELECT ' + legacySessions + ' FROM client_sessions').all(), before.sessions);
       assert.deepEqual(db.prepare('SELECT * FROM broker_requests ORDER BY id').all(), before.applications);
-      assert.deepEqual(db.prepare('SELECT version FROM schema_migrations ORDER BY version').all().map(row => row.version), [1, 2, 3]);
+      assert.deepEqual(db.prepare('SELECT version FROM schema_migrations ORDER BY version').all().map(row => row.version), [1, 2, 3, 4]);
       const profiles = db.prepare('SELECT * FROM lessor_profiles').all();
       assert.equal(profiles.length, 1);
       assert.equal(profiles[0].user_id, 'legacy-owner');
@@ -119,7 +120,7 @@ test('numbered migrations backfill approved lessors exactly once and preserve le
     inspect(temporary.path, db => {
       assert.deepEqual(db.prepare('SELECT * FROM lessor_profiles').all(), first);
       assert.deepEqual(db.prepare('SELECT * FROM broker_requests ORDER BY id').all(), before.applications);
-      assert.equal(db.prepare('SELECT COUNT(*) AS n FROM schema_migrations').get().n, 3);
+      assert.equal(db.prepare('SELECT COUNT(*) AS n FROM schema_migrations').get().n, 4);
     });
   } finally { await service?.close(); temporary.remove(); }
 });
@@ -143,13 +144,14 @@ test('migration three reconciles approvals made by the old main after migrations
     // Reproduce the installed v1/v2 schema followed by old-main approval, which wrote only the application decision.
     const decidedAt = new Date().toISOString();
     inspect(temporary.path, db => {
+      removePhase1Schema(db, temporary.path);
       db.prepare('DELETE FROM schema_migrations WHERE version=3').run();
       db.prepare("UPDATE broker_requests SET status='approved',decided_at=?,decided_by=? WHERE id=?").run(decidedAt, reviewer.user.id, pending.id);
       assert.equal(db.prepare('SELECT COUNT(*) AS n FROM lessor_profiles WHERE user_id=?').get(owner.user.id).n, 0);
     });
     const snapshot = () => inspect(temporary.path, db => ({
-      users: db.prepare('SELECT * FROM client_users ORDER BY id').all(),
-      sessions: db.prepare('SELECT * FROM client_sessions ORDER BY token_hash').all(),
+      users: db.prepare('SELECT ' + legacyUsers + ' FROM client_users ORDER BY id').all(),
+      sessions: db.prepare('SELECT ' + legacySessions + ' FROM client_sessions ORDER BY token_hash').all(),
       applications: db.prepare('SELECT * FROM broker_requests ORDER BY id').all(),
       requests: db.prepare('SELECT * FROM client_requests ORDER BY id').all(),
       messages: db.prepare('SELECT * FROM request_messages ORDER BY sequence').all(),
@@ -170,19 +172,22 @@ test('migration three reconciles approvals made by the old main after migrations
     const profile = (await (await service.get('/lessor-profile', owner.Cookie)).json()).profile;
     assert.ok(profile?.id); assert.equal(profile.status, 'approved'); assert.equal(profile.createdAt, decidedAt);
     inspect(temporary.path, db => {
-      assert.deepEqual(db.prepare('SELECT version FROM schema_migrations ORDER BY version').all().map(row => row.version), [1, 2, 3]);
+      assert.deepEqual(db.prepare('SELECT version FROM schema_migrations ORDER BY version').all().map(row => row.version), [1, 2, 3, 4]);
       assert.equal(db.prepare('SELECT COUNT(*) AS n FROM lessor_profiles').get().n, 2);
       const reconciled = db.prepare('SELECT * FROM lessor_profiles WHERE user_id=?').get(owner.user.id);
       assert.equal(reconciled.application_id, pending.id); assert.equal(reconciled.id, profile.id);
       assert.deepEqual(db.prepare('SELECT * FROM lessor_profiles WHERE id=?').get(existing.profile.id), existingProfile);
     });
-    assert.deepEqual((await (await service.get('/me', reviewer.Cookie)).json()).user.permissions, { reviewBrokers: true, manageRequests: true });
-    assert.deepEqual((await (await service.get('/me', owner.Cookie)).json()).user.permissions, { reviewBrokers: false, manageRequests: false });
+    assert.deepEqual((await (await service.get('/me', reviewer.Cookie)).json()).user.permissions, { platformAdmin: false, reviewBrokers: true, manageRequests: true });
+    assert.deepEqual((await (await service.get('/me', owner.Cookie)).json()).user.permissions, { platformAdmin: false, reviewBrokers: false, manageRequests: false });
     assert.deepEqual(await (await service.get('/request-conversations/' + savedRequest.id + '/messages', owner.Cookie)).json(), conversation);
-    assert.equal((await (await service.get('/request-inbox', reviewer.Cookie)).json()).total, 1);
+    assert.equal((await service.get('/request-inbox', reviewer.Cookie)).status, 403);
+    const scopedLogin=await service.send('/admin-login',reviewer.input); assert.equal(scopedLogin.status,200);
+    assert.equal((await (await service.get('/request-inbox',cookie(scopedLogin))).json()).total,1);
+    const afterLogin=snapshot();
     assert.deepEqual((await (await service.get(equipmentPath(savedEquipment.id), existingOwner.Cookie)).json()).equipment, savedEquipment);
     await service.close(); service = undefined; service = await start(temporary.path);
-    assert.deepEqual(snapshot(), before);
+    assert.deepEqual(snapshot(), afterLogin);
     assert.deepEqual((await (await service.get('/lessor-profile', owner.Cookie)).json()).profile, profile);
     assert.deepEqual(await (await service.get('/request-conversations/' + savedRequest.id + '/messages', owner.Cookie)).json(), conversation);
     inspect(temporary.path, db => assert.equal(db.prepare('SELECT COUNT(*) AS n FROM lessor_profiles').get().n, 2));

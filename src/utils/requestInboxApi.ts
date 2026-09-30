@@ -18,8 +18,8 @@ async function call(path: string, options: RequestInit = {}) {
 }
 const isMessage = (value: any): value is RequestMessage => !!value && typeof value.id === 'string' && Number.isSafeInteger(value.sequence) && value.sequence > 0 && ['admin', 'client'].includes(value.role) && typeof value.body === 'string' && Number.isFinite(Date.parse(value.createdAt));
 const isRequest = (value: any): value is InboxRequest => !!value && typeof value.id === 'string' && ['title', 'description', 'location'].every(key => typeof value[key] === 'string') && Number.isSafeInteger(value.quantity) && typeof value.customer?.name === 'string' && typeof value.customer.email === 'string' && ['admin', 'client'].includes(value.waitingFor) && Number.isFinite(Date.parse(value.createdAt));
-export async function loadInbox(page: number, filter: string, query: string): Promise<InboxList> {
-  const data = await call('request-inbox?' + new URLSearchParams({ page: String(page), filter, q: query }));
+export async function loadInbox(page: number, filter: string, query: string, from = '', to = ''): Promise<InboxList> {
+  const data = await call('request-inbox?' + new URLSearchParams({ page: String(page), filter, q: query, from, to }));
   if (!Array.isArray(data.requests) || !data.requests.every(isRequest) || !Number.isSafeInteger(data.total) || data.total < 0 || data.page !== page || data.pageSize !== 20 || !['total', 'unanswered', 'answered'].every(key => Number.isSafeInteger(data.stats?.[key]) && data.stats[key] >= 0)) throw new RequestApiError('تعذر التحقق من قائمة الطلبات.', 0);
   return data;
 }

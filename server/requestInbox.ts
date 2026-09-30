@@ -53,10 +53,16 @@ export function createRequestInbox({ db, userFrom, now }: { db: DatabaseSync; us
     });
     if (admin) {
       router.get('/', (req, res) => {
-        const query = parseQuery(req.originalUrl, ['page', 'filter', 'q']);
+        const query = parseQuery(req.originalUrl, ['page', 'filter', 'q', 'from', 'to']);
         const page = query?.page ?? '1', filter = query?.filter ?? 'all', q = (query?.q ?? '').trim();
         if (!query || !/^[1-9]\d{0,5}$/.test(page) || !['all', 'unanswered', 'answered'].includes(filter) || q.length > 120 || /[\x00-\x1f\x7f]/.test(q)) return res.status(400).json({ error: 'خيارات البحث أو الصفحة غير صحيحة.' });
         const clauses: string[] = [], params: string[] = [];
+        const from = query.from ?? '', to = query.to ?? '';
+        const validDate = (v: string) => !v || (/^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(v)) && new Date(v).toISOString().slice(0,10) === v);
+        if (!validDate(from) || !validDate(to) || (from && to && from > to)) return res.status(400).json({ error: 'الفترة غير صحيحة.' });
+        if (from) { clauses.push('r.created_at>=?'); params.push(from); }
+        if (to) { clauses.push('r.created_at<?'); params.push(new Date(Date.parse(to)+86400000).toISOString().slice(0,10)); }
+
         if (filter !== 'all') clauses.push(`${waiting}='${filter === 'answered' ? 'admin' : 'client'}'`);
         if (q) {
           clauses.push("(r.title LIKE ? ESCAPE '\\' OR r.id LIKE ? ESCAPE '\\' OR r.location LIKE ? ESCAPE '\\' OR u.name LIKE ? ESCAPE '\\' OR u.email LIKE ? ESCAPE '\\')");

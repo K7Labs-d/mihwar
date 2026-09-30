@@ -8,14 +8,14 @@ type EquipmentRow = {
   id: string; name: string; category: Equipment['category']; description: string; location: string;
   hourly_rate_halalas: number | null; daily_rate_halalas: number | null; currency: 'SAR';
   operator_mode: Equipment['operatorMode']; availability: Equipment['availability']; status: Equipment['status'];
-  version: number; created_at: string; updated_at: string; submission_payload: string;
+  review_status?: 'pending' | 'approved' | 'rejected'; rejection_reason?: string | null; version: number; created_at: string; updated_at: string; submission_payload: string;
 };
 const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
 const publicEquipment = (row: EquipmentRow): Equipment => ({
   id: row.id, name: row.name, category: row.category, description: row.description, location: row.location,
   hourlyRateHalalas: row.hourly_rate_halalas, dailyRateHalalas: row.daily_rate_halalas, currency: row.currency,
   operatorMode: row.operator_mode, availability: row.availability, status: row.status,
-  version: row.version, createdAt: row.created_at, updatedAt: row.updated_at,
+  reviewStatus: row.review_status, rejectionReason: row.rejection_reason, version: row.version, createdAt: row.created_at, updatedAt: row.updated_at,
 });
 const businessValues = (data: EquipmentInput) => [data.name, data.category, data.description, data.location, data.hourlyRateHalalas, data.dailyRateHalalas, data.operatorMode, data.availability, data.status];
 const missing = (res: express.Response) => res.status(404).json({ error: 'المعدة غير موجودة أو غير متاحة لحسابك.' });
@@ -30,13 +30,14 @@ export function createEquipment({ db, userIdFrom, now }: { db: DatabaseSync; use
     res.locals.lessorId = profile.id;
     next();
   });
-  const find = (id: string, lessorId: string) => uuid.test(id) ? db.prepare('SELECT * FROM equipment WHERE id=? AND lessor_profile_id=?').get(id, lessorId) as EquipmentRow | undefined : undefined;
+  const selection = `SELECT e.*,COALESCE(v.status,'pending') AS review_status,v.reason AS rejection_reason FROM equipment e LEFT JOIN equipment_reviews v ON v.equipment_id=e.id AND v.equipment_version=e.version`;
+  const find = (id: string, lessorId: string) => uuid.test(id) ? db.prepare(selection + ' WHERE e.id=? AND e.lessor_profile_id=?').get(id, lessorId) as EquipmentRow | undefined : undefined;
   router.get('/', (req, res) => {
     const page = req.query.page ?? '1';
     if (Object.keys(req.query).some(key => key !== 'page') || typeof page !== 'string' || !/^[1-9]\d{0,5}$/.test(page)) return res.status(400).json({ error: 'رقم الصفحة غير صالح.' });
     const lessorId = res.locals.lessorId as string;
     const total = Number(db.prepare('SELECT COUNT(*) AS total FROM equipment WHERE lessor_profile_id=?').get(lessorId)!.total);
-    const rows = db.prepare('SELECT * FROM equipment WHERE lessor_profile_id=? ORDER BY created_at DESC,id DESC LIMIT 20 OFFSET ?').all(lessorId, (Number(page) - 1) * 20) as EquipmentRow[];
+    const rows = db.prepare(selection + ' WHERE e.lessor_profile_id=? ORDER BY e.created_at DESC,e.id DESC LIMIT 20 OFFSET ?').all(lessorId, (Number(page) - 1) * 20) as EquipmentRow[];
     return res.json({ equipment: rows.map(publicEquipment), page: Number(page), pageSize: 20, total });
   });
   router.get('/:id', (req, res) => {
@@ -61,7 +62,7 @@ export function createEquipment({ db, userIdFrom, now }: { db: DatabaseSync; use
       const conflict = saved.submission_payload !== payload;
       db.exec('COMMIT');
       if (conflict) return res.status(409).json({ error: 'استُخدم معرّف الإرسال لمعدة ببيانات مختلفة. افتح نموذج إضافة جديدًا.' });
-      return res.status(inserted.changes ? 201 : 200).json({ equipment: publicEquipment(saved) });
+      return res.status(inserted.changes ? 201 : 200).json({ equipment: publicEquipment(find(saved.id, lessorId)!) });
     } catch (error) {
       db.exec('ROLLBACK');
       throw error;
@@ -93,7 +94,7 @@ export function createEquipment({ db, userIdFrom, now }: { db: DatabaseSync; use
     } catch (error) { db.exec('ROLLBACK'); throw error; }
     if (!row && !current) return missing(res);
     if (!row) return res.status(409).json({ error: 'تختلف النسخة المحفوظة عن هذا التعديل. أعد فتح التفاصيل وراجع البيانات قبل المحاولة مجددًا.' });
-    return res.json({ equipment: publicEquipment(row) });
+    return res.json({ equipment: publicEquipment(find(row.id, lessorId)!) });
   });
   router.all('/', (_req, res) => res.set('Allow', 'GET, POST').status(405).json({ error: 'هذا الإجراء غير متاح.' }));
   router.all('/:id', (_req, res) => res.set('Allow', 'GET, POST').status(405).json({ error: 'يمكن تعديل المعدة أو أرشفتها، ولا يتاح حذفها.' }));
