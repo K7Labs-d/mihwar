@@ -7,6 +7,7 @@ import {
   type Page,
 } from '../../data/productPages';
 import { useAuth } from '../client/AuthContext';
+import { ThemeToggle } from '../theme/ThemeToggle';
 
 export function ProductNavigation({ page }: { page: Page }) {
   const { user } = useAuth();
@@ -44,11 +45,14 @@ export function ProductNavigation({ page }: { page: Page }) {
           </span>
         </a>
         <span className="header-caption">كل الأطراف. في مكان واحد.</span>
-        {user && (
-          <a href="#client" className="quiet-button">
-            حسابي
-          </a>
-        )}
+        <div className="header-actions">
+          <ThemeToggle />
+          {user && (
+            <a href="#client" className="quiet-button">
+              حسابي
+            </a>
+          )}
+        </div>
       </header>
       {user && user.selectedRole !== null && !admin && (
         <nav className="product-navigation" aria-label="أقسام محور">

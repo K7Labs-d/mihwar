@@ -178,3 +178,94 @@
 @media (prefers-reduced-motion:reduce) {
   .lm *, .lm *::before, .lm *::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; }
 }
+
+/* The day map uses a warm survey-paper field. Night values above are unchanged. */
+html[data-theme="light"] .mahwar-experience--live-map { --accent:#855916; background:#f5f1e8; }
+html[data-theme="light"] .mahwar-experience--live-map .product-navigation a[aria-current] { color:#855916; background:#ba893012; box-shadow:inset 0 -1px #a4792b; }
+html[data-theme="light"] .lm { --lm-gold:#855916; --lm-ink:#282820; --lm-muted:#696659; }
+html[data-theme="light"] .lm button:focus-visible,
+html[data-theme="light"] .lm input:focus-visible { outline-color:#855916; }
+html[data-theme="light"] .lm-heading h1 span { color:#696659; }
+html[data-theme="light"] .lm-modes { border-color:#d9d2c3; background:#ece6da; }
+html[data-theme="light"] .lm-modes button { color:#696659; }
+html[data-theme="light"] .lm-modes button[aria-pressed="true"] { background:#ffb21a; color:#3e2c0c; }
+html[data-theme="light"] .lm-map { border-color:#d5cdba; background:radial-gradient(ellipse at 40% 36%,#e7dfc680,transparent 52%),#f4f0e6; box-shadow:0 20px 65px #53472b12; }
+html[data-theme="light"] .lm-geography { color:#c1c4b7; }
+html[data-theme="light"] .lm-map-vignette { background:linear-gradient(180deg,#f5f1e8f2,transparent 28%,transparent 60%,#f5f1e8f2),radial-gradient(ellipse,transparent 30%,#f4f0e655); }
+html[data-theme="light"] .lm-avenue-bed { stroke:#ece8dd; }
+html[data-theme="light"] .lm-avenue-line { stroke:#a8ae9e; }
+html[data-theme="light"] .lm-ring-road { stroke:#bdc1b2; }
+html[data-theme="light"] .lm-terrain { stroke:#948967; opacity:.3; }
+html[data-theme="light"] .lm-city-name { fill:#777664; opacity:.2; }
+html[data-theme="light"] .lm-city-caption { fill:#696d5d; opacity:.5; }
+html[data-theme="light"] .lm-request-wave { stroke:#a87721; }
+html[data-theme="light"] .lm-search-fill { fill:#bb8a3007; }
+html[data-theme="light"] .lm-search-edge,
+html[data-theme="light"] .lm-search-inner { stroke:#9c772e; }
+html[data-theme="light"] .lm-connection { stroke:#a67c2e; }
+html[data-theme="light"] .lm-travel-dot { fill:#966719; filter:drop-shadow(0 0 4px #c4933944); }
+html[data-theme="light"] .lm-node { color:#465347; }
+html[data-theme="light"] .lm-node-core { background:#596d5c; }
+html[data-theme="light"] .lm-node-halo { border-color:#74877480; }
+html[data-theme="light"] .lm-node--demand .lm-node-core { background:#946114; box-shadow:0 0 16px #bc842247; }
+html[data-theme="light"] .lm-node--demand .lm-node-halo { border-color:#a16f2999; box-shadow:0 0 0 6px #b9842410; }
+html[data-theme="light"] .lm-node--matched .lm-node-core { background:#92620f; box-shadow:0 0 12px #a9751c33; }
+html[data-theme="light"] .lm-node--matched .lm-node-halo { border-color:#aa7f2d99; }
+html[data-theme="light"] .lm-node--operation .lm-node-core { background:#45634d; }
+html[data-theme="light"] .lm-node--muted { opacity:1; }
+html[data-theme="light"] .lm-node--muted .lm-node-visual { opacity:.65; }
+html[data-theme="light"] .lm-node[aria-pressed="true"] .lm-node-halo { border-color:#855916; box-shadow:0 0 0 5px #b9842417; }
+html[data-theme="light"] .lm-node-label { text-shadow:0 1px 4px #fffdf8,0 0 8px #fffdf8; }
+html[data-theme="light"] .lm-node-label small { color:#53614f; }
+html[data-theme="light"] .lm-node-label--request { color:#855916; }
+html[data-theme="light"] .lm-field-label { color:#535a4b; }
+html[data-theme="light"] .lm-field-label span { color:#696659; }
+html[data-theme="light"] .lm-simulation { color:#855916; }
+html[data-theme="light"] .lm-simulation i { background:#a87721; }
+html[data-theme="light"] .lm-filters button { color:#696659; }
+html[data-theme="light"] .lm-filters button[aria-pressed="true"] { color:#694b16; border-color:#c5b17f; background:#fffdf8cc; }
+html[data-theme="light"] .lm-filter-dot { background:#697b67; }
+html[data-theme="light"] .lm-filter-dot--demand,
+html[data-theme="light"] .lm-filter-dot--unmatched { background:#a87721; }
+html[data-theme="light"] .lm-filter-dot--supply { background:#45634d; }
+html[data-theme="light"] .lm-operations-note,
+html[data-theme="light"] .lm-narrative>p:last-child { color:#696659; }
+html[data-theme="light"] .lm-narrative-code { color:#855916; }
+html[data-theme="light"] .lm-dna { border-color:#d1c5ab; background:#fffdf8f5; box-shadow:0 18px 45px #6653321c; }
+html[data-theme="light"] .lm-dna-top { color:#855916; }
+html[data-theme="light"] .lm-icon-button { color:#696659; }
+html[data-theme="light"] .lm-icon-button:hover { background:#e7ddc680; color:#855916; }
+html[data-theme="light"] .lm-dna-id,
+html[data-theme="light"] .lm-dna-summary h2 { color:#282820; }
+html[data-theme="light"] .lm-dna-area { color:#696659; }
+html[data-theme="light"] .lm-dna-status { color:#855916; }
+html[data-theme="light"] .lm-dna-status i { background:#a87721; }
+html[data-theme="light"] .lm-dna-path { border-bottom-color:#d9d2c3; color:#696659; }
+html[data-theme="light"] .lm-dna-path span+span::before { color:#8f7b4d; }
+html[data-theme="light"] .lm-dna-path .lm-path-current { color:#855916; }
+html[data-theme="light"] .lm-dna-details { scrollbar-color:#b1a482 transparent; }
+html[data-theme="light"] .lm-dna-details>p { color:#4c4b40; }
+html[data-theme="light"] .lm-dna-details>small { color:#696659; }
+html[data-theme="light"] .lm-related-list button { background:#f1ebdf; color:#4c4b40; }
+html[data-theme="light"] .lm-related-list b,
+html[data-theme="light"] .lm-related-list p { color:#855916; }
+html[data-theme="light"] .lm-future-path { border-top-color:#d9d2c3; }
+html[data-theme="light"] .lm-future-path>span,
+html[data-theme="light"] .lm-future-path p { color:#696659; }
+html[data-theme="light"] .lm-dna-expand { color:#855916; }
+html[data-theme="light"] .lm-reopen { color:#855916; border-color:#c8b790; background:#fffdf8f2; }
+html[data-theme="light"] .lm-time { border-color:#d1c5ab; background:#fffdf8f5; box-shadow:0 6px 25px #6653321c; }
+html[data-theme="light"] .lm-play { color:#855916; background:#eddcb766; }
+html[data-theme="light"] .lm-time-track label { color:#855916; }
+html[data-theme="light"] .lm-time-track label span { color:#696659; }
+html[data-theme="light"] .mahwar-experience .lm-time input { background:transparent; accent-color:#94651b; }
+html[data-theme="light"] .lm-time input::-webkit-slider-runnable-track { background:linear-gradient(to right,#a87721 var(--lm-progress),#d6cfbf var(--lm-progress)); }
+html[data-theme="light"] .lm-time input::-webkit-slider-thumb { background:#94651b; box-shadow:0 0 0 4px #b9842414; }
+html[data-theme="light"] .lm-time input::-moz-range-track { background:#d6cfbf; }
+html[data-theme="light"] .lm-time input::-moz-range-progress { background:#a87721; }
+html[data-theme="light"] .lm-time input::-moz-range-thumb { background:#94651b; }
+html[data-theme="light"] .lm-time-readout { color:#855916; }
+html[data-theme="light"] .lm-time-readout small,
+html[data-theme="light"] .lm-footnote { color:#696659; }
+html[data-theme="light"] .lm-sheet-handle>span { background:#aa976b; }
+html[data-theme="light"] .lm-dna--expanded .lm-dna-path { border-bottom-color:#d9d2c3; }

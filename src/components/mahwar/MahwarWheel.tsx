@@ -23,6 +23,7 @@ import {
 import { MahwarState, MahwarBranch } from '../../types/mahwar';
 import { MAHWAR_BRANCHES } from '../../data/mahwarBranches';
 import { soundEngine } from '../../utils/audioSynthesizer';
+import './wheel-theme.css';
 
 interface MahwarWheelProps {
   interactionLocked?: boolean;
@@ -154,6 +155,7 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
       ref={containerRef}
       className="relative w-full flex flex-col items-center justify-center select-none py-6"
       data-wheel
+      data-wheel-state={state}
       dir="rtl"
     >
       {/* Dynamic Ambient Background Glow */}
@@ -165,7 +167,7 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
             opacity: isBranchesVisible ? 0.85 : isPressing ? 0.95 : 0.65,
           }}
           transition={{ duration: 0.6, ease: 'easeOut' }}
-          className="w-[340px] sm:w-[500px] h-[340px] sm:h-[500px] rounded-full bg-[radial-gradient(circle_at_center,rgba(245,158,11,0.22)_0%,rgba(217,119,6,0.08)_45%,transparent_70%)] blur-2xl"
+          className="mw-ambient w-[340px] sm:w-[500px] h-[340px] sm:h-[500px] rounded-full bg-[radial-gradient(circle_at_center,rgba(245,158,11,0.22)_0%,rgba(217,119,6,0.08)_45%,transparent_70%)] blur-2xl"
         />
         {/* Intense Core Flare when Unlocking */}
         <AnimatePresence>
@@ -175,7 +177,7 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
               animate={{ scale: 1.8, opacity: [0, 1, 0] }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.6, ease: 'easeOut' }}
-              className="absolute w-[400px] h-[400px] rounded-full bg-[radial-gradient(circle,rgba(251,191,36,0.6)_0%,rgba(245,158,11,0.3)_40%,transparent_70%)] blur-xl"
+              className="mw-flare absolute w-[400px] h-[400px] rounded-full bg-[radial-gradient(circle,rgba(251,191,36,0.6)_0%,rgba(245,158,11,0.3)_40%,transparent_70%)] blur-xl"
             />
           )}
         </AnimatePresence>
@@ -190,7 +192,7 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
           viewBox="0 0 560 560"
         >
           {/* Outermost Orbit Grid */}
-          <circle 
+          <circle className="mw-outer-orbit"
             cx="280" 
             cy="280" 
             r="260" 
@@ -200,7 +202,7 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
             strokeDasharray="4 6" 
           />
           {/* Branch Orbit Path */}
-          <motion.circle 
+          <motion.circle className="mw-branch-orbit"
             cx="280" 
             cy="280" 
             r={orbitRadiusDesktop} 
@@ -213,7 +215,7 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
             strokeDasharray={isBranchesVisible ? '6 4' : '2 6'} 
           />
           {/* Inner Trajectory Ring */}
-          <circle 
+          <circle className="mw-inner-orbit"
             cx="280" 
             cy="280" 
             r="140" 
@@ -254,12 +256,13 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
                   cy={280 + 82 * Math.sin(rad)}
                   r={isHovered ? 4 : 2.5}
                   fill={isHovered ? '#fbbf24' : '#f59e0b'}
-                  className="animate-pulse"
+                  className="mw-joint animate-pulse"
                 />
 
                 {/* Directional Arrow toward Center */}
                 <g transform={`translate(${midX}, ${midY}) rotate(${branch.angle + 180})`}>
                   <path
+                    className="mw-direction"
                     d="M-4,-4 L2,0 L-4,4"
                     fill="none"
                     stroke={isHovered ? '#fde68a' : '#f59e0b'}
@@ -330,12 +333,12 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
                       damping: 20, 
                       delay: index * 0.05 
                     }}
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto z-30"
+                    className="mw-branch absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto z-30"
                     onClick={() => handleBranchHover(branch)}
                   >
                     {/* Branch Capsule */}
                     <div 
-                      className={`relative flex flex-col items-center justify-center cursor-pointer transition-all duration-300 rounded-full ${
+                      className={`mw-branch-capsule relative flex flex-col items-center justify-center cursor-pointer transition-all duration-300 rounded-full ${
                         isHovered 
                           ? 'shadow-[0_0_30px_rgba(245,158,11,0.55)] scale-105' 
                           : 'shadow-[0_0_18px_rgba(0,0,0,0.8)] hover:shadow-[0_0_24px_rgba(245,158,11,0.35)]'
@@ -343,21 +346,21 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
                       style={{ width: orbitSize < 400 ? '66px' : '84px', height: orbitSize < 400 ? '66px' : '84px' }}
                     >
                       {/* Outer Ring Glow */}
-                      <div className={`absolute inset-0 rounded-full border transition-all duration-300 ${
+                      <div className={`mw-branch-rim absolute inset-0 rounded-full border transition-all duration-300 ${
                         isHovered 
                           ? 'border-amber-400 bg-amber-500/20 scale-105' 
                           : 'border-amber-500/40 bg-slate-900/80 hover:border-amber-400/80'
                       }`} />
 
                       {/* Inner Circular Metallic Capsule */}
-                      <div className="relative w-[88%] h-[88%] rounded-full bg-gradient-to-b from-[#111827] via-[#0b0f19] to-[#05070e] border border-amber-500/30 flex flex-col items-center justify-center p-2 backdrop-blur-md">
+                      <div className="mw-branch-bezel relative w-[88%] h-[88%] rounded-full bg-gradient-to-b from-[#111827] via-[#0b0f19] to-[#05070e] border border-amber-500/30 flex flex-col items-center justify-center p-2 backdrop-blur-md">
                         {/* Icon */}
-                        <div className={`transition-transform duration-300 ${isHovered ? 'scale-110 text-amber-300' : 'text-slate-300'}`}>
+                        <div className={`mw-branch-icon transition-transform duration-300 ${isHovered ? 'scale-110 text-amber-300' : 'text-slate-300'}`}>
                           {renderBranchIcon(branch.iconName)}
                         </div>
 
                         {/* Title Label */}
-                        <span className="text-[12px] font-bold text-white tracking-wide mt-1 font-['Cairo']">
+                        <span className="mw-branch-label text-[12px] font-bold text-white tracking-wide mt-1 font-['Cairo']">
                           {branch.label}
                         </span>
 
@@ -391,7 +394,7 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
             className="absolute w-[230px] sm:w-[250px] h-[230px] sm:h-[250px] pointer-events-none"
           >
             {/* 4 Segmented Mechanical Arc Plates */}
-            <svg viewBox="0 0 250 250" className="w-full h-full">
+            <svg viewBox="0 0 250 250" className="mw-mechanical-ring w-full h-full">
               {/* Outer Golden Notches */}
               <circle
                 cx="125"
@@ -456,7 +459,7 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
             onPointerCancel={() => { if (state === 'pressing') updateState('closed'); }}
             onPointerLeave={() => { if (state === 'pressing') updateState('closed'); }}
             onClick={handleCenterClick}
-            className={`group relative w-[180px] sm:w-[200px] h-[180px] sm:h-[200px] rounded-full cursor-pointer transition-all duration-300 flex flex-col items-center justify-center select-none ${
+            className={`mw-hub group relative w-[180px] sm:w-[200px] h-[180px] sm:h-[200px] rounded-full cursor-pointer transition-all duration-300 flex flex-col items-center justify-center select-none ${
               isPressing 
                 ? 'shadow-[inset_0_8px_25px_rgba(0,0,0,0.9),0_0_20px_rgba(245,158,11,0.6)]' 
                 : isBranchesVisible
@@ -465,7 +468,7 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
             }`}
           >
             {/* Outer Golden Border Rim */}
-            <div className={`absolute inset-0 rounded-full border-2 transition-all duration-300 ${
+            <div className={`mw-hub-rim absolute inset-0 rounded-full border-2 transition-all duration-300 ${
               isBranchesVisible 
                 ? 'border-amber-400 bg-amber-500/10' 
                 : isPressing 
@@ -474,13 +477,13 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
             }`} />
 
             {/* Inner Metallic Bezel with Brushed Texture */}
-            <div className="relative w-[164px] sm:w-[184px] h-[164px] sm:h-[184px] rounded-full bg-gradient-to-b from-[#141c2e] via-[#090d16] to-[#04060b] border border-slate-700/60 flex flex-col items-center justify-center overflow-hidden">
+            <div className="mw-hub-bezel relative w-[164px] sm:w-[184px] h-[164px] sm:h-[184px] rounded-full bg-gradient-to-b from-[#141c2e] via-[#090d16] to-[#04060b] border border-slate-700/60 flex flex-col items-center justify-center overflow-hidden">
               
               {/* Subtle Concentric Metallic Ring */}
-              <div className="absolute inset-2 rounded-full border border-amber-500/15 pointer-events-none" />
+              <div className="mw-inner-ring absolute inset-2 rounded-full border border-amber-500/15 pointer-events-none" />
 
               {/* Radial Highlight Reflection */}
-              <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-32 h-20 bg-gradient-to-b from-white/15 to-transparent rounded-full blur-sm pointer-events-none" />
+              <div className="mw-reflection absolute -top-10 left-1/2 -translate-x-1/2 w-32 h-20 bg-gradient-to-b from-white/15 to-transparent rounded-full blur-sm pointer-events-none" />
 
               {/* Padlock Icon Assembly (Shackle lifts & rotates on unlock!) */}
               <motion.div
@@ -505,7 +508,7 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
                   transition={{ type: 'spring', stiffness: 400, damping: 15 }}
                   className="origin-bottom-left"
                 >
-                  <svg width="28" height="20" viewBox="0 0 28 20" fill="none">
+                  <svg className="mw-shackle" width="28" height="20" viewBox="0 0 28 20" fill="none">
                     <path
                       d="M6 18 V9 C6 4.5 9.5 2 14 2 C18.5 2 22 4.5 22 9 V18"
                       stroke="#fbbf24"
@@ -516,14 +519,14 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
                 </motion.div>
 
                 {/* Padlock Body */}
-                <div className="relative -mt-2 w-7 h-6 rounded-md bg-gradient-to-b from-amber-400 via-amber-500 to-amber-600 border border-amber-300 shadow-sm shadow-black/80 flex items-center justify-center">
+                <div className="mw-lock-body relative -mt-2 w-7 h-6 rounded-md bg-gradient-to-b from-amber-400 via-amber-500 to-amber-600 border border-amber-300 shadow-sm shadow-black/80 flex items-center justify-center">
                   {/* Keyhole Slit */}
                   <div className="w-1.5 h-2.5 bg-slate-950 rounded-full" />
                 </div>
               </motion.div>
 
               {/* "محور" Typography and Logo Aperture Emblem */}
-              <div className="flex items-center gap-2">
+              <div className="mw-mark flex items-center gap-2">
                 <span className="text-xl sm:text-2xl font-black text-white tracking-wide font-['Cairo']">
                   محور
                 </span>
@@ -548,7 +551,7 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
               </div>
 
               {/* Status Hint below Hub */}
-              <div className="mt-1 text-[10px] font-bold text-amber-400/80 tracking-wider">
+              <div className="mw-status mt-1 text-[10px] font-bold text-amber-400/80 tracking-wider">
                 منظومة متكاملة
               </div>
             </div>
@@ -568,11 +571,11 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
             className="flex flex-col items-center gap-1.5 cursor-pointer group"
             onClick={handleCenterClick}
           >
-            <span className="text-sm sm:text-base font-bold text-slate-200 group-hover:text-amber-400 transition-colors font-['Cairo'] flex items-center gap-2">
+            <span className="mw-open-callout text-sm sm:text-base font-bold text-slate-200 group-hover:text-amber-400 transition-colors font-['Cairo'] flex items-center gap-2">
               <span>اضغط لفتح المحور</span>
               <Sparkles className="w-4 h-4 text-amber-400 animate-bounce" />
             </span>
-            <div className="w-6 h-8 rounded-full border-2 border-amber-500/60 flex items-start justify-center p-1 group-hover:border-amber-400 transition-colors">
+            <div className="mw-scroll-cue w-6 h-8 rounded-full border-2 border-amber-500/60 flex items-start justify-center p-1 group-hover:border-amber-400 transition-colors">
               <motion.div 
                 animate={{ y: reducedMotion ? 0 : [0, 8, 0] }}
                 transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
@@ -591,15 +594,15 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
           >
             <button
               onClick={handleClose}
-              className="group flex items-center justify-center w-11 h-11 rounded-full bg-slate-900/90 hover:bg-slate-800 border border-slate-700 hover:border-amber-500 text-slate-300 hover:text-amber-400 shadow-xl transition-all cursor-pointer"
+              className="mw-close group flex items-center justify-center w-11 h-11 rounded-full bg-slate-900/90 hover:bg-slate-800 border border-slate-700 hover:border-amber-500 text-slate-300 hover:text-amber-400 shadow-xl transition-all cursor-pointer"
               title="إغلاق المحور"
             >
               <X className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
             </button>
-            <span className="text-xs font-bold text-slate-300 font-['Cairo']">
+            <span className="mw-close-label text-xs font-bold text-slate-300 font-['Cairo']">
               إغلاق المحور
             </span>
-            <span className="text-[11px] text-slate-500">
+            <span className="mw-close-hint text-[11px] text-slate-500">
               اختر أحد الفروع لاستكشاف وظائفه
             </span>
           </motion.div>

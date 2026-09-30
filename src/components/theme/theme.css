@@ -1,0 +1,203 @@
+/* Keep the existing night palette untouched. Day mode is an opt-in override. */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: none;
+}
+.theme-toggle {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1px solid var(--edge, #393e42);
+  border-radius: 12px;
+  background: var(--surface, #101417);
+  color: var(--muted, #a5aaaf);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 22px;
+  cursor: pointer;
+}
+.theme-toggle svg { color: var(--accent, #ffb21a); flex: none; }
+.theme-toggle:hover { border-color: var(--accent, #ffb21a); }
+.theme-toggle:focus-visible { outline: 2px solid var(--accent, #ffb21a); outline-offset: 4px; }
+@media (max-width: 720px) {
+  .header-actions { gap: 8px; margin-inline-start: auto; }
+  .theme-toggle { width: 44px; padding: 10px; }
+  .theme-toggle span { display: none; }
+}
+
+html[data-theme="light"] {
+  color-scheme: light;
+  background: #f5f1e8;
+}
+html[data-theme="light"] body { background: #f5f1e8; color: #282820; }
+html[data-theme="light"] .mahwar-experience {
+  --canvas: #f5f1e8;
+  --surface: #fffdf8;
+  --raised: #ece6da;
+  --text: #282820;
+  --muted: #696659;
+  --accent: #855916;
+  --gold: #ffb21a;
+  --line: #d9d2c3;
+  --edge: #918674;
+  --tint: #f0e5cf;
+  --success-text: #256040;
+  --success-surface: #e7efe6;
+  --error-text: #9c3627;
+  --error-surface: #f8e7e0;
+  color: var(--text);
+  background: var(--canvas);
+}
+html[data-theme="light"] #main-content { color: var(--text); }
+html[data-theme="light"] .mahwar-experience :focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+html[data-theme="light"] .mahwar-experience ::selection { background: #e6c685; color: #282820; }
+
+/* Text on the legacy product, forms and request components. */
+html[data-theme="light"] :is(
+  .mahwar-brand small, .header-caption, .experience-heading > p:last-child,
+  .panel-title p, .action-copy small, .context-caption p, .mahwar-footer,
+  .client-branch > p, .registration-steps button, .field-hint, .form-footnote,
+  .document-picker span, .document-list small, .review-grid dt, .page-breadcrumb,
+  .section-table th, .product-journey a, .equipment-profile p, .equipment-rate dt,
+  .inbox-stats span, .inbox-item-copy span, .inbox-item-copy time,
+  .conversation-empty, .message-meta, .text-slate-400
+) { color: var(--muted); }
+html[data-theme="light"] :is(
+  .page-breadcrumb span, .review-grid dd, .inbox-item-copy strong,
+  .conversation-message p, .inbox-filters label, .conversation-form label
+) { color: var(--text); }
+html[data-theme="light"] :is(.product-navigation, .broker-navigation, .mahwar-footer) { border-color: var(--line); }
+html[data-theme="light"] .broker-navigation { background: var(--surface); }
+html[data-theme="light"] :is(.product-navigation a, .broker-navigation a) { color: var(--muted); }
+html[data-theme="light"] :is(.product-navigation a, .broker-navigation a, .product-journey a):hover {
+  background: var(--raised);
+  color: var(--accent);
+}
+html[data-theme="light"] :is(.product-navigation a, .broker-navigation a, .product-journey a)[aria-current] {
+  background: var(--tint);
+  color: var(--accent);
+}
+
+/* Surfaces have the same hierarchy and dimensions as the night design. */
+html[data-theme="light"] :is(.branch-panel, .product-surface) {
+  background: var(--surface);
+  border-color: var(--line);
+  box-shadow: 0 12px 40px #53463009;
+}
+html[data-theme="light"] .branch-action {
+  background: var(--surface);
+  border-color: var(--line);
+}
+html[data-theme="light"] .branch-action:hover {
+  background: var(--raised);
+  border-color: var(--accent);
+}
+html[data-theme="light"] .branch-action:active { background: var(--tint); }
+html[data-theme="light"] .branch-action.primary-action {
+  background: var(--tint);
+  border-color: #b28b4f;
+  box-shadow: none;
+}
+html[data-theme="light"] .action-icon { background: var(--raised); }
+html[data-theme="light"] :is(.form-surface, .product-journey, .equipment-rate) {
+  background: var(--surface);
+  border-color: var(--line);
+}
+html[data-theme="light"] :is(.form-surface > h3, .review-title, .section-table-wrap, .settings-empty, .section-table th) {
+  border-color: var(--line);
+}
+html[data-theme="light"] .section-table th { background: var(--raised); }
+html[data-theme="light"] .mahwar-experience .quiet-button {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--edge);
+}
+html[data-theme="light"] .mahwar-experience .quiet-button:hover { background: var(--raised); border-color: var(--accent); }
+html[data-theme="light"] .mahwar-experience .gold-button {
+  background: var(--gold);
+  border-color: #bb7f13;
+  color: #231906;
+}
+html[data-theme="light"] .mahwar-experience .gold-button:hover { background: #ffc146; }
+html[data-theme="light"] .text-button { color: var(--muted); }
+html[data-theme="light"] :is(.text-button, .icon-button):hover { background: var(--raised); color: var(--accent); }
+html[data-theme="light"] .admin-sidebar .quiet-button { background: var(--canvas); border-color: transparent; }
+html[data-theme="light"] .admin-sidebar .quiet-button[aria-current] { background: var(--tint); color: var(--accent); }
+html[data-theme="light"] .auth-card > .quiet-button { background: var(--canvas); border-color: transparent; }
+html[data-theme="light"] .product-surface .related-pages a[aria-current="page"] {
+  background: var(--tint);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* Native input/option colors and validation remain readable on warm paper. */
+html[data-theme="light"] .mahwar-experience :is(input, select, textarea) {
+  background-color: var(--surface);
+  color: var(--text);
+  border-color: var(--edge);
+  accent-color: var(--accent);
+  caret-color: var(--text);
+}
+html[data-theme="light"] .mahwar-experience :is(input, textarea)::placeholder { color: var(--muted); opacity: 1; }
+html[data-theme="light"] .mahwar-experience :is(input, select, textarea):focus {
+  border-color: var(--accent);
+  outline-color: var(--accent);
+}
+html[data-theme="light"] .mahwar-experience :is(input, select, textarea)[aria-invalid="true"],
+html[data-theme="light"] .document-picker:has([aria-invalid="true"]) { border-color: var(--error-text); }
+html[data-theme="light"] .mahwar-experience :is(input, textarea):autofill {
+  -webkit-text-fill-color: var(--text);
+  box-shadow: 0 0 0 1000px var(--raised) inset;
+}
+html[data-theme="light"] .step-number { background: var(--raised); border-color: var(--edge); }
+html[data-theme="light"] .current button { color: var(--accent); }
+html[data-theme="light"] .current .step-number { background: var(--gold); color: #251a04; border-color: var(--accent); box-shadow: none; }
+html[data-theme="light"] .done .step-number { border-color: var(--accent); color: var(--accent); }
+html[data-theme="light"] .document-picker { background: var(--tint); border-color: var(--edge); }
+html[data-theme="light"] .document-list li { background: var(--raised); border-color: var(--line); }
+html[data-theme="light"] .result-icon { background: var(--tint); border-color: #b28b4f; }
+html[data-theme="light"] .equipment-profile { background: var(--tint); border-color: var(--line); }
+html[data-theme="light"] .equipment-rate dd { color: var(--accent); }
+html[data-theme="light"] :is(.local-note, .value-tags span, .feature-status) {
+  background: var(--tint);
+  color: var(--accent);
+  border-color: #c4ae85;
+}
+html[data-theme="light"] :is(.local-note svg, .empty-state > svg) { color: var(--accent); }
+
+/* Status is conveyed by the existing label as well as its semantic color. */
+html[data-theme="light"] :is(.request-badge, .client-requests .request-status, .equipment-state[data-state="unavailable"], .inbox-badge.needs-reply) {
+  background: var(--tint);
+  border-color: #b28b4f;
+  color: var(--accent);
+}
+html[data-theme="light"] .equipment-state { color: var(--muted); border-color: var(--edge); }
+html[data-theme="light"] :is(.request-success, .request-status.status-approved, .request-badge.status-approved, .equipment-state[data-state="available"], .inbox-badge:not(.needs-reply)) {
+  color: var(--success-text);
+  background: var(--success-surface);
+  border-color: #719c7c;
+}
+html[data-theme="light"] :is(.request-error, .request-status.status-rejected, .request-badge.status-rejected) {
+  color: var(--error-text);
+  background: var(--error-surface);
+  border-color: #bf8374;
+}
+html[data-theme="light"] :is(.field-error, .required-mark) { color: var(--error-text); }
+html[data-theme="light"] .mahwar-experience .reject-button { color: var(--error-text); border-color: #bf8374; }
+
+/* Request inbox and conversation panels are lazy-loaded; root specificity keeps
+   their original night rules from overriding day colors when routes change. */
+html[data-theme="light"] :is(.inbox-stats > div, .inbox-item, .inbox-detail-card, .conversation-message) {
+  background: var(--surface);
+  border-color: var(--line);
+}
+html[data-theme="light"] .inbox-stats strong { color: var(--accent); }
+html[data-theme="light"] .inbox-item:hover { border-color: var(--accent); }
+html[data-theme="light"] .request-conversation { border-color: var(--line); }
+html[data-theme="light"] .conversation-message.from-admin { background: var(--tint); border-color: #c4ae85; }
+html[data-theme="light"] .from-admin .message-meta strong { color: var(--accent); }
