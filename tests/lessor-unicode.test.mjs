@@ -1,3 +1,4 @@
+import { removePhase1Schema, legacyUsers, legacySessions } from './helpers/legacy-schema.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import express from 'express';
@@ -33,7 +34,7 @@ async function fixture() {
     return { ...await response.json(), Cookie: response.headers.get('set-cookie').split(';')[0] };
   };
   const owner = await account('unicode-owner'), reviewer = await account('unicode-reviewer');
-  inspect(path, db => db.prepare('UPDATE client_users SET can_review_brokers=1 WHERE id=?').run(reviewer.user.id));
+  inspect(path, db => { db.prepare('UPDATE client_users SET can_review_brokers=1 WHERE id=?').run(reviewer.user.id); db.prepare('UPDATE client_sessions SET admin_scope=1 WHERE user_id=?').run(reviewer.user.id); });
   const submit = async (name = draft.name) => {
     const response = await post('/broker-requests', { ...draft, name }, owner.Cookie);
     return { status: response.status, body: await response.json() };
@@ -81,15 +82,16 @@ for (const ledger of [0, 2]) test(`legacy Unicode approval does not block startu
     const original = inspect(f.path, db => {
       db.prepare("UPDATE broker_requests SET details=?,status='approved',decided_at=?,decided_by=? WHERE id=?").run(JSON.stringify({ ...draft, name: '😀' }), '2026-09-01T00:00:00.000Z', f.reviewer.user.id, pending.id);
       db.prepare("UPDATE broker_requests SET status='approved',decided_at=?,decided_by=? WHERE id=?").run('2026-09-01T00:00:00.000Z', f.reviewer.user.id, validPending.id);
+      removePhase1Schema(db, f.path);
       if (ledger === 0) db.exec('DROP TABLE equipment; DROP TABLE lessor_profiles; DROP INDEX broker_request_identity_owner; DROP TABLE schema_migrations;');
       else db.exec('DELETE FROM schema_migrations WHERE version=3;');
-      return { row: db.prepare('SELECT * FROM broker_requests WHERE id=?').get(pending.id), users: db.prepare('SELECT * FROM client_users ORDER BY id').all(), sessions: db.prepare('SELECT * FROM client_sessions ORDER BY token_hash').all() };
+      return { row: db.prepare('SELECT * FROM broker_requests WHERE id=?').get(pending.id), users: db.prepare('SELECT ' + legacyUsers + ' FROM client_users ORDER BY id').all(), sessions: db.prepare('SELECT ' + legacySessions + ' FROM client_sessions ORDER BY token_hash').all() };
     });
     await f.start();
     inspect(f.path, db => {
       assert.deepEqual(db.prepare('SELECT * FROM broker_requests WHERE id=?').get(pending.id), original.row);
-      assert.deepEqual(db.prepare('SELECT * FROM client_users ORDER BY id').all(), original.users);
-      assert.deepEqual(db.prepare('SELECT * FROM client_sessions ORDER BY token_hash').all(), original.sessions);
+      assert.deepEqual(db.prepare('SELECT ' + legacyUsers + ' FROM client_users ORDER BY id').all(), original.users);
+      assert.deepEqual(db.prepare('SELECT ' + legacySessions + ' FROM client_sessions ORDER BY token_hash').all(), original.sessions);
       assert.equal(db.prepare('SELECT COUNT(*) AS n FROM lessor_profiles').get().n, 1);
       assert.equal(db.prepare('SELECT user_id FROM lessor_profiles').get().user_id, unaffected.user.id);
       assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check, 'ok');
@@ -99,7 +101,9 @@ for (const ledger of [0, 2]) test(`legacy Unicode approval does not block startu
     assert.equal((await status.json()).code, 'LESSOR_IDENTITY_REQUIRES_CORRECTION');
     assert.equal((await f.get('/equipment', f.owner.Cookie)).status, 403);
     assert.equal((await f.get('/me', f.reviewer.Cookie)).status, 200);
-    const detail = await (await f.get(`/broker-review/requests/${pending.id}`, f.reviewer.Cookie)).json();
+    assert.equal((await f.get(`/broker-review/requests/${pending.id}`,f.reviewer.Cookie)).status,403);
+    const scopedLogin=await f.post('/admin-login',{email:'unicode-reviewer@example.test',password:'unicode-isolated-password-1234'});assert.equal(scopedLogin.status,200);
+    const detail = await (await f.get(`/broker-review/requests/${pending.id}`, scopedLogin.headers.get('set-cookie').split(';')[0])).json();
     assert.equal(detail.request.status, 'approved'); assert.ok(detail.request.identityIssue);
     const validProfile = (await (await f.get('/lessor-profile', unaffected.Cookie)).json()).profile;
     assert.equal(validProfile.displayName, draft.name);

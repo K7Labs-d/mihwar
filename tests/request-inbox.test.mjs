@@ -38,6 +38,7 @@ async function fixture(now) {
   const permission = action => spawnSync(process.execPath, ['scripts/request-manager.mjs', action, manager.input.email], { cwd: new URL('..', import.meta.url), env: { ...process.env, AUTH_DB_PATH: path }, encoding: 'utf8' });
   assert.equal(permission('grant').status, 0);
   const db = new DatabaseSync(path);
+  const adminLogin=await service.send('/admin-login',manager.input); assert.equal(adminLogin.status,200); manager.cookie=adminLogin.headers.get('set-cookie').split(';')[0];
   return { path, service, client, manager, other, permission, db, async close() { db.close(); await this.service.close(); rmSync(directory, { recursive: true, force: true }); } };
 }
 const adminMessages = id => '/request-inbox/' + id + '/messages';

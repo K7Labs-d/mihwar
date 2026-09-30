@@ -41,6 +41,7 @@ export function AdminRequests() {
   const [filter, setFilter] = useState('all');
   const [query, setQuery] = useState('');
   const [search, setSearch] = useState('');
+  const [from,setFrom] = useState(''), [to,setTo] = useState('');
   const [list, setList] = useState<InboxList | null>(null);
   const [error, setError] = useState<RequestApiError | null>(null);
   const [loading, setLoading] = useState(true);
@@ -51,7 +52,7 @@ export function AdminRequests() {
     async function refresh() {
       if (pending || document.hidden) return;
       pending = true;
-      try { const data = await loadInbox(page, filter, query); if (active) { setList(data); setError(null); } }
+      try { const data = await loadInbox(page, filter, query, from, to); if (active) { setList(data); setError(null); } }
       catch (failure) { if (active) { setError(inboxError(failure)); setList(null); } }
       finally { pending = false; if (active) setLoading(false); }
     }
@@ -59,7 +60,7 @@ export function AdminRequests() {
     const timer = setInterval(() => void refresh(), 15000);
     const focus = () => void refresh(); window.addEventListener('focus', focus);
     return () => { active = false; clearInterval(timer); window.removeEventListener('focus', focus); };
-  }, [selected, page, filter, query, attempt]);
+  }, [selected, page, filter, query, from, to, attempt]);
 
   return <div className="admin-requests">
     <div className="inbox-heading"><div><p className="eyebrow"><ShieldCheck size={15} /> إدارة محور</p><h1>صندوق الطلبات</h1><p className="muted">استقبل احتياج العميل وتابع المحادثة معه في مكان واحد.</p></div>{!selected && <button className="quiet-button" disabled={loading} onClick={() => setAttempt(value => value + 1)}><RefreshCw size={16} /> تحديث الطلبات</button>}</div>
@@ -67,6 +68,7 @@ export function AdminRequests() {
       {list && <div className="inbox-stats" aria-label="ملخص الطلبات"><div><span>كل الطلبات</span><strong>{list.stats.total}</strong></div><div><span>بانتظار رد الإدارة</span><strong>{list.stats.unanswered}</strong></div><div><span>تم رد الإدارة</span><strong>{list.stats.answered}</strong></div></div>}
       <form className="inbox-filters" onSubmit={event => { event.preventDefault(); setQuery(search.trim()); setPage(1); setAttempt(value => value + 1); }}>
         <div className="inbox-search"><label htmlFor="inbox-search">البحث في الطلبات</label><div><input id="inbox-search" type="search" maxLength={120} placeholder="عنوان الطلب، العميل، الموقع أو المعرّف" value={search} onChange={event => setSearch(event.target.value)} /><button className="quiet-button" type="submit"><Search size={17} /> بحث</button></div></div>
+        <label className="figma-field">من تاريخ<input type="date" value={from} onChange={e=>{setFrom(e.target.value);setPage(1);}}/></label><label className="figma-field">إلى تاريخ<input type="date" min={from} value={to} onChange={e=>{setTo(e.target.value);setPage(1);}}/></label>
         <div><label htmlFor="inbox-filter">حالة المتابعة</label><select id="inbox-filter" value={filter} onChange={event => { setFilter(event.target.value); setPage(1); }}><option value="all">كل الطلبات</option><option value="unanswered">بانتظار رد الإدارة</option><option value="answered">تم رد الإدارة</option></select></div>
       </form>
       {loading ? <div className="empty-state" role="status"><Inbox size={36} /><p>جارٍ تحميل الطلبات…</p></div> : error ? <AccessError error={error} retry={() => setAttempt(value => value + 1)} /> : list && <>

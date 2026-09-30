@@ -77,7 +77,7 @@ async function start(databasePath) {
 async function setup(service, path) {
   const owner = await service.account('retry-owner');
   const reviewer = await service.account('retry-reviewer');
-  inspect(path, db => db.prepare('UPDATE client_users SET can_review_brokers=1 WHERE id=?').run(reviewer.user.id));
+  inspect(path, db => { db.prepare('UPDATE client_users SET can_review_brokers=1 WHERE id=?').run(reviewer.user.id); db.prepare('UPDATE client_sessions SET admin_scope=1 WHERE user_id=?').run(reviewer.user.id); });
   const profile = await service.approve(owner, reviewer);
   return { owner, reviewer, profile, saved: await service.create(owner) };
 }
@@ -164,7 +164,12 @@ test('recovery never exposes a foreign asset, including after ownership changes 
     assert.equal(foreign.status, 404);
     assert.equal((await foreign.json()).equipment, undefined);
     // Isolated data mutation models a future administrative transfer; there is no transfer product API.
-    inspect(temporary.path, db => db.prepare('UPDATE equipment SET lessor_profile_id=? WHERE id=?').run(otherProfile.id, saved.id));
+    inspect(temporary.path, db => {
+      assert.throws(() => db.prepare('UPDATE equipment SET lessor_profile_id=? WHERE id=?').run(otherProfile.id, saved.id), /Approved lessor required/);
+      // Simulate an out-of-band future migration only after verifying today's DB blocks transfers.
+      db.exec('DROP TRIGGER equipment_approved_owner_update');
+      db.prepare('UPDATE equipment SET lessor_profile_id=? WHERE id=?').run(otherProfile.id, saved.id);
+    });
     const formerOwner = await service.edit(saved.id, edit, owner);
     assert.equal(formerOwner.status, 404);
     assert.equal((await formerOwner.json()).equipment, undefined);

@@ -21,6 +21,6 @@ async function reviewFetch<T>(path: string, body?: object): Promise<T> {
   if (!data) throw new ReviewApiError('تعذر قراءة نتيجة الخادم. حدّث الطلب للتحقق من حالته.', 0);
   return data;
 }
-export const loadReviewPage = (status: string, page: number) => reviewFetch<ReviewPage>(`/requests?status=${encodeURIComponent(status)}&page=${page}`);
+export const loadReviewPage = (status: string, page: number, q = '', from = '', to = '') => reviewFetch<ReviewPage>(`/requests?status=${encodeURIComponent(status)}&page=${page}&${new URLSearchParams({q,from,to})}`);
 export const loadReviewDetail = (id: string) => reviewFetch<ReviewDetail>('/requests/' + encodeURIComponent(id));
 export const saveReviewDecision = (id: string, status: 'approved' | 'rejected', reason: string) => reviewFetch<ReviewDetail>('/requests/' + encodeURIComponent(id) + '/decision', status === 'rejected' ? { status, reason } : { status });

@@ -22,7 +22,7 @@ export type EquipmentInput = {
   status: 'active' | 'archived';
 };
 export type Equipment = EquipmentInput & {
-  id: string; currency: 'SAR'; version: number; createdAt: string; updatedAt: string;
+  reviewStatus?: 'pending' | 'approved' | 'rejected'; rejectionReason?: string | null; id: string; currency: 'SAR'; version: number; createdAt: string; updatedAt: string;
 };
 export type EquipmentErrors = Partial<Record<keyof EquipmentInput | 'form', string>>;
 const fields = ['name', 'category', 'description', 'location', 'hourlyRateHalalas', 'dailyRateHalalas', 'operatorMode', 'availability', 'status'];

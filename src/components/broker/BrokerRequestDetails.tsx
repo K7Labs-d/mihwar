@@ -20,7 +20,7 @@ export function BrokerRequestDetails({ request, message }: { request: BrokerRequ
     </dl>
     {request.decidedAt && <p className="muted">تاريخ القرار: {new Date(request.decidedAt).toLocaleString('ar-SA')}</p>}
     {request.status === 'rejected' && request.rejectionReason && <div className="local-note rejection-reason"><div><strong>سبب الرفض</strong><p>{request.rejectionReason}</p></div></div>}
-    <p className="muted">{request.status === 'pending' ? 'الطلب محفوظ وقيد المراجعة. إرساله لا يعني اعتماد المؤجر.' : request.status === 'approved' ? 'تم اعتماد طلب تسجيل المؤجر.' : 'تم رفض طلب تسجيل المؤجر. يظل الطلب وقرار المراجعة محفوظين.'}</p>
+    <p className="muted">{request.status === 'pending' ? 'الطلب محفوظ وقيد المراجعة. إرساله لا يعني اعتماد المؤجر.' : request.status === 'approved' ? 'تم اعتماد طلب تسجيل المؤجر.' : 'تم رفض طلب تسجيل المؤجر. صحح البيانات وفق السبب ثم قدم طلبًا جديدًا من صفحة التسجيل كمؤجر. يظل القرار السابق محفوظًا.'}</p>
     <p className="form-footnote">لم تُرفق مستندات؛ رفع المستندات غير متاح حاليًا.</p>
   </div>;
 }

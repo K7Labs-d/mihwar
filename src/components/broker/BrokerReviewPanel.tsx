@@ -6,6 +6,7 @@ import { loadReviewPage, loadReviewDetail, saveReviewDecision, ReviewApiError, t
 
 export function BrokerReviewPanel({ onBack, onClientLogin }: { onBack: () => void; onClientLogin?: () => void }) {
   const [status, setStatus] = useState('pending');
+  const [q,setQ] = useState(''), [from,setFrom] = useState(''), [to,setTo] = useState('');
   const [page, setPage] = useState(1);
   const [listing, setListing] = useState<ReviewPage | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -23,10 +24,10 @@ export function BrokerReviewPanel({ onBack, onClientLogin }: { onBack: () => voi
   useEffect(() => {
     let current = true;
     setLoading(true); setError(null); setMessage(''); setDetail(null); setListing(null); setReason(''); setUncertain(false);
-    (selected ? loadReviewDetail(selected).then(value => { if (current) setDetail(value); }) : loadReviewPage(status, page).then(value => { if (current) setListing(value); }))
+    (selected ? loadReviewDetail(selected).then(value => { if (current) setDetail(value); }) : loadReviewPage(status, page, q, from, to).then(value => { if (current) setListing(value); }))
       .catch(value => { if (current) setError(value); }).finally(() => { if (current) setLoading(false); });
     return () => { current = false; };
-  }, [selected, status, page, revision]);
+  }, [selected, status, page, revision, q, from, to]);
   useEffect(() => { if (!loading) heading.current?.focus({ preventScroll: true }); }, [loading]);
   const decide = async (decision: 'approved' | 'rejected') => {
     if (!detail?.canDecide || submitting.current || uncertain) return;
@@ -48,19 +49,21 @@ export function BrokerReviewPanel({ onBack, onClientLogin }: { onBack: () => voi
   return <div className="broker-review" aria-busy={loading || busy}>
     <div className="review-title"><h3 ref={heading} tabIndex={-1}>{selected ? 'مراجعة طلب المؤجر' : 'مراجعة جميع طلبات المؤجرين'}</h3><button className="quiet-button" disabled={busy || loading} onClick={() => setRevision(value => value + 1)}><RefreshCw size={16} /> تحديث</button></div>
     {!selected && <div className="form-field review-filter"><label htmlFor="review-status">حالة الطلبات</label><select id="review-status" value={status} onChange={event => { setStatus(event.target.value); setPage(1); }}><option value="all">جميع الحالات</option>{Object.entries(brokerStatusLabel).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>}
+    {!selected && <div className="admin-filters"><label className="figma-field">البحث<input maxLength={120} value={q} onChange={e=>{setQ(e.target.value);setPage(1);}}/></label><label className="figma-field">من تاريخ<input type="date" value={from} onChange={e=>{setFrom(e.target.value);setPage(1);}}/></label><label className="figma-field">إلى تاريخ<input type="date" min={from} value={to} onChange={e=>{setTo(e.target.value);setPage(1);}}/></label></div>}
     {error && <div className="local-note" role="alert">{error.message}{error.status === 401 && <button className="text-button" onClick={onClientLogin}>تسجيل الدخول</button>}</div>}
     {loading ? <div className="empty-state" role="status">جارٍ تحميل الطلبات…</div>
-      : selected && detail ? <>
+      : selected && detail ? <div className="figma-review-layout"><div className="figma-review-record">
         <BrokerRequestDetails request={detail.request} message={message} />
         {detail.request.identityIssue && <p className="local-note" role="alert">{detail.request.identityIssue}</p>}
         <dl className="review-grid review-account"><div><dt>صاحب الحساب</dt><dd>{detail.request.owner.name}</dd></div><div><dt>بريد الحساب</dt><dd dir="auto">{detail.request.owner.email}</dd></div>{detail.request.decidedBy && <div><dt>اتخذ القرار</dt><dd>{detail.request.decidedBy.name || detail.request.decidedBy.id}</dd></div>}</dl>
+        </div><aside className="figma-review-decision"><h3>قرار المراجعة</h3>
         {detail.canDecide ? <fieldset className="broker-fieldset review-decision" disabled={busy || uncertain}>
           <div className="form-field"><label htmlFor="rejection-reason">سبب الرفض (مطلوب عند الرفض)</label><textarea id="rejection-reason" ref={reasonInput} rows={3} maxLength={1000} value={reason} onChange={event => setReason(event.target.value)} /></div>
           <p className="form-footnote">بعد حفظ القرار لا يمكن تغييره من هذه اللوحة.</p>
           <div className="registration-controls"><button className="gold-button" onClick={() => decide('approved')}><Check size={18} /> اعتماد الطلب</button><button className="quiet-button reject-button" onClick={() => decide('rejected')}><X size={18} /> رفض الطلب</button></div>
         </fieldset> : detail.request.status === 'pending' && <p className="local-note">لا يمكنك مراجعة طلبك الشخصي.</p>}
         {busy && <p className="muted" role="status">جارٍ حفظ القرار…</p>}
-      </>
+      </aside></div>
       : !selected && listing && <>
         <p className="muted" role="status">عدد الطلبات: {listing.total}</p>
         {listing.requests.length ? <div className="branch-actions review-request-list">{listing.requests.map(request => <button key={request.id} className="branch-action" onClick={() => setSelected(request.id)}><FileText size={24} /><span className="action-copy"><strong>{request.name}</strong><small>{new Date(request.createdAt).toLocaleString('ar-SA')}</small></span><span className={`request-badge status-${request.status}`}>{brokerStatusLabel[request.status]}</span></button>)}</div> : <div className="empty-state"><FileText size={36} /><p>لا توجد طلبات بهذه الحالة.</p></div>}

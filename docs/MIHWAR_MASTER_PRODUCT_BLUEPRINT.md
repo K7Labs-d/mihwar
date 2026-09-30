@@ -170,3 +170,8 @@ Equipment Marketplace — سوق المعدات
 قبل التنفيذ: Goal → Actor → User Flow → Domain/Data → Permissions → UI States → Edge Cases → Tests → Acceptance Criteria.
 
 بعد التنفيذ: Tests PASS → Review Diff → Update Blueprint/Roadmap → Commit/PR → Merge → تحديد NEXT.
+
+
+## تعديل المرحلة الأولى وفق طلب خالد — فرع للمراجعة، لم يُدمج
+
+طُبقت بوابة الدخول الإلزامية بالبريد وكلمة المرور، اختيار مساحة المستأجر/المؤجر، دخول الإدارة المنفصل، لوحة بيانات حقيقية ومراجعة معدات وسجل إداري. استُخدمت المصادقة وSQLite والمكونات الحالية، وأُضيفت migration 4؛ لا إعادة بناء ولا OTP ولا تغيير استضافة. يعرض السوق المحمي المعدات المعتمدة فقط. تظل Offers → Booking → Execution → Payment مراحل لاحقة وفق اعتماديات الخريطة. لا بيانات تمثيلية لها في لوحة الإدارة. تفاصيل الموجود والتغييرات والاختبارات في [تقرير التنفيذ](FIGMA_PHASE1_IMPLEMENTATION.md).

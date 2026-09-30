@@ -1,4 +1,5 @@
 import express from 'express';
+import { writeAudit, adminFilters } from './adminOperations.ts';
 import type { DatabaseSync } from 'node:sqlite';
 import { publicBrokerRequest, type BrokerRow } from './brokerRequests.ts';
 import { createApprovedLessorProfile, InvalidLessorIdentityError, readLessorIdentity, lessorIdentityIssue } from './lessorProfiles.ts';
@@ -25,12 +26,12 @@ export function createBrokerReview({ db, userFrom, now }: { db: DatabaseSync; us
   });
   const find = (id: string) => db.prepare(selection + ' WHERE b.id=?').get(id) as ReviewRow | undefined;
   router.get('/requests', (req, res) => {
-    const status = req.query.status ?? 'all';
-    const pageValue = req.query.page ?? '1';
-    if (typeof status !== 'string' || !['all', 'pending', 'approved', 'rejected'].includes(status) || typeof pageValue !== 'string' || !/^[1-9]\d{0,5}$/.test(pageValue)) return res.status(400).json({ error: 'مرشح الطلبات أو رقم الصفحة غير صحيح.' });
-    const page = Number(pageValue), pageSize = 20;
-    const condition = status === 'all' ? '' : ' WHERE b.status=?';
-    const parameters = status === 'all' ? [] : [status];
+    const f = adminFilters(req, ['pending','approved','rejected'], ["json_extract(b.details,'$.name')", 'b.id'], 'b.created_at');
+    if (!f) return res.status(400).json({ error: 'خيارات التصفية غير صحيحة.' });
+    const page = f.page, pageSize = 20;
+    if (f.status !== 'all') { f.clauses.push('b.status=?'); f.params.push(f.status); }
+    const condition = f.clauses.length ? ' WHERE ' + f.clauses.join(' AND ') : '';
+    const parameters = f.params;
     const total = Number(db.prepare('SELECT COUNT(*) AS n FROM broker_requests b' + condition).get(...parameters)!.n);
     const rows = db.prepare(selection + condition + ' ORDER BY b.created_at DESC, b.rowid DESC LIMIT ? OFFSET ?').all(...parameters, pageSize, (page - 1) * pageSize) as ReviewRow[];
     // List only the data needed to choose a request; identity and contact details are in the protected detail endpoint.
@@ -57,6 +58,7 @@ export function createBrokerReview({ db, userFrom, now }: { db: DatabaseSync; us
         WHERE id=? AND status='pending' AND user_id<>?`).run(body.status, new Date(now()).toISOString(), reviewerId, body.status === 'rejected' ? reason : null, row.id, reviewerId);
       const current = find(row.id)!;
       if (updated.changes && body.status === 'approved') createApprovedLessorProfile(db, current);
+      if (updated.changes) writeAudit(db, reviewerId, 'lessor', row.id, body.status, body.status === 'rejected' ? reason : null, current.decided_at!);
       db.exec('COMMIT');
       if (!updated.changes) return res.status(409).json({ error: 'حُسم هذا الطلب مسبقًا. تم استرجاع القرار المحفوظ.', request: reviewRequest(current), canDecide: false });
       return res.json({ request: reviewRequest(current), canDecide: false });

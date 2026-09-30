@@ -1,0 +1,815 @@
+@font-face {
+  font-family: Cairo;
+  src: url('../../assets/fonts/cairo-variable.woff2') format('woff2');
+  font-weight: 200 1000;
+  font-style: normal;
+  font-display: swap;
+}
+/* Figma MIHWAR tokens and responsive layouts; existing feature components remain reusable. */
+.mahwar-experience {
+  --accent: #ffb21a;
+  --surface: #101417;
+  --line: #282d31;
+  --muted: #a5aaaf;
+  --raised: #171c20;
+  --edge: #393e42;
+  --tint: #211a0e;
+  background: #080b0e;
+  font-family: Cairo, sans-serif;
+}
+.figma-header {
+  height: 92px;
+  padding: 16px 48px;
+  border-bottom: 0;
+}
+.figma-header .mahwar-brand {
+  font-size: 22px;
+  line-height: 36px;
+  gap: 8px;
+}
+.figma-header .mahwar-brand small {
+  font-size: 12px;
+  line-height: 20px;
+  margin: 0;
+  font-weight: 400;
+}
+.figma-header .mahwar-brand > svg,
+.figma-header .mahwar-brand > img {
+  width: 40px;
+  height: 40px;
+}
+.figma-header .header-caption {
+  font-size: 12px;
+  line-height: 20px;
+  margin-inline: auto;
+}
+.figma-header .quiet-button {
+  min-width: 136px;
+}
+.figma-context {
+  background: var(--tint);
+  color: var(--accent);
+  font-size: 12px;
+  line-height: 20px;
+  padding: 8px 48px;
+  min-height: 36px;
+}
+.figma-content {
+  max-width: 1440px;
+  margin: auto;
+  padding: 40px 48px;
+  min-width: 0;
+}
+.figma-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 24px;
+  min-width: 0;
+}
+.figma-card h2 {
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 36px;
+  margin: 0 0 16px;
+}
+.figma-card p {
+  line-height: 28px;
+}
+.figma-intro {
+  margin-bottom: 24px;
+}
+.figma-intro h1,
+.role-choice h1 {
+  font-size: 36px;
+  line-height: 56px;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+.figma-intro .eyebrow {
+  line-height: 20px;
+  margin-bottom: 8px;
+}
+.muted {
+  color: var(--muted);
+}
+.figma-notice {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--tint);
+  color: var(--accent);
+  padding: 24px;
+  font-size: 14px;
+  line-height: 24px;
+  margin-block: 16px;
+}
+.figma-notice p + p {
+  margin-top: 16px;
+}
+.figma-tint {
+  background: var(--tint);
+}
+.mahwar-experience .gold-button,
+.mahwar-experience .quiet-button {
+  min-height: 52px;
+  border-radius: 12px;
+  padding: 12px 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 24px;
+  font-weight: 600;
+  text-decoration: none;
+  background: var(--surface);
+  border: 1px solid var(--edge);
+  color: #f5f5f5;
+  cursor: pointer;
+  box-shadow: none;
+}
+.mahwar-experience .gold-button {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #231906;
+}
+.mahwar-experience button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.mahwar-experience .quiet-button:hover {
+  border-color: var(--accent);
+}
+.figma-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 24px;
+  margin-bottom: 16px;
+  min-width: 0;
+}
+.figma-field input,
+.figma-field select,
+.figma-field textarea {
+  border: 1px solid var(--edge);
+  border-radius: 8px;
+  min-height: 48px;
+  padding: 12px 16px;
+  width: 100%;
+  background: var(--raised);
+  color: #f5f5f5;
+  font: inherit;
+  outline: none;
+}
+.figma-field input::placeholder,
+.figma-field textarea::placeholder {
+  color: var(--muted);
+  font-weight: 400;
+}
+.figma-field small {
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--muted);
+  font-weight: 400;
+}
+.figma-field input:focus,
+.figma-field select:focus,
+.figma-field textarea:focus {
+  border-color: var(--accent);
+}
+.auth-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 696fr) minmax(0, 600fr);
+  gap: 48px;
+  align-items: start;
+}
+.auth-introduction h1 {
+  font-size: 56px;
+  font-weight: 900;
+  line-height: 80px;
+  white-space: pre-line;
+  margin: 0 0 24px;
+}
+.auth-introduction > .muted {
+  font-size: 16px;
+  line-height: 28px;
+  margin-bottom: 24px;
+}
+.auth-card h2 {
+  font-size: 36px;
+  line-height: 56px;
+  margin-bottom: 16px;
+}
+.auth-card > .muted {
+  margin-bottom: 16px;
+}
+.auth-card .gold-button,
+.auth-card > .quiet-button {
+  width: 100%;
+}
+.auth-card > .quiet-button {
+  margin-top: 16px;
+  background: #080b0e;
+  border-color: transparent;
+}
+.password-input {
+  position: relative;
+  display: block;
+}
+.password-input input {
+  padding-right: 48px;
+}
+.password-input button {
+  position: absolute;
+  right: 14px;
+  top: 15px;
+  color: var(--muted);
+  cursor: pointer;
+}
+.role-choice {
+  max-width: 820px;
+  margin: auto;
+}
+.role-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 24px;
+}
+.role-options .quiet-button {
+  flex-direction: column;
+  padding: 24px;
+  min-height: 150px;
+}
+.role-options strong {
+  font-size: 24px;
+}
+.role-options span {
+  font-size: 14px;
+  color: var(--muted);
+}
+.account-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 900fr) minmax(0, 420fr);
+  gap: 24px;
+  align-items: start;
+}
+.account-layout aside > a,
+.account-layout aside > button {
+  width: 100%;
+  margin-bottom: 16px;
+}
+.figma-data > div {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  min-height: 48px;
+  font-size: 14px;
+  line-height: 24px;
+}
+.figma-data dt {
+  color: var(--muted);
+  font-size: 12px;
+  flex: 1;
+}
+.figma-data dd {
+  flex: 1;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  text-align: left;
+}
+.figma-data {
+  margin-bottom: 16px;
+}
+.admin-layout {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.admin-sidebar h2 {
+  margin-bottom: 16px;
+}
+.admin-sidebar nav {
+  display: grid;
+  gap: 16px;
+}
+.admin-sidebar .quiet-button {
+  width: 100%;
+  background: #080b0e;
+  border-color: transparent;
+  font-size: 12px;
+}
+.admin-sidebar .quiet-button[aria-current] {
+  background: var(--tint);
+  color: var(--accent);
+}
+.admin-sidebar > a {
+  margin-top: 24px;
+}
+.admin-workspace {
+  min-width: 0;
+}
+.admin-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-block: 24px;
+  direction: ltr;
+}
+.admin-stats > * {
+  direction: rtl;
+}
+.admin-stats h2 {
+  font-size: 22px;
+  margin-bottom: 12px;
+}
+.admin-stats .eyebrow {
+  font-size: 12px;
+}
+.stat-value {
+  font-size: 28px;
+  line-height: 40px;
+  font-weight: 700;
+}
+.admin-stats .muted {
+  font-size: 12px;
+  line-height: 20px;
+  margin-top: 12px;
+}
+.admin-operation-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+}
+.admin-operation-grid .quiet-button {
+  min-width: 200px;
+  margin-top: 16px;
+}
+.admin-filters {
+  display: flex;
+  align-items: end;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-block: 24px;
+}
+.admin-filters .figma-field {
+  flex: 1;
+  min-width: 140px;
+  margin: 0;
+}
+.admin-filters .quiet-button {
+  flex: none;
+}
+.table-scroll {
+  overflow: auto;
+  margin-top: 24px;
+}
+.admin-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 14px;
+  line-height: 24px;
+}
+.admin-table th {
+  background: var(--raised);
+  color: var(--muted);
+  font-size: 12px;
+  padding: 12px;
+  text-align: right;
+  white-space: nowrap;
+}
+.admin-table td {
+  padding: 16px 12px;
+  border-bottom: 1px solid var(--line);
+  overflow-wrap: anywhere;
+  max-width: 280px;
+}
+.admin-table .quiet-button {
+  min-height: 44px;
+  padding: 8px 16px;
+}
+.admin-detail {
+  margin-top: 24px;
+}
+.figma-decision {
+  padding: 24px;
+  background: var(--tint);
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+.admin-workspace .product-page {
+  padding: 0;
+}
+.admin-workspace .product-page-header h1 {
+  font-size: 36px;
+  line-height: 56px;
+}
+.admin-workspace .related-pages {
+  display: none;
+}
+.admin-workspace .broker-review {
+  padding: 0;
+}
+.marketplace-layout {
+  display: grid;
+  grid-template-columns: 312px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.marketplace-layout form > button {
+  width: 100%;
+  margin-top: 12px;
+}
+.marketplace-results {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+.marketplace-results button {
+  margin-top: 20px;
+}
+.figma-content > .empty-state,
+.marketplace-layout .empty-state {
+  min-height: 336px;
+  border-radius: 16px;
+}
+.product-navigation {
+  height: 64px;
+  justify-content: flex-start;
+  flex-wrap: nowrap;
+  padding: 8px 48px;
+  gap: 8px;
+  overflow: auto;
+}
+.product-navigation a {
+  min-width: 174px;
+  height: 48px;
+  font-size: 14px;
+}
+.product-navigation a[aria-current] {
+  box-shadow: none;
+  background: var(--tint);
+}
+@media (min-width: 1441px) {
+  .figma-header,
+  .figma-context {
+    padding-inline: max(48px, calc((100vw - 1344px) / 2));
+  }
+}
+@media (max-width: 1100px) {
+  .figma-content {
+    padding: 32px 24px;
+  }
+  .figma-header {
+    padding: 16px 24px;
+  }
+  .figma-context {
+    padding-inline: 24px;
+  }
+  .auth-layout {
+    gap: 32px;
+  }
+  .auth-introduction h1 {
+    font-size: 44px;
+    line-height: 64px;
+  }
+  .admin-layout {
+    grid-template-columns: 200px minmax(0, 1fr);
+  }
+  .admin-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .product-navigation {
+    padding-inline: 24px;
+  }
+  .admin-filters .figma-field {
+    min-width: 120px;
+  }
+}
+@media (max-width: 720px) {
+  .figma-content {
+    padding: 24px 16px;
+  }
+  .figma-header {
+    height: 80px;
+    padding: 12px 16px;
+    gap: 12px;
+  }
+  .figma-header .header-caption {
+    display: none;
+  }
+  .figma-header .quiet-button {
+    min-width: 90px;
+  }
+  .figma-context {
+    padding-inline: 16px;
+  }
+  .auth-layout,
+  .account-layout,
+  .marketplace-layout {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .auth-introduction {
+    order: 2;
+  }
+  .auth-introduction h1 {
+    font-size: 32px;
+    line-height: 48px;
+    margin-bottom: 16px;
+  }
+  .auth-card {
+    order: 1;
+  }
+  .auth-card h2,
+  .figma-intro h1,
+  .role-choice h1 {
+    font-size: 28px;
+    line-height: 44px;
+  }
+  .figma-card {
+    padding: 20px;
+  }
+  .auth-introduction .figma-notice {
+    padding: 20px;
+  }
+  .admin-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .admin-sidebar {
+    width: 100%;
+  }
+  .admin-sidebar h2,
+  .admin-sidebar > a {
+    display: none;
+  }
+  .admin-sidebar nav {
+    display: flex;
+    overflow: auto;
+    gap: 8px;
+  }
+  .admin-sidebar .quiet-button {
+    width: auto;
+    white-space: nowrap;
+  }
+  .admin-sidebar {
+    padding: 12px;
+  }
+  .admin-workspace {
+    width: 100%;
+  }
+  .admin-operation-grid,
+  .marketplace-results,
+  .role-options {
+    grid-template-columns: 1fr;
+  }
+  .admin-stats {
+    gap: 12px;
+  }
+  .admin-stats .figma-card {
+    padding: 16px;
+  }
+  .admin-stats h2 {
+    font-size: 18px;
+    line-height: 30px;
+  }
+  .product-navigation {
+    padding-inline: 16px;
+  }
+  .product-navigation a {
+    min-width: 120px;
+    font-size: 12px;
+  }
+  .figma-data > div {
+    padding-inline: 0;
+  }
+  .figma-data dt {
+    flex: 1;
+  }
+  .figma-data dd {
+    flex: 1;
+  }
+  .admin-workspace .product-page-header h1 {
+    font-size: 28px;
+    line-height: 44px;
+  }
+}
+
+.figma-review-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 660fr) minmax(0, 396fr);
+  gap: 24px;
+  align-items: start;
+}
+.figma-review-record {
+  min-width: 0;
+}
+.figma-review-decision {
+  background: var(--tint);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 24px;
+}
+.figma-review-decision h3 {
+  font-size: 22px;
+  line-height: 36px;
+  margin-bottom: 16px;
+}
+.figma-review-decision .review-decision {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.figma-review-decision .registration-controls {
+  display: grid;
+}
+.figma-review-decision .form-field textarea {
+  background: var(--raised);
+  border: 1px solid var(--edge);
+  border-radius: 8px;
+  min-height: 100px;
+  color: #f5f5f5;
+}
+.admin-workspace .figma-review-record .review-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+.admin-workspace .figma-review-record .review-grid > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  border: 0;
+  padding: 12px 16px;
+  background: none;
+}
+.admin-workspace .figma-review-record .review-grid dt {
+  color: var(--muted);
+  font-size: 12px;
+}
+.admin-workspace .figma-review-record .review-grid dd {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.admin-workspace .broker-request-details {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 24px;
+}
+.admin-workspace .panel-title > svg {
+  display: none;
+}
+.admin-workspace .review-account {
+  margin-block: 16px;
+}
+.admin-workspace .review-back {
+  margin-top: 24px;
+}
+.admin-workspace .inbox-filters input,
+.admin-workspace .inbox-filters select {
+  background: var(--raised);
+  border-color: var(--edge);
+}
+@media (max-width: 900px) {
+  .figma-review-layout {
+    grid-template-columns: 1fr;
+  }
+  .figma-review-decision {
+    padding: 20px;
+  }
+}
+
+.lessor-application-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 960fr) minmax(0, 360fr);
+  gap: 24px;
+  align-items: start;
+}
+.phase1-flow-body {
+  min-width: 0;
+}
+.phase1-existing-flow .branch-panel,
+.phase1-flow-card {
+  width: 100%;
+  max-width: none;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: none;
+}
+.phase1-flow-card .branch-panel {
+  border: 0;
+  padding: 0;
+}
+.phase1-existing-flow .panel-title > svg {
+  display: none;
+}
+.phase1-existing-flow .registration-panel {
+  margin: 0;
+}
+.phase1-existing-flow .form-field input,
+.phase1-existing-flow .form-field select,
+.phase1-existing-flow .form-field textarea {
+  background: var(--raised);
+  border-color: var(--edge);
+  border-radius: 8px;
+  min-height: 48px;
+  color: var(--text);
+}
+.phase1-existing-flow .registration-steps {
+  margin-block: 24px;
+  gap: 8px;
+}
+.phase1-existing-flow .registration-step {
+  background: var(--raised);
+  border-color: var(--line);
+}
+.phase1-existing-flow .registration-step[aria-current] {
+  background: var(--tint);
+  color: var(--accent);
+}
+.lessor-application-layout aside ol {
+  list-style: none;
+  display: grid;
+  gap: 16px;
+  padding: 0;
+  margin: 24px 0;
+}
+.phase1-existing-flow .review-grid > div {
+  background: var(--raised);
+  border-color: var(--line);
+}
+.phase1-existing-flow .panel-title h2 {
+  font-size: 22px;
+  line-height: 36px;
+}
+.phase1-flow-card {
+  margin-top: 24px;
+}
+.lessor-application-layout {
+  margin-top: 24px;
+}
+@media (max-width: 900px) {
+  .lessor-application-layout {
+    grid-template-columns: 1fr;
+  }
+  .lessor-application-layout aside {
+    order: 2;
+  }
+}
+@media (max-width: 720px) {
+  .phase1-existing-flow .branch-panel,
+  .phase1-flow-card {
+    padding: 20px;
+  }
+  .phase1-existing-flow .registration-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .phase1-existing-flow .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .phase1-existing-flow .registration-controls {
+    flex-wrap: wrap;
+  }
+}
+
+.broker-navigation {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 8px 48px;
+  overflow: auto;
+  height: 64px;
+}
+.broker-navigation a {
+  min-width: 208px;
+  min-height: 48px;
+  white-space: nowrap;
+  border-radius: 8px;
+}
+.broker-navigation a[aria-current] {
+  background: var(--tint);
+  box-shadow: none;
+}
+@media (max-width: 720px) {
+  .broker-navigation {
+    padding-inline: 16px;
+    display: flex;
+    flex-wrap: nowrap;
+    height: 64px;
+  }
+  .broker-navigation a {
+    min-width: 144px;
+    font-size: 12px;
+  }
+}

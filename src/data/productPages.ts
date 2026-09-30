@@ -1,5 +1,9 @@
 // Keep existing route IDs stable while adapting the lessor branch from the blueprint.
 export const PRODUCT_PAGES = [
+  { id: 'admin-login', branchId: null, title: 'دخول الإدارة', description: 'بوابة الإدارة الخاصة' },
+  { id: 'admin-lessors', branchId: null, title: 'اعتماد المؤجرين', description: 'مراجعة طلبات اعتماد المؤجرين' },
+  { id: 'admin-users', branchId: null, title: 'المستخدمون', description: 'المستخدمون المسجلون وصلاحياتهم' },
+  { id: 'admin-audit', branchId: null, title: 'سجل القرارات', description: 'هوية المسؤول ووقت كل قرار' },
   { id: 'admin-requests', branchId: null, title: 'إدارة الطلبات', description: 'استقبال طلبات العملاء والرد عليها' },
   { id: '', branchId: null, title: 'منظومة محور التفاعلية', description: 'منظومة متكاملة تربط أطراف العملية في مكان واحد' },
   { id: 'request', branchId: 'request', title: 'الطلب', description: 'تنظيم احتياجك ومتابعة طلباتك بين أطراف العملية' },

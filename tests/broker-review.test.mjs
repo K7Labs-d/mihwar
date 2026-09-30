@@ -54,6 +54,7 @@ function grant(databasePath, account) {
   const result = permission(databasePath, 'grant', account.input.email);
   assert.equal(result.status, 0, result.stderr);
   assert.deepEqual(JSON.parse(result.stdout), { userId: account.user.id, reviewBrokers: true });
+  const db=new DatabaseSync(databasePath); try { db.prepare('UPDATE client_sessions SET admin_scope=1 WHERE user_id=?').run(account.user.id); } finally { db.close(); }
 }
 const detailPath = id => '/broker-review/requests/' + id;
 const decisionPath = id => detailPath(id) + '/decision';

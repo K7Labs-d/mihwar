@@ -20,6 +20,7 @@ const amountValue = (value: string) => {
   return Number(whole) * 100 + Number(decimal.padEnd(2, '0'));
 };
 function EquipmentState({ item }: { item: Equipment }) {
+  if (item.status !== 'archived' && item.reviewStatus !== 'approved') return <span className="equipment-state" data-state={item.reviewStatus ?? 'pending'}>{item.reviewStatus === 'rejected' ? 'مرفوضة — صحّح بياناتها' : 'بانتظار مراجعة الإدارة'}</span>;
   const state = item.status === 'archived' ? 'archived' : item.availability;
   return <span className="equipment-state" data-state={state}>{state === 'archived' ? 'مؤرشفة' : state === 'available' ? 'متاحة للتأجير' : 'غير متاحة حاليًا'}</span>;
 }
@@ -129,6 +130,7 @@ export function LessorEquipment({ onClientLogin }: { onClientLogin: () => void }
         <div className="equipment-profile"><BadgeCheck size={26} /><div><strong>{profile.displayName}</strong><p>مؤجر معتمد · {profile.entity === 'company' ? 'شركة / مؤسسة' : 'فرد'}</p></div></div>
         {item ? <div className="request-details">
           <div className="request-title-row"><h3>{item.name}</h3><EquipmentState item={item} /></div>
+          <p className="figma-notice">مراجعة الإدارة: {item.reviewStatus === 'approved' ? 'معتمدة' : item.reviewStatus === 'rejected' ? 'مرفوضة' : 'بانتظار المراجعة'}. {item.rejectionReason && `سبب الرفض: ${item.rejectionReason}. عدّل بيانات المعدة وأعد حفظها للتصحيح.`}</p>
           <dl className="equipment-rates"><div className="equipment-rate"><dt>السعر النهائي / الساعة</dt><dd>{priceLabel(item.hourlyRateHalalas)}</dd></div><div className="equipment-rate"><dt>السعر النهائي / اليوم</dt><dd>{priceLabel(item.dailyRateHalalas)}</dd></div></dl>
           <dl className="review-grid"><div><dt>التصنيف</dt><dd>{categoryLabel(item.category)}</dd></div><div><dt>موقع المعدة</dt><dd>{item.location}</dd></div><div className="full-field"><dt>الوصف والمواصفات</dt><dd>{item.description}</dd></div><div><dt>المشغل</dt><dd>{item.operatorMode === 'with_operator' ? 'مع مشغل (ضمن السعر)' : 'بدون مشغل'}</dd></div><div><dt>التوفر الحالي</dt><dd>{item.availability === 'available' ? 'متاحة' : 'غير متاحة'}</dd></div><div><dt>حالة المعدة</dt><dd>{item.status === 'active' ? 'نشطة' : 'مؤرشفة'}</dd></div><div><dt>آخر تحديث</dt><dd><time dateTime={item.updatedAt}>{dateLabel(item.updatedAt)}</time></dd></div><div className="full-field"><dt>معرّف المعدة</dt><dd className="request-id" dir="ltr">{item.id}</dd></div></dl>
           <div className="equipment-detail-actions"><button className="gold-button" onClick={() => { setSuccess(''); setView('edit'); }}><Pencil size={17} /> تعديل البيانات والتوفر</button></div>

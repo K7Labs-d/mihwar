@@ -18,6 +18,7 @@ function reconcileApprovedProfiles(db: DatabaseSync): string[] {
 
 // Existing account/application bootstraps remain intact. All new product schema changes are numbered.
 const migrations = [
+  // New migrations are appended below to keep existing ledgers and data intact.
   {
     version: 1, name: 'lessor_profiles',
     apply(db: DatabaseSync) {
@@ -69,6 +70,54 @@ const migrations = [
       // Older releases could approve applications after migrations 1/2 had already run.
       // Preserve existing profiles and audit history; create only the missing approved identities.
       reconcileApprovedProfiles(db);
+    },
+  },
+  {
+    version: 4, name: 'account_roles_admin_review_and_visits',
+    apply(db: DatabaseSync) {
+      db.exec(`ALTER TABLE client_users ADD COLUMN selected_role TEXT DEFAULT 'renter' CHECK(selected_role IS NULL OR selected_role IN ('renter','lessor'));
+        ALTER TABLE client_users ADD COLUMN is_platform_admin INTEGER NOT NULL DEFAULT 0 CHECK(is_platform_admin IN (0,1));
+        ALTER TABLE client_sessions ADD COLUMN admin_scope INTEGER NOT NULL DEFAULT 0 CHECK(admin_scope IN (0,1));
+        CREATE TABLE equipment_reviews (
+          equipment_id TEXT NOT NULL REFERENCES equipment(id), equipment_version INTEGER NOT NULL,
+          status TEXT NOT NULL CHECK(status IN ('approved','rejected')),
+          reason TEXT, actor_id TEXT NOT NULL REFERENCES client_users(id), decided_at TEXT NOT NULL,
+          PRIMARY KEY(equipment_id,equipment_version),
+          CHECK((status='rejected' AND length(trim(reason)) BETWEEN 3 AND 1000) OR (status='approved' AND reason IS NULL))
+        );
+        CREATE TABLE admin_audit (
+          sequence INTEGER PRIMARY KEY AUTOINCREMENT, actor_id TEXT NOT NULL REFERENCES client_users(id),
+          target_type TEXT NOT NULL, target_id TEXT NOT NULL, action TEXT NOT NULL,
+          reason TEXT, created_at TEXT NOT NULL
+        );
+        CREATE INDEX admin_audit_date ON admin_audit(created_at,sequence);
+        CREATE TABLE visitor_days (visitor_hash TEXT NOT NULL, day TEXT NOT NULL, PRIMARY KEY(visitor_hash,day));
+        CREATE INDEX visitor_days_date ON visitor_days(day);
+        CREATE TRIGGER equipment_approved_owner_insert BEFORE INSERT ON equipment
+        WHEN NOT EXISTS(SELECT 1 FROM lessor_profiles p JOIN broker_requests b ON b.id=p.application_id AND b.user_id=p.user_id
+          WHERE p.id=NEW.lessor_profile_id AND p.status='approved' AND b.status='approved')
+        BEGIN SELECT RAISE(ABORT,'Approved lessor required'); END;
+        CREATE TRIGGER equipment_approved_owner_update BEFORE UPDATE ON equipment
+        WHEN NEW.lessor_profile_id<>OLD.lessor_profile_id OR NOT EXISTS(SELECT 1 FROM lessor_profiles p JOIN broker_requests b ON b.id=p.application_id AND b.user_id=p.user_id
+          WHERE p.id=NEW.lessor_profile_id AND p.status='approved' AND b.status='approved')
+        BEGIN SELECT RAISE(ABORT,'Approved lessor required'); END;
+        CREATE TRIGGER broker_decision_authority BEFORE UPDATE OF status,decided_at,decided_by,rejection_reason ON broker_requests
+        WHEN OLD.status<>'pending' OR NEW.status NOT IN ('approved','rejected') OR NEW.decided_by=NEW.user_id
+          OR NEW.decided_at IS NULL OR NOT EXISTS(SELECT 1 FROM client_users a WHERE a.id=NEW.decided_by AND a.can_review_brokers=1)
+          OR (NEW.status='rejected' AND (NEW.rejection_reason IS NULL OR length(trim(NEW.rejection_reason)) NOT BETWEEN 3 AND 1000))
+          OR (NEW.status='approved' AND NEW.rejection_reason IS NOT NULL)
+        BEGIN SELECT RAISE(ABORT,'Authorized immutable lessor decision required'); END;
+        CREATE TRIGGER admin_audit_no_update BEFORE UPDATE ON admin_audit BEGIN SELECT RAISE(ABORT,'Audit is append only'); END;
+        CREATE TRIGGER admin_audit_no_delete BEFORE DELETE ON admin_audit BEGIN SELECT RAISE(ABORT,'Audit is append only'); END;
+        CREATE TRIGGER equipment_review_no_update BEFORE UPDATE ON equipment_reviews BEGIN SELECT RAISE(ABORT,'Review is immutable'); END;
+        CREATE TRIGGER equipment_review_no_delete BEFORE DELETE ON equipment_reviews BEGIN SELECT RAISE(ABORT,'Review is immutable'); END;
+        CREATE TRIGGER equipment_review_authority BEFORE INSERT ON equipment_reviews
+        WHEN NOT EXISTS(SELECT 1 FROM client_users a WHERE a.id=NEW.actor_id AND a.is_platform_admin=1)
+          OR NOT EXISTS(SELECT 1 FROM equipment e JOIN lessor_profiles p ON p.id=e.lessor_profile_id
+            WHERE e.id=NEW.equipment_id AND e.version=NEW.equipment_version AND p.user_id<>NEW.actor_id)
+        BEGIN SELECT RAISE(ABORT,'Authorized current review required'); END;`);
+      // Infer the selected workspace for existing lessors without granting new privileges.
+      db.exec("UPDATE client_users SET selected_role='lessor' WHERE EXISTS(SELECT 1 FROM broker_requests b WHERE b.user_id=client_users.id AND b.status IN ('pending','approved'))");
     },
   },
 ];

@@ -38,7 +38,7 @@ async function fixture() {
     assert.equal(ownerResponse.status, 201); const ownerCookie = cookie(ownerResponse);
     const reviewerResponse = await post('/register', { name: 'unicode-reviewer', email: 'unicode-reviewer@example.com', password: 'isolated-unicode-password-2468' });
     assert.equal(reviewerResponse.status, 201); const reviewerCookie = cookie(reviewerResponse), reviewer = (await reviewerResponse.json()).user;
-    inspect(db => db.prepare('UPDATE client_users SET can_review_brokers=1 WHERE id=?').run(reviewer.id));
+    inspect(db => { db.prepare('UPDATE client_users SET can_review_brokers=1 WHERE id=?').run(reviewer.id); db.prepare('UPDATE client_sessions SET admin_scope=1 WHERE user_id=?').run(reviewer.id); });
     const submitted = await post('/broker-requests', application, ownerCookie); assert.equal(submitted.status, 201);
     const pending = (await submitted.json()).request;
     const approved = await post('/broker-review/requests/' + pending.id + '/decision', { status: 'approved' }, reviewerCookie);
