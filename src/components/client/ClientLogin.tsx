@@ -270,7 +270,7 @@ export function ClientLogin({ admin = false }: { admin?: boolean }) {
                       registration ? 'new-password' : 'current-password'
                     }
                     required
-                    minLength={12}
+                    minLength={8}
                     maxLength={128}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -288,7 +288,7 @@ export function ClientLogin({ admin = false }: { admin?: boolean }) {
                     {visible ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </span>
-                <small id="password-help">من 12 إلى 128 حرفًا.</small>
+                <small id="password-help">من 8 إلى 128 حرفًا.</small>
               </label>
               {registration && (
                 <label className="figma-field" htmlFor="client-confirmation">
@@ -299,7 +299,7 @@ export function ClientLogin({ admin = false }: { admin?: boolean }) {
                     type={visible ? 'text' : 'password'}
                     autoComplete="new-password"
                     required
-                    minLength={12}
+                    minLength={8}
                     maxLength={128}
                     value={confirmation}
                     onChange={(e) => setConfirmation(e.target.value)}

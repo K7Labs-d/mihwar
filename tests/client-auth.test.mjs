@@ -26,6 +26,66 @@ async function start(databasePath = ':memory:', now = Date.now) {
 }
 const cookie = response => response.headers.get('set-cookie').split(';')[0];
 
+test('password boundaries are consistent for registration, login and administrative login', async t => {
+  for (const length of [0, 7, 8, 11, 12, 128, 129]) {
+    await t.test(String(length) + ' characters', async () => {
+      const service = await start();
+      const input = { ...account, password: 'x'.repeat(length) };
+      const accepted = length >= 8 && length <= 128;
+      try {
+        const registered = await service.post('/register', input);
+        assert.equal(registered.status, accepted ? 201 : 400);
+        if (!accepted) assert.match((await registered.json()).error, /من 8 إلى 128/);
+        const login = await service.post('/login', input);
+        assert.equal(login.status, accepted ? 200 : 400);
+        if (!accepted) assert.match((await login.json()).error, /من 8 إلى 128/);
+        const admin = await service.post('/admin-login', input);
+        // A valid password still does not grant an ordinary account admin access.
+        assert.equal(admin.status, accepted ? 403 : 400);
+        if (!accepted) {
+          assert.match((await admin.json()).error, /من 8 إلى 128/);
+          assert.equal((await service.get('/me')).status, 401);
+          assert.equal((await service.post('/register', account)).status, 201);
+        }
+      } finally { await service.close(); }
+    });
+  }
+});
+
+test('an eight-character password remains hashed and can log in after restart', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'mahwar-auth-test-'));
+  const databasePath = join(directory, 'clients.sqlite');
+  const input = { ...account, password: 'Eight!42' };
+  let service;
+  try {
+    service = await start(databasePath);
+    const registered = await service.post('/register', input);
+    assert.equal(registered.status, 201);
+    const user = (await registered.json()).user;
+    const Cookie = cookie(registered);
+    const inspect = new DatabaseSync(databasePath);
+    try {
+      const stored = inspect.prepare('SELECT password_hash FROM client_users WHERE id=?').get(user.id);
+      assert.match(stored.password_hash, /^scrypt\$[a-f0-9]{32}\$[a-f0-9]{128}$/);
+      assert.ok(!stored.password_hash.includes(input.password));
+    } finally { inspect.close(); }
+    await service.close();
+    service = await start(databasePath);
+    assert.equal((await (await service.get('/me', Cookie)).json()).user.id, user.id);
+    assert.equal((await service.post('/logout', {}, { Cookie })).status, 200);
+    assert.equal((await service.get('/me', Cookie)).status, 401);
+    assert.equal((await service.post('/login', { ...input, password: 'Wrong!42' })).status, 401);
+    const login = await service.post('/login', input);
+    assert.equal(login.status, 200);
+    assert.equal((await login.json()).user.id, user.id);
+  } finally {
+    await service?.close();
+    assert.equal(dirname(resolve(directory)), resolve(tmpdir()));
+    assert.ok(basename(directory).startsWith('mahwar-auth-test-'));
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 test('real account and hashed session survive restart; logout revokes the exact session', async () => {
   const directory = mkdtempSync(join(tmpdir(), 'mahwar-auth-test-'));
   const databasePath = join(directory, 'clients.sqlite');
