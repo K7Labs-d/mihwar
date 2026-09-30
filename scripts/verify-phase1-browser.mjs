@@ -43,7 +43,7 @@ try {
     await new Promise((r) => setTimeout(r, 100));
   }
   assert.ok(ready, 'server starts');
-  let options = { headless: true };
+  let options = { headless: true, ...(process.env.MIHWAR_BROWSER_PATH ? { executablePath: process.env.MIHWAR_BROWSER_PATH, args: ['--no-sandbox'] } : {}) };
   if (process.env.MIHWAR_CHROMIUM_MODULE) {
     const { default: c } = await import(process.env.MIHWAR_CHROMIUM_MODULE);
     options = {
@@ -53,10 +53,17 @@ try {
     };
   }
   browser = await chromium.launch(options);
+  // Run the same real flows in either palette without changing account behavior.
+  async function setTestTheme(context) {
+    if (process.env.MIHWAR_TEST_THEME === 'light') {
+      await context.addInitScript(() => localStorage.setItem('mihwar-theme', 'light'));
+    }
+  }
   const context = await browser.newContext({
       viewport: { width: 1440, height: 1120 },
     }),
     page = await context.newPage();
+  await setTestTheme(context);
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto(base + '/#marketplace');
   await page.getByRole('heading', { name: 'حياك من جديد' }).waitFor();
@@ -133,6 +140,7 @@ try {
   });
   // New browser context with an ordinary lessor: all data stays inside this fixture.
   const lessor = await browser.newContext();
+  await setTestTheme(lessor);
   const lessorPage = await lessor.newPage();
   lessorPage.on('pageerror', (e) => errors.push(e.message));
   await lessorPage.goto(base + '/#client');
@@ -249,6 +257,7 @@ try {
       'admin-users',
       'admin-audit',
       'client',
+      'marketplace',
       'broker-registration',
       'broker-management',
       'equipment',
@@ -262,7 +271,9 @@ try {
         width: innerWidth,
         scrollWidth: document.documentElement.scrollWidth,
         font: getComputedStyle(document.body).fontFamily,
+        theme: document.documentElement.dataset.theme,
       }));
+      assert.equal(geometry.theme, process.env.MIHWAR_TEST_THEME === 'light' ? 'light' : 'dark');
       assert.equal(
         geometry.scrollWidth,
         width,
@@ -301,6 +312,7 @@ try {
     ['can_review_brokers', 'admin-lessors', 'راجع الجهة قبل منح أهلية التأجير'],
   ]) {
     const delegated = await browser.newContext();
+    await setTestTheme(delegated);
     const delegatedPage = await delegated.newPage();
     delegatedPage.on('pageerror', (e) => errors.push(e.message));
     const email = permission + '@example.com';
