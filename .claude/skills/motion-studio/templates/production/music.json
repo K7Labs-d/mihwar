@@ -1,0 +1,19 @@
+{
+  "bpm": 120,
+  "beats": 16,
+  "root": 62,
+  "chords": [[0, "Dm"], [4, "Dm"], [8, "Bb"], [12, "F"]],
+  "sections": {
+    "drone": [[0, 4]],
+    "heartbeat": [[0, 4]],
+    "kick": [[4, 16]],
+    "clap": [[4, 16]],
+    "hats": [[4, 16]],
+    "bass": [[4, 16]],
+    "pad": [[4, 16]]
+  },
+  "stops": [3.5],
+  "fade_out": 2.0,
+  "music_gain_db": -3,
+  "sfx_gain_db": 0
+}

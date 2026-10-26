@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Proportions traced from the dossier mark (p.8, 600 dpi): outer ring r40, ticks r23.9..44.4, inner ring r19.5, diamond 12.7 -->
+  <circle cx="50" cy="50" r="40" stroke="#c6a15b" stroke-width="2.1"/>
+  <path d="M50 5.6V26.1M50 73.9V94.4M5.6 50H26.1M73.9 50H94.4" stroke="#c6a15b" stroke-width="2.1"/>
+  <circle cx="50" cy="50" r="19.5" stroke="#c6a15b" stroke-width="1.9"/>
+  <path d="M50 37.3L62.7 50L50 62.7L37.3 50Z" fill="#c6a15b"/>
+</svg>
