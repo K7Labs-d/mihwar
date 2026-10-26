@@ -89,10 +89,10 @@ export function build(S, rt) {
   {
     const s = S.shot('need', { at: 0, beats: 4 });
     const node = s.item(NODE('user', 180), { x: 1260, y: 400, w: 180, h: 180 });
-    pingNode(S, s, node, 0);
+    pingNode(S, s, node, 0.5, 0);
     const h = s.text('مشروع ينتظر معدة.', { cls: 'h1 hook' });
     s.place(h, { x: 1260, y: 630 });
-    s.enter(h, 'rise', { land: 0.5 });   // the cut on beat 4 is its exit
+    s.enter(h, 'rise', { land: 0 });     // the message is on the first frame; the cut on beat 4 is its exit
     s.camera({ z: 90, x: -40, ry: -3.5 });
   }
 
@@ -100,10 +100,10 @@ export function build(S, rt) {
   {
     const s = S.shot('idle', { at: 4, beats: 4 });
     const node = s.item(NODE('box', 180), { x: 660, y: 400, w: 180, h: 180 });
-    pingNode(S, s, node, 0);
+    pingNode(S, s, node, 0.5, 0);
     const h = s.text('ومعدة تنتظر مشروعًا.', { cls: 'h1 hook' });
     s.place(h, { x: 660, y: 630 });
-    s.enter(h, 'rise', { land: 0.5 });
+    s.enter(h, 'rise', { land: 0 });
     s.camera({ z: 90, x: 40, ry: 3.5 });
   }
 
@@ -121,7 +121,7 @@ export function build(S, rt) {
     s.enter(nL, 'pop', { land: 0.25, sfx: 'tick' });
 
     // Lines: drawn from the need (right) toward the equipment (left), wandering, then forced straight.
-    s.draw(paths, { a: 0, b: 1.5, stagger: 3, ease: Ease.move, sfx: 'draw', gain: -14, label: 'tangle draws' });
+    s.draw(paths, { a: -0.75, b: 1, stagger: 3, ease: Ease.move, sfx: 'draw', gain: -14, label: 'tangle draws' });
     const chaosIn = s.t(0), chaosPeak = s.t(4), straight0 = s.t(5.5), straight1 = s.t(7), collapse0 = s.t(7), collapse1 = s.t(7.5);
     S.every(t => {
       if (t < s.t0 || t >= s.t1) return;
@@ -195,10 +195,10 @@ export function build(S, rt) {
     const nL = s.item(NODE('box', 130), { x: 440, y: Y, w: 130, h: 130 });
     const mk = s.item(MARK(170), { x: CX, y: Y, w: 170, h: 170 });
     s.enter(mk, 'pop', { land: 0, sfx: 'tick' });
-    s.enter(nR, 'swing', { land: 0.25, sfx: 'whoosh' });
-    s.enter(nL, 'swing', { land: 0.5, sfx: ['land'] });
+    s.enter(nR, 'swing', { land: 0, sfx: 'whoosh' });
+    s.enter(nL, 'swing', { land: 0, sfx: false, silent: 'lands with the right node; one whoosh covers the pair' });
     const line = s.item(`<svg width="1920" height="40" viewBox="0 0 1920 40" fill="none"><path class="axis" d="M1408 20H1048" pathLength="1"/><path class="axis" d="M872 20H512" pathLength="1"/></svg>`, { x: CX, y: Y, w: 1920, h: 40 });
-    s.draw(line.querySelectorAll('path'), { a: 0.75, b: 1.75, stagger: 6, ease: Ease.move, sfx: 'draw', gain: -12, label: 'axis connects the sides' });
+    s.draw(line.querySelectorAll('path'), { a: 0.25, b: 1.25, stagger: 6, ease: Ease.move, sfx: 'draw', gain: -12, label: 'axis connects the sides' });
     const dot = s.item('<div class="pulse"></div>', { x: 1408, y: Y, w: 22, h: 22 });
     S.tween(dot, { o: 0 }, { o: 0 }, s.t(0), s.t(0), Ease.linear);
     for (const [a, b] of [[2, 3], [4, 5]]) {
@@ -251,8 +251,8 @@ export function build(S, rt) {
       const card = s.item(`<div class="card tall">${drawing(k, 360)}<span class="arrow">←</span></div>`, { x, y: 500, w: 440, h: 470 });
       s.enter(card, 'swing', { land: at - 0.25, sfx: 'whoosh' });
       // Drawing starts before the card lands (and before the cut for the first card): no empty card on screen.
-      const m = s.draw(card.querySelectorAll('.equip [pathLength]'), { a: at - 1, b: at + 0.5, stagger: 1, ease: Ease.move, sfx: 'draw', gain: -15, label: `${label} draws` });
-      m.cues.push(S.cue(s.t(at + 0.5), 'clank', { gain: -13, pan: ((x - CX) / CX) * 0.6, motion: m.id }));
+      const m = s.draw(card.querySelectorAll('.equip [pathLength]'), { a: at - 0.75, b: at + 0.5, stagger: 0, ease: Ease.out, sfx: 'draw', gain: -15, label: `${label} draws` });
+      m.cues.push(S.cue(s.t(at - 0.25), 'clank', { gain: -13, pan: ((x - CX) / CX) * 0.6, motion: m.id }));  // drawing reads complete as the card lands
       const l = s.text(label, { cls: 'label' });
       s.place(l, { x: x + 180, y: 668, ax: 1 });
       s.enter(l, 'rise', { land: at + 0.5, sfx: ['tick'] });
@@ -313,12 +313,13 @@ export function build(S, rt) {
   S.persistent('vignette', { cls: 'vignette' }).item('<div></div>', { x: CX, y: CY, w: 1920, h: 1080 });
 
   // ---------- helpers that need the studio ----------
-  function pingNode(S, s, node, beat) {
+  // pingAt: the bell can sit on another visual beat (here: the headline landing on the cut).
+  function pingNode(S, s, node, beat, pingAt = beat) {
     s.enter(node, 'pop', { land: beat, sfx: 'tick' });
     const halo = node.querySelector('.halo');
     S.tween(halo, { s: 0.8, o: 0.0 }, { s: 1.0, o: 0.9 }, s.t(beat), s.t(beat) + S.f(4), Ease.out);
     S.tween(halo, { s: 1.0, o: 0.9 }, { s: 2.2, o: 0 }, s.t(beat) + S.f(4), s.t(beat + 2), Ease.out);
-    S.cue(s.t(beat), 'ping', { gain: -10, pan: 0 });
+    S.cue(s.t(pingAt), 'ping', { gain: -10, pan: 0 });
   }
 
   function impact(S, s, { glow, shock, markBox }) {

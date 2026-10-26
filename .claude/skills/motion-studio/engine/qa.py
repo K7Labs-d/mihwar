@@ -48,12 +48,16 @@ def decode_audio(path):
 
 
 def onset_curve(x, sr, hop=240):
-    """Spectral flux, one value per `hop` samples (5 ms)."""
+    """Spectral flux, one value per `hop` samples (5 ms). 100 ms of silence is prepended: a sound on
+    frame 0 rises out of the player's silence, but without a pre-roll the first analysis window
+    already contains it and the rise is invisible."""
     m = x.mean(axis=1) if x.ndim == 2 else x
+    pad = int(0.1 * sr)
+    m = np.concatenate([np.zeros(pad), m])
     f, t, Z = signal.stft(m, sr, nperseg=1024, noverlap=1024 - hop, boundary=None, padded=False)
     mag = np.log1p(np.abs(Z) * 100)
     flux = np.maximum(0, np.diff(mag, axis=1)).sum(axis=0)
-    times = t[1:]
+    times = t[1:] - pad / sr
     return times, flux
 
 
