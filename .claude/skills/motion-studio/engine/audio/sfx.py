@@ -41,6 +41,21 @@ def swell(seed, length=0.5, pitch=0.0):
     return widen(stereo(y), 0.4, seed), n - 1
 
 
+def breath(seed, length=None, pitch=0.0):
+    """Transition: a soft, dark air swell that rises smoothly into the cut and lets go after it.
+    Everything below ~1.6 kHz and no sudden onset, so it never reads as a crack or a whoosh."""
+    rise, rel = 0.55, 0.3
+    n = n_of(rise + rel)
+    t = np.arange(n) / SR
+    x = noise(rise + rel, seed, 'pink')
+    f = np.where(t < rise, 280 + 1300 * (t / rise) ** 2, 1580 * np.exp(-(t - rise) / 0.12) + 250) * _pitch(pitch)
+    y = sweep_filter(x, 'lowpass', f)
+    e = np.where(t < rise, np.sin(np.pi / 2 * t / rise) ** 3, np.exp(-(t - rise) / 0.09))
+    y = y * e
+    y /= np.max(np.abs(y)) + 1e-9
+    return widen(stereo(y), 0.4, seed), n_of(rise)
+
+
 def land(seed, length=None, pitch=0.0):
     """Soft low thump with a felt click: something settling into place."""
     dur = 0.32
@@ -201,4 +216,4 @@ def shimmer(seed, length=None, pitch=0.0):
     return reverb(stereo(y * 0.5), wet=0.4, dur=2.4, seed=29), n_of(0.002)
 
 
-RECIPES = {f.__name__: f for f in [whoosh, swell, land, tick, blip, ping, draw, clank, hit, sub, riser, snap, pulse, shimmer]}
+RECIPES = {f.__name__: f for f in [whoosh, breath, swell, land, tick, blip, ping, draw, clank, hit, sub, riser, snap, pulse, shimmer]}

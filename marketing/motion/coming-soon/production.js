@@ -143,8 +143,8 @@ export function build(S, rt) {
     // The riser climbs with the chaos and ends where the lines lock (90% of the snap ease).
     s.proc('tangle tightens', { a: 4, b: 6.5, sfx: { name: 'riser', at: 6.5, len: S.b(2.5), gain: -9 } });
     s.proc('lines snap into one axis', { a: 5.5, b: 7, sfx: [{ name: 'snap', at: 6.5, gain: -6 }] });
-    s.move(nR, {}, { x: CX - XR, s: 0.2, o: 0 }, { a: 7, b: 7.5, ease: Ease.in, sfx: 'swell', gain: -12, label: 'right node collapses' });
-    s.move(nL, {}, { x: CX - XL, s: 0.2, o: 0 }, { a: 7, b: 7.5, ease: Ease.in, sfx: false, silent: 'mirrors the right node; one swell covers both', label: 'left node collapses' });
+    s.move(nR, {}, { x: CX - XR, s: 0.2, o: 0 }, { a: 7, b: 7.5, ease: Ease.in, sfx: 'swell', gain: -12, land: null, label: 'right node collapses' });
+    s.move(nL, {}, { x: CX - XL, s: 0.2, o: 0 }, { a: 7, b: 7.5, ease: Ease.in, land: null, silent: 'mirrors the right node; one swell covers both', label: 'left node collapses' });
     const spark = s.item('<div class="spark"></div>', { x: CX, y: CY, w: 28, h: 28 });
     s.enter(spark, 'pop', { land: 7.5, sfx: 'tick' });
 
@@ -171,12 +171,12 @@ export function build(S, rt) {
     const shock = s.item('<div class="shock"></div>', { x: CX, y: CY, w: 320, h: 320 });
     const markBox = s.item(MARK(300), { x: CX, y: CY, w: 300, h: 300 });
     impact(S, s, { glow, shock, markBox });
-    s.move(markBox, { y: 0, s: 1 }, { y: -150, s: 0.78 }, { a: 1, b: 1.75, sfx: 'whoosh', gain: -14, label: 'mark rises to make room for the name' });
+    s.move(markBox, { y: 0, s: 1 }, { y: -150, s: 0.78 }, { a: 1, b: 1.75, land: null, silent: 'rides under the wordmark landing', label: 'mark rises to make room for the name' });
     S.tween(glow, {}, { y: -150 }, s.t(1), s.t(1.75), Ease.move);
 
     const word = s.text('محور', { cls: 'wordmark' });
     s.place(word, { x: CX, y: 625 });
-    s.enter(word, 'dolly', { land: 1.75, sfx: ['whoosh', 'land'] });
+    s.enter(word, 'dolly', { land: 1.75, sfx: ['land'] });
     const lat = s.text('MIHWAR', { cls: 'latin-mark latin', split: 'none' });
     s.place(lat, { x: CX, y: 770, w: 900 });
     s.enter(lat, 'rise', { land: 2.25, sfx: ['tick'] });
@@ -195,15 +195,15 @@ export function build(S, rt) {
     const nL = s.item(NODE('box', 130), { x: 440, y: Y, w: 130, h: 130 });
     const mk = s.item(MARK(170), { x: CX, y: Y, w: 170, h: 170 });
     s.enter(mk, 'pop', { land: 0, sfx: 'tick' });
-    s.enter(nR, 'swing', { land: 0, sfx: 'whoosh' });
-    s.enter(nL, 'swing', { land: 0, sfx: false, silent: 'lands with the right node; one whoosh covers the pair' });
+    s.enter(nR, 'swing', { land: 0, sfx: 'land' });
+    s.enter(nL, 'swing', { land: 0, sfx: false, silent: 'lands with the right node; one landing covers the pair' });
     const line = s.item(`<svg width="1920" height="40" viewBox="0 0 1920 40" fill="none"><path class="axis" d="M1408 20H1048" pathLength="1"/><path class="axis" d="M872 20H512" pathLength="1"/></svg>`, { x: CX, y: Y, w: 1920, h: 40 });
     s.draw(line.querySelectorAll('path'), { a: 0.25, b: 1.25, stagger: 6, ease: Ease.move, sfx: 'draw', gain: -12, label: 'axis connects the sides' });
     const dot = s.item('<div class="pulse"></div>', { x: 1408, y: Y, w: 22, h: 22 });
     S.tween(dot, { o: 0 }, { o: 0 }, s.t(0), s.t(0), Ease.linear);
     for (const [a, b] of [[2, 3], [4, 5]]) {
       S.tween(dot, { o: 0 }, { o: 1 }, s.t(a), s.t(a) + S.f(3), Ease.linear);
-      s.move(dot, { x: 0 }, { x: 512 - 1408 }, { a, b, ease: Ease.move, sfx: 'pulse', gain: -12, label: 'pulse crosses the axis' });
+      s.move(dot, { x: 0 }, { x: 512 - 1408 }, { a, b, ease: Ease.move, sfx: 'pulse', gain: -12, land: null, label: 'pulse crosses the axis' });
       S.tween(dot, { o: 1 }, { o: 0 }, s.t(b) - S.f(3), s.t(b), Ease.linear);
     }
     const h = s.text('يربط صاحب الاحتياج بمالك المعدة.', { cls: 'h2' });
@@ -217,7 +217,7 @@ export function build(S, rt) {
     const s = S.shot('context', { at: 30, beats: 6 });
     const h = s.text('الطلب والعرض والمتابعة', { cls: 'h2' });
     s.place(h, { x: CX, y: 220 });
-    s.enter(h, 'swing', { lands: [0, 0.5, 1], sfx: ['whoosh', 'land'] });
+    s.enter(h, 'swing', { lands: [0, 0.5, 1], sfx: ['land'] });
     const xs = [1440, CX, 480], icons = ['file', 'tag', 'chat'];
     const cards = xs.map((x, i) => {
       const c = s.item(`<div class="card">${icon(icons[i], 52, 'card-ico')}<i class="sk" style="width:62%"></i><i class="sk" style="width:84%"></i><i class="sk" style="width:46%"></i></div>`, { x, y: 525, w: 400, h: 260 });
@@ -226,8 +226,8 @@ export function build(S, rt) {
     });
     const rim = s.item(`<div class="card rim"><div class="trio">${icon('file', 46)}${icon('tag', 46)}${icon('chat', 46)}</div><i class="sk" style="width:84%"></i><i class="sk" style="width:46%"></i></div>`, { x: CX, y: 525, w: 400, h: 260 });
     S.tween(rim, { o: 0 }, { o: 0 }, s.t(0), s.t(0), Ease.linear);
-    s.move(cards[0], {}, { x: CX - 1440, z: -60 }, { a: 2.25, b: 2.75, ease: Ease.snap, sfx: 'whoosh', gain: -12, land: 'hit', landGain: -11, label: 'right panel merges' });
-    s.move(cards[2], {}, { x: CX - 480, z: -60 }, { a: 2.25, b: 2.75, ease: Ease.snap, sfx: false, silent: 'merges with the right panel under one hit', label: 'left panel merges' });
+    s.move(cards[0], {}, { x: CX - 1440, z: -60 }, { a: 2.25, b: 2.75, ease: Ease.snap, land: 'hit', landGain: -11, label: 'right panel merges' });
+    s.move(cards[2], {}, { x: CX - 480, z: -60 }, { a: 2.25, b: 2.75, ease: Ease.snap, land: null, silent: 'merges with the right panel under one hit', label: 'left panel merges' });
     S.tween(cards[0], {}, { o: 0 }, s.t(2.7), s.t(2.9), Ease.linear);
     S.tween(cards[2], {}, { o: 0 }, s.t(2.7), s.t(2.9), Ease.linear);
     S.tween(cards[1], {}, { s: 1.06 }, s.t(2.6), s.t(2.85), Ease.out);
@@ -249,7 +249,7 @@ export function build(S, rt) {
     cfgs.forEach(([k, label, x], i) => {
       const at = 0.25 + i * 1.25;
       const card = s.item(`<div class="card tall">${drawing(k, 360)}<span class="arrow">←</span></div>`, { x, y: 500, w: 440, h: 470 });
-      s.enter(card, 'swing', { land: at - 0.25, sfx: 'whoosh' });
+      s.enter(card, 'swing', { land: at - 0.25, sfx: false, silent: 'the clank lands on the same beat' });
       // Drawing starts before the card lands (and before the cut for the first card): no empty card on screen.
       const m = s.draw(card.querySelectorAll('.equip [pathLength]'), { a: at - 0.75, b: at + 0.5, stagger: 0, ease: Ease.out, sfx: 'draw', gain: -15, label: `${label} draws` });
       m.cues.push(S.cue(s.t(at - 0.25), 'clank', { gain: -13, pan: ((x - CX) / CX) * 0.6, motion: m.id }));  // drawing reads complete as the card lands
@@ -271,7 +271,7 @@ export function build(S, rt) {
     s.enter(b, 'rise', { land: 1 });
     const MY = 610;
     const mk = s.item(MARK(170), { x: CX, y: MY, w: 170, h: 170 });
-    s.enter(mk, 'dolly', { land: 1.5, sfx: ['whoosh'] });
+    s.enter(mk, 'dolly', { land: 1.5, sfx: ['land'] });
     const nodes = [['user', 'المستأجر', 1420, MY], ['box', 'المؤجر', 500, MY], ['shield', 'الإدارة', CX, 850]];
     const lines = s.item(`<svg width="1920" height="1080" viewBox="0 0 1920 1080" fill="none">
       <path class="axis" d="M1355 ${MY}H1055" pathLength="1"/><path class="axis" d="M565 ${MY}H865" pathLength="1"/><path class="axis" d="M${CX} 785V705" pathLength="1"/></svg>`, { x: CX, y: CY, w: 1920, h: 1080 });
@@ -303,11 +303,14 @@ export function build(S, rt) {
     S.track(lat, 'ls', 1.4, 0.62, s.t(0.9), s.t(2.25), Ease.out);
     const pill = s.item('<div class="pill"><i></i></div>', { x: CX, y: 905, w: 400, h: 120 });
     const soon = s.text('قريبًا', { cls: 'soon', parent: pill.firstChild });
-    s.enter(pill, 'drop', { land: 2.25, sfx: ['whoosh', 'shimmer'] });
+    s.enter(pill, 'drop', { land: 2.25, sfx: ['shimmer'] });
     S.cue(s.t(2.25), 'land', { gain: -12 });
     s.camera({ z: 120, ry: -2.5 });
     void soon; // entered through the pill
   }
+
+  // ---------- transitions: one soft breath into every plain cut (the two logo hits keep their silence) ----------
+  for (const sh of S.shots) if (!['need', 'reveal', 'end'].includes(sh.id)) S.cue(sh.t0, 'breath', { gain: -15 });
 
   // ---------- persistent vignette on top ----------
   S.persistent('vignette', { cls: 'vignette' }).item('<div></div>', { x: CX, y: CY, w: 1920, h: 1080 });

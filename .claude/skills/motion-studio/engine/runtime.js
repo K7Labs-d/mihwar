@@ -340,9 +340,9 @@ export class Shot {
   }
 
   // Free move between two beats. Emits a sound unless told why not.
-  move(el, from, to, { a, b, ease = Ease.move, sfx = 'whoosh', gain = -10, land = null, landGain = -10, label = 'move', silent = null }) {
+  move(el, from, to, { a, b, ease = Ease.move, sfx = null, gain = -10, land = 'land', landGain = -12, label = 'move', silent = null }) {
     const S = this.S, t0 = this.t(a), t1 = this.t(b);
-    if (!sfx && !silent) throw new Error(`${label}: a motion without sound needs silent: '<reason>'`);
+    if (!sfx && !land && !silent) throw new Error(`${label}: a motion without sound needs silent: '<reason>'`);
     S.tween(el, from, to, t0, t1, ease);
     const m = S.motion({ kind: 'move', label, el, t0, t1, tSync: t0 + peakVelFrac(ease) * (t1 - t0), shot: this.id, silent });
     if (sfx && !silent) m.cues.push(S.cue(m.tSync, sfx, { gain, len: t1 - t0, el, motion: m.id }));
@@ -388,10 +388,10 @@ export class Shot {
 // d = frames, st = stagger frames per word (reading order: right to left in Arabic).
 export const PRESETS = {
   enter: {
-    rise: { d: 20, st: 3, ease: Ease.out, origin: '50% 100%', from: em => ({ y: 0.55 * em, z: -260, rx: 78, o: 0, blur: 10 }), sfx: ['whoosh', 'land'] },
-    swing: { d: 22, st: 3, ease: Ease.out, origin: '100% 50%', from: em => ({ x: 0.2 * em, z: -180, ry: -70, o: 0, blur: 8 }), sfx: ['whoosh', 'land'] },
-    dolly: { d: 26, st: 0, ease: Ease.out, origin: '50% 50%', from: () => ({ z: -1400, o: 0, blur: 16 }), sfx: ['whoosh', 'land'] },
-    drop: { d: 18, st: 2, ease: Ease.out, origin: '50% 0%', from: em => ({ y: -0.5 * em, z: 220, rx: -70, o: 0, blur: 10 }), sfx: ['whoosh', 'land'] },
+    rise: { d: 20, st: 3, ease: Ease.out, origin: '50% 100%', from: em => ({ y: 0.55 * em, z: -260, rx: 78, o: 0, blur: 10 }), sfx: ['land'] },
+    swing: { d: 22, st: 3, ease: Ease.out, origin: '100% 50%', from: em => ({ x: 0.2 * em, z: -180, ry: -70, o: 0, blur: 8 }), sfx: ['land'] },
+    dolly: { d: 26, st: 0, ease: Ease.out, origin: '50% 50%', from: () => ({ z: -1400, o: 0, blur: 16 }), sfx: ['land'] },
+    drop: { d: 18, st: 2, ease: Ease.out, origin: '50% 0%', from: em => ({ y: -0.5 * em, z: 220, rx: -70, o: 0, blur: 10 }), sfx: ['land'] },
     pop: { d: 14, st: 2, ease: Ease.out, origin: '50% 50%', from: () => ({ z: -320, s: 0.82, o: 0, blur: 6 }), sfx: ['tick'] },
   },
   exit: {
