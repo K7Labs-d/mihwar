@@ -130,9 +130,11 @@ def hit(seed, length=None, pitch=0.0):
     body = sine(f) * env_ad(n, 0.001, 1.1)
     burst = filt(noise(dur, seed, 'pink'), 'lowpass', 3500) * env_ad(n, 0.0005, 0.35)
     steel = sum(a * sine(110 * k * r, dur) * env_ad(n, 0.001, d) for r, a, d in [(2.76, 0.25, 0.9), (5.4, 0.15, 0.6), (8.93, 0.08, 0.4)])
-    # Broadband crack on top: without it the hit is a low thump with no audible front edge.
-    crack = filt(noise(dur, seed + 7), 'bandpass', (1200, 9000)) * env_ad(n, 0.0008, 0.07)
-    y = saturate(body * 1.0 + burst * 0.55 + steel + crack * 0.9, 1.6)
+    # Round front edge: low-passed noise thump (<= 1.8 kHz) with a 3 ms attack. A broadband
+    # high-frequency burst here reads as a whip crack, so nothing above ~2 kHz is added.
+    thump = filt(noise(dur, seed + 7), 'lowpass', 1800, 2) * env_ad(n, 0.003, 0.09)
+    mid = sine(f * 2.2) * env_ad(n, 0.002, 0.12) * 0.5
+    y = saturate(body * 1.0 + burst * 0.4 + steel + thump * 1.1 + mid, 1.6)
     return reverb(stereo(y), wet=0.3, dur=3.0, seed=17, damp=3500), n_of(0.001)
 
 
