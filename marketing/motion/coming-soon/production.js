@@ -283,7 +283,16 @@ export function build(S, rt) {
       if (i === 2) s.place(l, { x: x + 90, y, ax: 0 });
       else s.place(l, { x, y: y + 112 });
       s.enter(l, 'rise', { land: 2.25 + i * 0.5, sfx: ['land'] });
+      // Closing: everything but the mark withdraws quietly before the dissolve.
+      s.exit(l, 'sink', { at: 4.9, sfx: i === 0 ? 'breath' : false, silent: i === 0 ? null : 'one breath covers the three labels' });
+      S.tween(n, {}, { o: 0, s: 0.9 }, s.t(4.9), s.t(5.6), Ease.in);
     });
+    S.tween(lines, {}, { o: 0 }, s.t(4.9), s.t(5.6), Ease.in);
+    s.exit(a, 'sink', { at: 4.25, sfx: 'breath' });
+    s.exit(b, 'sink', { at: 4.4, sfx: false, silent: 'shares the headline breath' });
+    // The mark rises and grows into its place on the end card: the dissolve lands on it.
+    s.move(mk, {}, { y: 400 - MY, s: 250 / 170 }, { a: 4.5, b: 5.5, ease: Ease.drift, land: null, silent: 'carried by the closing breath', label: 'mark rises into the end card' });
+    S.tween(mk, {}, { o: 0 }, s.t(5.25), s.t(5.6), Ease.in);   // hands over to the end card's mark: no double image
     s.camera({ z: 80, ry: 3 });
   }
 
@@ -291,9 +300,13 @@ export function build(S, rt) {
   {
     const s = S.shot('end', { at: 48, beats: 8, persp: 1600 });
     const glow = s.item('<div class="glow"></div>', { x: CX, y: 400, w: 1000, h: 1000 });
-    const shock = s.item('<div class="shock"></div>', { x: CX, y: 400, w: 280, h: 280 });
     const markBox = s.item(MARK(250), { x: CX, y: 400, w: 250, h: 250 });
-    impact(S, s, { glow, shock, markBox });
+    // A closing, not a beginning: dissolve onto a mark that is already whole, the light warms
+    // slowly, and the opening bell returns to bookend the film.
+    s.dissolveIn(0.5);
+    S.tween(glow, { o: 0, s: 0.85 }, { o: 0.6, s: 1 }, s.t(-0.5), s.t(2), Ease.drift);
+    s.move(markBox, { z: 60 }, { z: 0 }, { a: -1, b: 1.5, ease: Ease.drift, land: null, silent: 'settles under the closing bell', label: 'mark settles' });
+    S.cue(s.t0, 'ping', { gain: -9 });
     const word = s.text('محور', { cls: 'wordmark' });
     s.place(word, { x: CX, y: 640 });
     s.enter(word, 'dolly', { land: 0.75 });
@@ -309,8 +322,8 @@ export function build(S, rt) {
     void soon; // entered through the pill
   }
 
-  // ---------- transitions: one soft breath into every plain cut (the two logo hits keep their silence) ----------
-  for (const sh of S.shots) if (!['need', 'reveal', 'end'].includes(sh.id)) S.cue(sh.t0, 'breath', { gain: -15 });
+  // ---------- transitions: one soft breath into every cut except the opening and the logo drop ----------
+  for (const sh of S.shots) if (!['need', 'reveal'].includes(sh.id)) S.cue(sh.t0, 'breath', { gain: -15 });
 
   // ---------- persistent vignette on top ----------
   S.persistent('vignette', { cls: 'vignette' }).item('<div></div>', { x: CX, y: CY, w: 1920, h: 1080 });

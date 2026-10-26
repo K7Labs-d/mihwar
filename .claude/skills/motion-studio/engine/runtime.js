@@ -266,6 +266,15 @@ export class Shot {
     if (!persistent) S.motion({ kind: 'cut', label: `cut into ${id}`, t0: this.t0, t1: this.t0, tSync: this.t0, shot: id });
   }
 
+  // Dissolve in from the previous shot over `beats` (the previous shot stays underneath).
+  // A soft, closing transition; hard cuts stay the default.
+  dissolveIn(beats) {
+    const S = this.S;
+    this.pre = S.b(beats);
+    S.tween(this.el, { o: 0 }, { o: 1 }, this.t0 - this.pre, this.t0, Ease.drift);
+    S.motion({ kind: 'move', label: `${this.id}: dissolve in`, t0: this.t0 - this.pre, t1: this.t0, tSync: this.t0, shot: this.id, silent: 'the transition sound sits on the cut' });
+  }
+
   // Positioned box centred on (x, y).
   item(html, { x, y, w, h, cls = '', parent = this.cam }) {
     const el = document.createElement('div');
@@ -402,7 +411,7 @@ export const PRESETS = {
   },
 };
 
-const SFX_GAIN = { whoosh: -9, land: -12, tick: -14, swell: -12 };
+const SFX_GAIN = { whoosh: -9, land: -12, tick: -14, swell: -12, breath: -18 };
 
 function runPreset(shot, el, P, kind, name, { tSync, tStart, lands, sfx, stagger, dur, silent }) {
   const S = shot.S;

@@ -52,7 +52,12 @@ try {
     const hasSound = (m.cues || []).length > 0;
     if (m.kind === 'cut') continue; // checked against music onsets by the mixer
     if (!hasSound && !m.silent) add('FAIL', 'sound-for-every-motion', `${m.label} (${m.shot}) has no sound and no reason`);
-    if (!hasSound && m.silent && /^(enter|exit)$/.test(m.kind) && /"/.test(m.label)) add('FAIL', 'sound-for-every-motion', `text motion cannot be silent: ${m.label}`);
+    // A text motion may stay silent only when another sound in the same shot plays during it
+    // (one sound for one gesture, e.g. three labels leaving together).
+    if (!hasSound && m.silent && /^(enter|exit)$/.test(m.kind) && /"/.test(m.label)) {
+      const shared = man.cues.some(c => c.t >= m.t0 - frame && c.t <= m.t1 + frame && man.motions.some(o => o.shot === m.shot && (o.cues || []).includes(c.id)));
+      if (!shared) add('FAIL', 'sound-for-every-motion', `text motion is silent and no other sound plays during it: ${m.label}`);
+    }
     for (const id of m.cues || []) {
       const c = cueById[id];
       if (c.t < m.t0 - 0.25 || c.t > m.t1 + 0.25) add('WARN', 'cue-near-motion', `${m.label}: cue ${c.name} at ${c.t.toFixed(3)}s is far from its motion (${m.t0.toFixed(3)}-${m.t1.toFixed(3)})`);

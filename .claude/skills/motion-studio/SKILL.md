@@ -106,6 +106,7 @@ export function build(S, rt) {            // S = Studio, rt = { Ease, noise1, ..
 | الدالة | الغرض | الصوت التلقائي |
 |---|---|---|
 | `S.shot(id, {at, beats, persp})` | لقطة؛ القطع عند `at` | يحتاج ضربة موسيقى أو مؤثر على إطار القطع |
+| `s.dissolveIn(beats)` | ذوبان من اللقطة السابقة (للختام؛ القطع الحاد هو الافتراضي) | يحتاج صوت على إطار القطع |
 | `S.persistent(id)` | طبقة طول الفيلم (خلفية، تظليل) | — |
 | `s.text(str, {cls, parent, split, allowOverlap})` | نص بكلمات منفصلة | — |
 | `s.item(html, {x, y, w, h})` · `s.depth(z)` | عنصر في مكانه · مستوى عمق للـ parallax | — |
