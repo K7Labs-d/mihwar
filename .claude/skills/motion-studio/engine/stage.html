@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="/engine/base.css">
+<link rel="stylesheet" href="/brand/brand.css">
+<link rel="stylesheet" href="/prod/style.css">
+</head>
+<body>
+<div id="stage"></div>
+<script type="module">
+  import * as rt from '/engine/runtime.js';
+  const prod = await import('/prod/production.js');
+  const fmt = new URLSearchParams(location.search).get('format') || prod.config.formats[0];
+  const [width, height] = fmt.split('x').map(Number);
+  const cfg = { ...prod.config, width, height, format: fmt };
+  document.body.classList.add(width >= height ? 'landscape' : 'portrait');
+  // Every face the production uses must be decoded before the first frame.
+  await Promise.all((prod.config.fonts || []).map(f => document.fonts.load(f)));
+  await document.fonts.ready;
+  const stage = document.getElementById('stage');
+  const S = new rt.Studio(stage, cfg);
+  await prod.build(S, rt);
+  await Promise.all([...document.images].map(i => i.decode().catch(() => {})));
+  S.seek(0);
+  window.__S = S;
+  window.__ready = true;
+</script>
+</body>
+</html>

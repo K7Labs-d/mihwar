@@ -1,0 +1,22 @@
+{
+  "name": "MIHWAR · محور",
+  "source": "MIHWAR Product Dossier 2026 (8 pages, 28 Sep 2026). Colours measured from rendered pages 1-2; fonts from the PDF's embedded faces.",
+  "colors": {
+    "bg": "#090b0e", "surface": "#111418", "raised": "#171b20", "line": "#1b1f24",
+    "ink": "#f2efe8", "body": "#adb0b4", "gold": "#c6a15b", "goldHi": "#d8bd7a"
+  },
+  "fonts": {
+    "arabic": "Noto Sans Arabic (variable, 100-900)",
+    "wordmark": "Noto Kufi Arabic 500",
+    "latin": "Noto Sans (variable)"
+  },
+  "mark": "mark.svg — outer ring r40, four ticks r23.9-44.4, inner ring r19.5, diamond half-diagonal 12.7 (viewBox 100)",
+  "honesty": [
+    "No market figures, customers, revenue or ratings (dossier p.8).",
+    "Equipment drawings represent categories, not listed or available stock (dossier p.1).",
+    "Interfaces appear as empty skeletons, never with invented data (dossier p.3, p.5).",
+    "No launch date or URL unless one is supplied and sourced."
+  ],
+  "allowedNumbers": [],
+  "bannedPhrases": ["ثورة", "الأفضل", "الأول من نوعه", "المستقبل هنا", "الحل الأمثل", "لا مثيل", "رقم 1", "الأسرع", "مضمون", "100%"]
+}

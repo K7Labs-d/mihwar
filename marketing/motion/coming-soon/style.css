@@ -1,0 +1,45 @@
+/* Production styles. Sizes are for the 1920x1080 master. */
+.h1 { font-size: 96px; font-weight: 600; line-height: 1.5; color: var(--ink); }
+.h2 { font-size: 80px; font-weight: 600; line-height: 1.5; color: var(--ink); }
+.h1.gold, .h2.gold { color: var(--gold-hi); }
+.h1.hook { font-size: 112px; }
+.label { font-size: 46px; font-weight: 600; line-height: 1.5; color: var(--ink); }
+.label.muted { color: var(--body); font-weight: 500; }
+.tagline { font-size: 56px; font-weight: 400; line-height: 1.5; color: var(--body); }
+.wordmark { font-family: var(--kufi); font-size: 170px; font-weight: 500; line-height: 1.4; color: var(--ink); }
+.latin-mark { font-size: 46px; font-weight: 500; line-height: 1.4; color: var(--gold); letter-spacing: 0.62em; text-align: center; text-indent: 0.62em; }
+.soon { font-size: 66px; font-weight: 600; line-height: 1.5; color: var(--gold-hi); }
+
+.bg .grid { width: 100%; height: 100%;
+  background-image: linear-gradient(to right, rgba(198,161,91,.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(198,161,91,.05) 1px, transparent 1px);
+  background-size: 120px 120px; background-position: center;
+  -webkit-mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, #000 0%, rgba(0,0,0,.35) 55%, transparent 100%);
+          mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, #000 0%, rgba(0,0,0,.35) 55%, transparent 100%); }
+.vignette .item > div { width: 100%; height: 100%; background: radial-gradient(ellipse 75% 75% at 50% 50%, transparent 55%, rgba(0,0,0,.6) 100%); }
+
+.node { position: relative; color: var(--gold); transform-style: preserve-3d; }
+.node .halo { position: absolute; inset: 0; border-radius: 50%; border: 1.5px solid var(--gold); opacity: 0; }
+.node .node-ring { position: absolute; inset: 0; }
+.node .node-ico { position: absolute; inset: 0; display: grid; place-items: center; }
+.node::before { content: ''; position: absolute; inset: 8%; border-radius: 50%; background: radial-gradient(circle, rgba(198,161,91,.12), rgba(198,161,91,0) 70%); }
+
+.blip { color: var(--gold); opacity: .9; }
+.spark { width: 100%; height: 100%; border-radius: 50%; background: var(--gold-hi); box-shadow: 0 0 24px 8px rgba(216,189,122,.55), 0 0 80px 30px rgba(198,161,91,.25); }
+.glow { width: 100%; height: 100%; border-radius: 50%; background: radial-gradient(circle, rgba(198,161,91,.16) 0%, rgba(198,161,91,.05) 35%, rgba(198,161,91,0) 65%); }
+.shock { width: 100%; height: 100%; border-radius: 50%; border: 2px solid var(--gold-hi); box-shadow: 0 0 30px rgba(216,189,122,.35); }
+.mark { display: block; }
+.mark .m-core { transform-box: fill-box; transform-origin: 50% 50%; }
+.axis { stroke: var(--gold); stroke-width: 2.2; stroke-linecap: round; }
+.pulse { width: 100%; height: 100%; border-radius: 50%; background: var(--gold-hi); box-shadow: 0 0 18px 6px rgba(216,189,122,.6); }
+
+.card { position: absolute; inset: 0; border-radius: 22px; background: #13171b; border: 1.5px solid #3a4249; padding: 38px 40px; box-sizing: border-box; color: var(--gold); display: flex; flex-direction: column; align-items: flex-start; gap: 18px; }
+.card .card-ico { margin-bottom: 8px; }
+.card .sk { display: block; height: 16px; border-radius: 8px; background: #272d33; }
+.card.rim .trio { display: flex; gap: 22px; margin-bottom: 8px; }
+.card.rim { background: var(--surface); border: 2px solid var(--gold); box-shadow: 0 0 40px rgba(198,161,91,.18); }
+.card.tall { padding: 40px 40px 0; align-items: center; }
+.card.tall .equip { margin-top: 24px; }
+.card.tall .arrow { position: absolute; left: 40px; bottom: 34px; font-family: var(--lat); font-size: 40px; line-height: 1; color: var(--gold); }
+
+.pill { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 22px; border: 2px solid var(--gold); border-radius: 999px; background: rgba(17,20,24,.6); box-sizing: border-box; transform-style: preserve-3d; }
+.pill i { width: 16px; height: 16px; border-radius: 50%; background: var(--gold-hi); box-shadow: 0 0 12px rgba(216,189,122,.7); }
