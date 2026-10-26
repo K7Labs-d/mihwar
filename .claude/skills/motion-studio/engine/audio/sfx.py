@@ -163,22 +163,17 @@ def riser(seed, length=1.0, pitch=0.0):
 
 
 def snap(seed, length=None, pitch=0.0):
-    """Lines locking into one axis: a short rising zip that ends in a click."""
-    zip_d = 0.07
-    dur = 0.5
+    """Lines locking into one axis: a soft, low 'lock' (felt thump + short muted tick).
+    No rising zip and no sharp click: that combination reads as a whip crack."""
+    dur = 0.45
     n = n_of(dur)
     t = t_axis(dur)
-    f = np.where(t < zip_d, 300 + 1800 * (t / zip_d) ** 2, 2100) * _pitch(pitch)
-    zipper = sine(f) * np.where(t < zip_d, (t / zip_d), 0) * 0.5
-    click_t = n_of(zip_d)
-    click = np.zeros(n)
-    c = filt(noise(0.02, seed), 'highpass', 2500) * env_ad(n_of(0.02), 0.0002, 0.008)
-    click[click_t:click_t + len(c)] = c
-    thump = np.zeros(n)
-    th = sine(90, 0.25) * env_ad(n_of(0.25), 0.001, 0.16)
-    thump[click_t:click_t + len(th)] = th[:n - click_t]
-    y = zipper + click * 0.9 + thump * 0.8
-    return reverb(stereo(y), wet=0.2, dur=1.2, seed=19), click_t
+    k = _pitch(pitch)
+    f = (150 * np.exp(-t / 0.03) + 85) * k
+    body = sine(f) * env_ad(n, 0.003, 0.2)
+    tick = filt(noise(dur, seed), 'bandpass', (700, 2600)) * env_ad(n, 0.002, 0.025) * 0.25
+    y = saturate(body * 0.9 + tick, 1.2)
+    return reverb(fade(stereo(y), 0.001, 0.02), wet=0.18, dur=1.1, seed=19), n_of(0.003)
 
 
 def pulse(seed, length=0.5, pitch=0.0):
