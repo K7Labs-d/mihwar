@@ -42,14 +42,15 @@ def kick(vel=1.0, seed=0):
 
 
 def clap(vel=1.0, seed=0):
-    d = 0.6
+    """Backbeat accent as a soft low tom (felt body + muted tick). A noise clap (bandpassed
+    burst train) reads as a whip crack when it repeats every bar, so there is no broadband noise here."""
+    d = 0.4
     n = n_of(d)
-    nz = filt(noise(d, seed), 'bandpass', (900, 5200))
-    e = np.zeros(n)
-    for i, off in enumerate([0, 0.009, 0.019, 0.028]):
-        s = n_of(off)
-        e[s:] += env_ad(n - s, 0.0005, 0.05 if i < 3 else 0.32) * (0.8 if i < 3 else 1.0)
-    return reverb(stereo(nz * e * vel * 0.7), wet=0.3, dur=1.4, seed=31)
+    t = np.arange(n) / SR
+    f = 95 + 70 * np.exp(-t / 0.04)
+    body = sine(f) * env_ad(n, 0.003, 0.22)
+    tick = filt(noise(d, seed), 'bandpass', (500, 2000)) * env_ad(n, 0.003, 0.03) * 0.2
+    return reverb(stereo(saturate((body + tick) * vel * 0.8, 1.2)), wet=0.15, dur=1.0, seed=31)
 
 
 def hat(vel=1.0, open_=False, seed=0):
