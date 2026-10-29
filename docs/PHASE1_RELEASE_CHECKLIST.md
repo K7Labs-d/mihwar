@@ -1,5 +1,17 @@
 # Phase 1 release checklist
 
+## October 2026 Node.js security update
+
+Render's October 23 advisory applies to this application's Node.js build and runtime. The reviewed configuration pins Render and CI to Node.js `24.22.1`; the package engine requires `>=24.22.1 <25`. Dependency versions, application code, migrations, the database path, disk and manual deployment setting are unchanged by this update. References: [Node.js October 21 security release](https://nodejs.org/en/blog/vulnerability/october-2026-security-releases), [Node.js 24.22.1](https://nodejs.org/en/blog/release/v24.22.1), [Render advisory](https://render.com/docs/advisory-emudhra).
+
+The repository does not establish the live service's Node.js version or prove that its disk and backup are healthy. Before approving any merge or deployment:
+
+- In the existing Render service, record the live commit and `node --version` from its Shell (build logs alone do not prove the running process version). Confirm `NODE_VERSION`, any `NODE_OPTIONS` or custom CA settings, `AUTH_DB_PATH` and the actual persistent-disk mount. Render's environment variable takes precedence over repository version files and package engines.
+- Confirm the existing SQLite file and its WAL/SHM files are under the mounted disk, with sufficient free space. Do not change the path or create a replacement empty database. The build command only installs dependencies and compiles; the persistent disk is unavailable during build/pre-deploy, while application startup opens SQLite and runs any pending migrations.
+- Complete the consistent private SQLite backup and isolated recovery/migration rehearsal below. Record integrity/foreign-key results, migration ledger and before/after counts for accounts, requests, messages and equipment. Test fixtures are not evidence that production has a recoverable backup.
+- Compare the live commit with the intended release: even this configuration-only patch could deploy older pending application migrations if production is behind `main`. Do not assume a code-only rollback is compatible with the live schema.
+- Leave `autoDeployTrigger: "off"`. A later approved deployment must rebuild with the patched runtime to refresh the native runtime's system CA store; a restart alone is not a rebuild. Expect a brief outage for a disk-backed service. Verify the resulting live Node.js version, commit, health and data persistence before closing the advisory.
+
 ## Reviewed implementation
 
 The release extends the existing MIHWAR application; it does not replace it or connect it to Supabase. The application uses the existing Express authentication and SQLite database selected by `AUTH_DB_PATH`.
