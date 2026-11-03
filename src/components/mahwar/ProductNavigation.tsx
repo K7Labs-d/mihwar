@@ -8,7 +8,13 @@ import {
 } from '../../data/productPages';
 import { useAuth } from '../client/AuthContext';
 
-export function ProductNavigation({ page }: { page: Page }) {
+export function ProductNavigation({
+  page,
+  authScreen = false,
+}: {
+  page: Page;
+  authScreen?: boolean;
+}) {
   const { user } = useAuth();
   const root = getSectionRoot(page),
     admin = root === 'admin';
@@ -30,6 +36,18 @@ export function ProductNavigation({ page }: { page: Page }) {
     'broker',
     'notifications',
   ];
+  if (authScreen)
+    return (
+      <header className="client-auth-header">
+        <a href="#" className="client-auth-brand" aria-label="محور — الرئيسية">
+          <span className="client-auth-brand-name">
+            محور<span className="client-auth-mark" aria-hidden="true" />
+          </span>
+          <small>تأجير المعدات</small>
+        </a>
+        <a href="#" className="client-auth-home">الرئيسية</a>
+      </header>
+    );
   return (
     <>
       <header className="mahwar-header figma-header">
