@@ -59,7 +59,7 @@ try {
     page = await context.newPage();
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto(base + '/#marketplace');
-  await page.getByRole('heading', { name: 'حياك من جديد' }).waitFor();
+  await page.getByRole('heading', { name: 'أهلًا بعودتك' }).waitFor();
   assert.equal(await page.locator('.product-navigation').count(), 0);
   assert.equal(
     (await context.request.get(base + '/api/client/marketplace')).status(),
@@ -136,7 +136,7 @@ try {
   const lessorPage = await lessor.newPage();
   lessorPage.on('pageerror', (e) => errors.push(e.message));
   await lessorPage.goto(base + '/#client');
-  await lessorPage.getByRole('heading', {name:'حياك من جديد'}).waitFor();
+  await lessorPage.getByRole('heading', {name:'أهلًا بعودتك'}).waitFor();
   await lessorPage
     .getByRole('button', { name: 'إنشاء حساب جديد', exact: true })
     .click();
@@ -277,9 +277,9 @@ try {
   }
   await page.goto(base + '/#client');
   await page.getByRole('button', { name: 'تسجيل الخروج', exact: true }).click();
-  await page.getByRole('heading', { name: 'حياك من جديد' }).waitFor();
+  await page.getByRole('heading', { name: 'أهلًا بعودتك' }).waitFor();
   await page.goto(base + '/#equipment');
-  await page.getByRole('heading', { name: 'حياك من جديد' }).waitFor();
+  await page.getByRole('heading', { name: 'أهلًا بعودتك' }).waitFor();
   assert.equal(
     (await context.request.get(base + '/api/client/admin/overview')).status(),
     401,

@@ -183,160 +183,154 @@ export function ClientLogin({ admin = false }: { admin?: boolean }) {
       </section>
     );
   return (
-    <>
-      <div className="figma-context">
-        {admin
-          ? 'الإدارة / دخول خاص'
-          : registration
-            ? 'الحساب / إنشاء حساب'
-            : 'الحساب / تسجيل الدخول'}
-      </div>
-      <section
-        className="figma-content auth-layout"
-        data-node-id={registration ? '7:7' : '7:6'}
-      >
-        <div className="auth-introduction">
-          <h1>
-            {admin ? 'إدارة محور.\nقرار موثّق.' : 'محور يجمع كل أطراف العملية.'}
-          </h1>
-          <p className="muted">
-            {admin
-              ? 'دخول منفصل للحسابات المخولة. تُتحقق الصلاحيات في الخادم عند كل طلب.'
-              : 'حساب واحد للاستئجار والتأجير. الدخول مطلوب قبل تصفح المعدات أو الطلب أو التواصل أو الحجز.'}
-          </p>
-          <div className="figma-notice">
-            <p>طلباتك ومحادثاتك مرتبطة بحسابك.</p>
-            <p>تأجير المعدات يتطلب اعتماد ملف المؤجر.</p>
-            <p className="muted">صلاحيات الإدارة لا تُختار أثناء التسجيل.</p>
-          </div>
-        </div>
-        <div className="figma-card auth-card">
-          <h2>
-            {admin
-              ? 'تسجيل دخول الإدارة'
-              : registration
-                ? 'ابدأ بحساب واحد'
-                : 'حياك من جديد'}
-          </h2>
-          <p className="muted">
-            {registration
-              ? 'للاستئجار وتأجير معداتك، دون حسابين منفصلين.'
-              : 'سجّل ببريدك الإلكتروني وكلمة المرور.'}
-          </p>
-          {feedback}
-          <form onSubmit={submit}>
-            <fieldset disabled={busy}>
-              {registration && (
-                <label className="figma-field" htmlFor="client-name">
-                  الاسم
-                  <input
-                    id="client-name"
-                    name="name"
-                    autoComplete="name"
-                    required
-                    minLength={2}
-                    maxLength={80}
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="أدخل اسمك"
-                  />
-                </label>
-              )}
-              <label className="figma-field" htmlFor="client-email">
-                البريد الإلكتروني
+    <section
+      className="client-auth-page"
+      aria-labelledby="client-auth-title"
+      data-node-id={registration ? '7:7' : '7:6'}
+    >
+      <header className="client-auth-intro">
+        <h1 id="client-auth-title">
+          {admin
+            ? 'تسجيل دخول الإدارة'
+            : registration
+              ? 'إنشاء حساب'
+              : 'أهلًا بعودتك'}
+        </h1>
+        <p>
+          {admin
+            ? 'دخول خاص للحسابات المخوّلة بإدارة محور'
+            : registration
+              ? 'حساب واحد للاستئجار وتأجير معداتك'
+              : 'سجّل دخولك لإدارة معداتك وطلباتك'}
+        </p>
+      </header>
+      <div className="client-auth-card">
+        {feedback}
+        <form onSubmit={submit} aria-busy={busy}>
+          <fieldset disabled={busy}>
+            {registration && (
+              <label className="client-auth-field" htmlFor="client-name">
+                الاسم
                 <input
-                  id="client-email"
-                  name="email"
-                  type="email"
-                  dir="ltr"
-                  autoComplete="username"
-                  autoCapitalize="none"
-                  spellCheck={false}
+                  id="client-name"
+                  name="name"
+                  autoComplete="name"
                   required
-                  maxLength={254}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="أدخل بريدك الإلكتروني"
+                  minLength={2}
+                  maxLength={80}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="أدخل اسمك"
                 />
               </label>
-              <label className="figma-field" htmlFor="client-password">
-                كلمة المرور
-                <span className="password-input">
-                  <input
-                    id="client-password"
-                    name="password"
-                    type={visible ? 'text' : 'password'}
-                    autoComplete={
-                      registration ? 'new-password' : 'current-password'
-                    }
-                    required
-                    minLength={8}
-                    maxLength={128}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    aria-describedby="password-help"
-                    dir="ltr"
-                  />
-                  <button
-                    type="button"
-                    aria-label={
-                      visible ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'
-                    }
-                    aria-pressed={visible}
-                    onClick={() => setVisible(!visible)}
-                  >
-                    {visible ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </span>
-                <small id="password-help">من 8 إلى 128 حرفًا.</small>
-              </label>
+            )}
+            <label className="client-auth-field" htmlFor="client-email">
+              البريد الإلكتروني
+              <input
+                id="client-email"
+                name="email"
+                type="email"
+                dir="ltr"
+                autoComplete="username"
+                autoCapitalize="none"
+                spellCheck={false}
+                required
+                maxLength={254}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="example@email.com"
+              />
+            </label>
+            <div className="client-auth-field">
+              <label htmlFor="client-password">كلمة المرور</label>
+              <div className="client-auth-password">
+                <input
+                  id="client-password"
+                  name="password"
+                  type={visible ? 'text' : 'password'}
+                  autoComplete={registration ? 'new-password' : 'current-password'}
+                  required
+                  minLength={8}
+                  maxLength={128}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  aria-describedby={registration ? 'password-help' : undefined}
+                  placeholder="••••••••••"
+                  dir="ltr"
+                />
+                <button
+                  type="button"
+                  aria-label={visible ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'}
+                  aria-pressed={visible}
+                  onClick={() => setVisible(!visible)}
+                >
+                  {visible ? <EyeOff size={19} /> : <Eye size={19} />}
+                </button>
+              </div>
               {registration && (
-                <label className="figma-field" htmlFor="client-confirmation">
-                  تأكيد كلمة المرور
-                  <input
-                    id="client-confirmation"
-                    name="confirmation"
-                    type={visible ? 'text' : 'password'}
-                    autoComplete="new-password"
-                    required
-                    minLength={8}
-                    maxLength={128}
-                    value={confirmation}
-                    onChange={(e) => setConfirmation(e.target.value)}
-                    dir="ltr"
-                  />
-                </label>
+                <small id="password-help">من 8 إلى 128 حرفًا.</small>
               )}
-              <button type="submit" className="gold-button">
-                {busy
-                  ? 'جارٍ المتابعة…'
-                  : registration
-                    ? 'إنشاء الحساب'
-                    : 'تسجيل الدخول'}
-              </button>
-            </fieldset>
-          </form>
-          {!admin && (
+            </div>
+            {registration && (
+              <label className="client-auth-field" htmlFor="client-confirmation">
+                تأكيد كلمة المرور
+                <input
+                  id="client-confirmation"
+                  name="confirmation"
+                  type={visible ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  required
+                  minLength={8}
+                  maxLength={128}
+                  value={confirmation}
+                  onChange={(e) => setConfirmation(e.target.value)}
+                  dir="ltr"
+                />
+              </label>
+            )}
+            {!registration && !admin && (
+              <details className="client-auth-recovery">
+                <summary>نسيت كلمة المرور؟</summary>
+                <p>استعادة كلمة المرور بالبريد غير متاحة حاليًا في محور.</p>
+              </details>
+            )}
+            <button type="submit" className="client-auth-submit">
+              {busy
+                ? 'جارٍ المتابعة…'
+                : registration
+                  ? 'إنشاء الحساب'
+                  : 'تسجيل الدخول'}
+            </button>
+          </fieldset>
+        </form>
+        {!admin && (
+          <p className="client-auth-switch">
+            <span>{registration ? 'عندك حساب؟' : 'ما عندك حساب؟'}</span>{' '}
             <button
-              className="quiet-button"
+              type="button"
+              aria-label={registration ? 'لدي حساب بالفعل' : 'إنشاء حساب جديد'}
               disabled={busy}
               onClick={() => {
                 setMode(registration ? 'login' : 'register');
                 setError('');
+                setSuccess('');
                 setPassword('');
                 setConfirmation('');
+                setVisible(false);
               }}
             >
-              {registration ? 'لدي حساب بالفعل' : 'إنشاء حساب جديد'}
+              {registration ? 'تسجيل الدخول' : 'إنشاء حساب'}
             </button>
-          )}
-          {admin && (
-            <a className="quiet-button" href="#client">
-              العودة إلى حسابي
-            </a>
-          )}
-        </div>
-      </section>
-    </>
+          </p>
+        )}
+        {admin && (
+          <a className="client-auth-back" href="#client">العودة إلى حسابي</a>
+        )}
+      </div>
+      <footer className="client-auth-footer">
+        <p>منصة واحدة، معدات أكثر، فرص أكبر.</p>
+        <small>© محور لتأجير المعدات</small>
+      </footer>
+    </section>
   );
 }

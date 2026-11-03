@@ -39,6 +39,12 @@ const navigate = (page: Page) => {
 function AuthenticatedApp() {
   const { user, loading, error, refresh } = useAuth();
   const [page, setPage] = useState(currentPage);
+  const authScreen =
+    !loading && !error && (
+      page === 'admin-login' || !user ||
+      (user.selectedRole !== null &&
+        (page === 'admin' || page.startsWith('admin-')) && !user.adminSession)
+    );
   useEffect(() => {
     const clearOldRoute = () => {
       const route = currentPage();
@@ -63,9 +69,11 @@ function AuthenticatedApp() {
     <MotionConfig reducedMotion="user">
       <div
         className={
-          page === 'live-map' && user
-            ? 'mahwar-experience mahwar-experience--live-map'
-            : 'mahwar-experience'
+          authScreen
+            ? 'mahwar-experience mahwar-experience--auth'
+            : page === 'live-map' && user
+              ? 'mahwar-experience mahwar-experience--live-map'
+              : 'mahwar-experience'
         }
         dir="rtl"
       >
@@ -79,7 +87,7 @@ function AuthenticatedApp() {
         >
           تجاوز التنقل إلى المحتوى
         </a>
-        <ProductNavigation page={page} />
+        <ProductNavigation page={page} authScreen={authScreen} />
         <main
           id="main-content"
           tabIndex={-1}
