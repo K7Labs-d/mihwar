@@ -48,7 +48,13 @@ export const MahwarHero = ({
             ? 'المستأجر / طلباتي'
             : 'تأجير معداتي / ' + (registering ? 'الاعتماد' : info.title)}
         </div>
-        <div className="figma-content phase1-existing-flow">
+        <div
+          className={
+            registering || page === 'broker-management'
+              ? 'figma-content phase1-existing-flow account-journey lessor-activation'
+              : 'figma-content phase1-existing-flow'
+          }
+        >
           <div className="figma-intro">
             <h1>{registering ? 'ابدأ بتعريفنا على نشاطك' : info.title}</h1>
             <p>
