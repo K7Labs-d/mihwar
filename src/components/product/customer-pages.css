@@ -1,0 +1,289 @@
+/* The recorded customer journey shares the established charcoal and gold theme. */
+.mahwar-experience:has(.product-screen) .figma-context {
+  padding: 12px 4px;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.product-screen.mahwar-content {
+  padding: 32px 0 24px;
+}
+
+.product-screen .experience-heading {
+  margin: 0 auto 20px;
+}
+
+.product-screen :is(.experience-heading h1, .product-page-heading h1) {
+  font-size: clamp(26px, 6.5vw, 32px);
+  font-weight: 800;
+  line-height: 1.5;
+  text-wrap: balance;
+}
+
+.product-screen :is(.experience-heading > p:last-child, .figma-intro > p, .product-page-heading .muted) {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.8;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.product-screen .eyebrow {
+  font-size: 12px;
+}
+
+.product-screen :is(.branch-panel, .phase1-flow-card, .product-journey) {
+  padding: 20px;
+  border-color: var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: none;
+}
+
+.product-screen .panel-heading {
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.product-screen .panel-title {
+  gap: 12px;
+  margin: 0;
+}
+
+.product-screen .panel-title > svg {
+  width: 28px;
+  height: 28px;
+}
+
+.product-screen .panel-title h2 {
+  font-size: 22px;
+  line-height: 1.6;
+}
+
+.product-screen .panel-title p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.product-screen .mahwar-workspace {
+  grid-template-columns: minmax(0, 560px);
+  gap: 20px;
+}
+
+.product-screen .mahwar-workspace.has-panel {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+}
+
+.product-screen .marketplace-layout {
+  grid-template-columns: minmax(240px, .8fr) minmax(0, 1.6fr);
+  gap: 16px;
+}
+
+.product-screen .marketplace-layout form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 10px;
+}
+
+.product-screen .marketplace-layout form > :is(h2, label) {
+  grid-column: 1 / -1;
+}
+
+.product-screen .marketplace-layout form > button {
+  margin-top: 0;
+  padding-inline: 10px;
+  font-size: 14px;
+}
+
+.product-screen .marketplace-results {
+  gap: 16px;
+}
+
+.product-screen .marketplace-results article > p {
+  margin-block: 8px;
+  font-size: 14px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+
+.product-screen :is(.figma-field, .form-field label, .conversation-form label) {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.7;
+}
+
+.product-screen :is(.figma-field, .form-field, .conversation-form) :is(input, select, textarea) {
+  min-width: 0;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: var(--raised);
+  color: #f5f5f6;
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.product-screen :is(input, select, textarea):focus-visible {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.product-screen .form-field [aria-invalid="true"] {
+  border-color: #e78d7c;
+}
+
+.product-screen .form-surface {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.product-screen :is(.broker-fields, .review-grid) {
+  gap: 16px;
+}
+
+.product-screen .review-grid > div {
+  min-width: 0;
+  padding: 12px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--raised);
+}
+
+.product-screen .review-grid dt {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.product-screen .review-grid dd {
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.product-screen .text-button {
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  color: var(--accent);
+  font-size: 14px;
+}
+
+.product-screen :is(.section-summary h3, .request-title-row h3) {
+  font-size: 20px;
+  line-height: 1.6;
+}
+
+.product-screen :is(.section-table-wrap, .settings-empty) {
+  border-color: var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.product-screen .section-table th {
+  padding: 12px 8px;
+  border-color: var(--line);
+  background: var(--raised);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.product-screen .empty-state {
+  padding: 28px 16px;
+  text-wrap: balance;
+}
+
+.product-screen .empty-state :is(h2, h3) {
+  font-size: 20px;
+  line-height: 1.6;
+}
+
+.product-screen .empty-state p {
+  font-size: 14px;
+  line-height: 1.9;
+}
+
+.product-screen .feature-status {
+  border-color: #f9b83e44;
+  background: var(--tint);
+  color: var(--accent);
+  font-size: 12px;
+}
+
+.product-screen .branch-action {
+  padding: 16px;
+  border-color: var(--line);
+  border-radius: 14px;
+  background: var(--raised);
+}
+
+.product-screen .action-icon {
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.product-screen .action-copy strong {
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.product-screen .action-copy small {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.product-screen .related-pages {
+  gap: 10px;
+}
+
+.product-screen .related-pages a {
+  flex-basis: 180px;
+}
+
+.product-screen .request-conversation {
+  border-color: var(--line);
+}
+
+.product-screen .conversation-message {
+  border-color: var(--line);
+  background: var(--raised);
+}
+
+.product-screen .conversation-message.from-admin {
+  border-color: #f9b83e44;
+  background: var(--tint);
+}
+
+.product-screen .product-page-heading {
+  justify-content: center;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .product-screen :is(.mahwar-workspace.has-panel, .marketplace-layout) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .product-screen :is(.branch-panel, .phase1-flow-card, .product-journey) {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 360px) {
+  .product-screen .marketplace-layout form > button {
+    grid-column: 1 / -1;
+    margin-top: 8px;
+  }
+}

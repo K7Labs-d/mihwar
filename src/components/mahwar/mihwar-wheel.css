@@ -1,0 +1,111 @@
+.mihwar-wheel {
+  padding-block: 12px;
+  font-family: Arial, Tahoma, sans-serif;
+}
+
+.mihwar-wheel .mahwar-core {
+  transform: none;
+}
+
+.mihwar-wheel .hub-toggle {
+  width: var(--hub-core-size);
+  height: var(--hub-core-size);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mihwar-wheel .hub-rim {
+  width: var(--hub-rim-size);
+  height: var(--hub-rim-size);
+}
+
+.mihwar-wheel .hub-toggle-face {
+  width: calc(var(--hub-core-size) - 16px);
+  height: calc(var(--hub-core-size) - 16px);
+  border-color: #f9b83e44;
+  background: radial-gradient(circle at 40% 15%, #39302466, transparent 65%), #16171b;
+}
+
+.mihwar-wheel .hub-title {
+  font-family: inherit;
+  font-size: clamp(22px, calc(var(--hub-core-size) * .16), 28px);
+}
+
+.mihwar-wheel .hub-branch {
+  border-radius: 50%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mihwar-wheel .hub-branch-capsule {
+  transition-property: box-shadow, background-color, border-color, color;
+}
+
+.mihwar-wheel .hub-branch-face {
+  padding: 4px;
+  border-color: #f9b83e44;
+  background: #22232a;
+  backdrop-filter: none;
+}
+
+.mihwar-wheel .hub-branch-face > span {
+  font-family: inherit;
+}
+
+.mihwar-wheel .hub-actions {
+  width: 100%;
+  min-height: 64px;
+  margin-top: 8px;
+}
+
+.mihwar-wheel .hub-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: min(100%, 280px);
+  min-height: 48px;
+  padding: 10px 18px;
+  border: 1px solid #f9b83e;
+  border-radius: 13px;
+  background: #f9b83e;
+  color: #16130c;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.6;
+  cursor: pointer;
+}
+
+.mihwar-wheel .hub-action:hover:not(:disabled) {
+  background: #ffc85f;
+}
+
+.mihwar-wheel .hub-close {
+  width: 48px;
+  height: 48px;
+  border-color: #f9b83e66;
+  background: #22232a;
+  color: #f9b83e;
+}
+
+.mihwar-wheel :is(.hub-toggle, .hub-branch):focus-visible {
+  outline: 2px solid #f9b83e;
+  outline-offset: 5px;
+}
+
+@media (max-width: 360px) {
+  .mihwar-wheel .hub-branch-face svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .mihwar-wheel .hub-branch-face > span {
+    margin-top: 2px;
+    font-size: 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mihwar-wheel *, .mihwar-wheel *::before, .mihwar-wheel *::after {
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+  }
+}

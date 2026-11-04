@@ -6,6 +6,8 @@ import './components/product/figma-phase1.css';
 import './components/client/client-login.css';
 import './components/client/account-pages.css';
 import './components/broker/lessor-activation.css';
+import './components/product/customer-pages.css';
+import './components/mahwar/mihwar-wheel.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

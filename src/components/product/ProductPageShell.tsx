@@ -16,7 +16,7 @@ export function ProductPageShell({ page }: { page: ShellPage }) {
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => { heading.current?.focus({ preventScroll: true }); }, [page]);
 
-  return <section className="mahwar-content product-page-shell" dir="rtl" aria-labelledby="product-page-heading">
+  return <section className={`mahwar-content product-page-shell${info.branchId === 'offer' ? ' account-journey product-screen' : ''}`} dir="rtl" aria-labelledby="product-page-heading">
     <header className="product-page-heading">
       <div>
         <p className="eyebrow">{shell.section}</p>
