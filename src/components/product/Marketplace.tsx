@@ -33,7 +33,7 @@ export function Marketplace() {
   return (
     <>
       <div className="figma-context">المستأجر / سوق المعدات</div>
-      <section className="figma-content">
+      <section className="figma-content account-journey product-screen product-screen--marketplace">
         <header className="figma-intro">
           <h1>
             {selected

@@ -52,7 +52,9 @@ export const MahwarHero = ({
           className={
             registering || page === 'broker-management'
               ? 'figma-content phase1-existing-flow account-journey lessor-activation'
-              : 'figma-content phase1-existing-flow'
+              : page === 'request'
+                ? 'figma-content phase1-existing-flow account-journey product-screen'
+                : 'figma-content phase1-existing-flow'
           }
         >
           <div className="figma-intro">
@@ -109,7 +111,13 @@ export const MahwarHero = ({
 
   return (
     <>
-      <div className="mahwar-content">
+      <div
+        className={
+          page === '' || page === 'offer'
+            ? 'mahwar-content account-journey product-screen product-screen--hub'
+            : 'mahwar-content'
+        }
+      >
         <div className="experience-heading">
           <p className="eyebrow">محور — منظومة متكاملة</p>
           <h1>

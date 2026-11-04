@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useId } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { 
   FileText, 
@@ -50,6 +50,8 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
   const [sparksActive, setSparksActive] = useState<boolean>(false);
   
   const containerRef = useRef<HTMLDivElement>(null);
+  const centerRef = useRef<HTMLButtonElement>(null);
+  const branchesId = useId();
 
   const state = externalState ?? internalState;
   const activeBranch = externalActiveBranchId !== undefined
@@ -71,16 +73,17 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
     if (state === 'closed') setInternalActiveBranch(null);
     if (state === 'unlocking') {
       soundEngine.playUnlockSequence();
-      const timer = setTimeout(() => { updateState('open'); soundEngine.playBranchesExpand(); }, reducedMotion ? 0 : 420);
+      const timer = setTimeout(() => { updateState('open'); soundEngine.playBranchesExpand(); }, reducedMotion ? 0 : 240);
       return () => clearTimeout(timer);
     }
     if (state === 'closing') {
-      const timer = setTimeout(() => updateState('closed'), reducedMotion ? 0 : 450);
+      const timer = setTimeout(() => updateState('closed'), reducedMotion ? 0 : 240);
       return () => clearTimeout(timer);
     }
   }, [state]);
 
-  const handleCenterMouseDown = () => {
+  const handleCenterMouseDown = (event: React.PointerEvent<HTMLButtonElement>) => {
+    if (!event.isPrimary || event.button !== 0) return;
     if (interactionLocked) return;
     onInteract?.();
     if (state === 'closed') { soundEngine.playPressDown(); updateState('pressing'); }
@@ -88,23 +91,30 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
   const handleCenterClick = () => {
     if (interactionLocked) return;
     onInteract?.();
-    if (state === 'closed' || state === 'pressing') updateState('unlocking');
-    else if (state === 'open' || state === 'branch_hover') handleClose();
+    if (state === 'closed' || state === 'pressing' || state === 'closing') updateState('unlocking');
+    else if (state === 'unlocking' || state === 'open' || state === 'branch_hover') handleClose();
   };
   const handleClose = () => {
     if (interactionLocked) return;
+    const previousHash = window.location.hash;
     onInteract?.();
     setInternalActiveBranch(null);
     onBranchSelect?.(null);
     updateState('closing');
     soundEngine.playLockShut();
+    const restoreFocus = () => requestAnimationFrame(() => {
+      const button = centerRef.current ?? document.querySelector<HTMLButtonElement>('[data-hub-toggle]');
+      if (button?.getAttribute('aria-expanded') === 'false') button.focus({ preventScroll: true });
+    });
+    if (window.location.hash !== previousHash) window.addEventListener('hashchange', restoreFocus, { once: true });
+    else restoreFocus();
   };
 
   // Handle Branch Hover (State 05)
   const handleBranchHover = (branch: MahwarBranch | null) => {
     if (interactionLocked) return;
     onInteract?.();
-    if (state === 'open' || state === 'branch_hover') {
+    if (state === 'unlocking' || state === 'open' || state === 'branch_hover') {
       if (branch) {
         setInternalActiveBranch(branch);
         updateState('branch_hover');
@@ -134,7 +144,7 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
     }
   };
 
-  const isBranchesVisible = state === 'open' || state === 'branch_hover';
+  const isBranchesVisible = state === 'unlocking' || state === 'open' || state === 'branch_hover';
   const orbitRadiusDesktop = 210; // Radius for 5 branch nodes
   const [orbitSize, setOrbitSize] = useState(340);
   const orbitRef = useRef<HTMLDivElement>(null);
@@ -148,12 +158,22 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
     return () => observer.disconnect();
   }, []);
   const orbitRadius = orbitSize * orbitRadiusDesktop / 560;
+  const coreSize = Math.min(200, Math.max(132, orbitSize * .48));
+  const nodeSize = orbitSize < 320 ? 56 : orbitSize < 400 ? 66 : 84;
 
   return (
     <div 
       ref={containerRef}
-      className="relative w-full flex flex-col items-center justify-center select-none py-6"
+      className="mihwar-wheel relative w-full flex flex-col items-center justify-center select-none py-6"
       data-wheel
+      data-state={state}
+      style={{ '--hub-core-size': `${coreSize}px`, '--hub-rim-size': `${coreSize + 40}px` } as React.CSSProperties}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape' && isBranchesVisible && !interactionLocked) {
+          event.preventDefault();
+          handleClose();
+        }
+      }}
       dir="rtl"
     >
       {/* Dynamic Ambient Background Glow */}
@@ -292,7 +312,7 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
         {/* ======================================================== */}
         <AnimatePresence>
           {isBranchesVisible && (
-            <div className="absolute inset-0 pointer-events-none">
+            <div id={branchesId} role="group" aria-label="أقسام المحور" className="absolute inset-0 pointer-events-none">
               {MAHWAR_BRANCHES.map((branch, index) => {
                 const rad = (branch.angle * Math.PI) / 180;
                 // Responsive calculation based on screen
@@ -306,41 +326,36 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
                     disabled={interactionLocked}
                     key={branch.id}
                     initial={{ 
-                      x: 0, 
-                      y: 0, 
-                      scale: 0.2, 
+                      scale: .85,
                       opacity: 0 
                     }}
                     animate={{ 
-                      x: orbitRadius * Math.cos(rad), 
-                      y: orbitRadius * Math.sin(rad), 
-                      scale: isHovered ? 1.15 : 1, 
+                      scale: isHovered ? (orbitSize < 320 ? 1.05 : 1.15) : 1,
                       opacity: 1 
                     }}
                     exit={{ 
-                      x: 0, 
-                      y: 0, 
-                      scale: 0.2, 
+                      scale: .85,
                       opacity: 0,
-                      transition: { duration: 0.35, ease: 'easeInOut' }
+                      transition: { duration: .16, ease: 'easeInOut' }
                     }}
                     transition={{ 
                       type: 'spring', 
                       stiffness: 220, 
                       damping: 20, 
-                      delay: index * 0.05 
+                      delay: index * .025
                     }}
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto z-30"
+                    className="hub-branch absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto z-30"
+                    style={{ left: `calc(50% + ${orbitRadius * Math.cos(rad)}px)`, top: `calc(50% + ${orbitRadius * Math.sin(rad)}px)`, touchAction: 'manipulation' }}
                     onClick={() => handleBranchHover(branch)}
                   >
                     {/* Branch Capsule */}
                     <div 
-                      className={`relative flex flex-col items-center justify-center cursor-pointer transition-all duration-300 rounded-full ${
+                      className={`hub-branch-capsule relative flex flex-col items-center justify-center cursor-pointer transition-all duration-300 rounded-full ${
                         isHovered 
                           ? 'shadow-[0_0_30px_rgba(245,158,11,0.55)] scale-105' 
                           : 'shadow-[0_0_18px_rgba(0,0,0,0.8)] hover:shadow-[0_0_24px_rgba(245,158,11,0.35)]'
                       }`}
-                      style={{ width: orbitSize < 400 ? '66px' : '84px', height: orbitSize < 400 ? '66px' : '84px' }}
+                      style={{ width: nodeSize, height: nodeSize }}
                     >
                       {/* Outer Ring Glow */}
                       <div className={`absolute inset-0 rounded-full border transition-all duration-300 ${
@@ -350,7 +365,7 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
                       }`} />
 
                       {/* Inner Circular Metallic Capsule */}
-                      <div className="relative w-[88%] h-[88%] rounded-full bg-gradient-to-b from-[#111827] via-[#0b0f19] to-[#05070e] border border-amber-500/30 flex flex-col items-center justify-center p-2 backdrop-blur-md">
+                      <div className="hub-branch-face relative w-[88%] h-[88%] rounded-full bg-gradient-to-b from-[#111827] via-[#0b0f19] to-[#05070e] border border-amber-500/30 flex flex-col items-center justify-center p-2 backdrop-blur-md">
                         {/* Icon */}
                         <div className={`transition-transform duration-300 ${isHovered ? 'scale-110 text-amber-300' : 'text-slate-300'}`}>
                           {renderBranchIcon(branch.iconName)}
@@ -388,7 +403,7 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
               scale: isBranchesVisible ? 1.08 : isPressing ? 0.94 : 1,
             }}
             transition={{ type: 'spring', stiffness: 180, damping: 18 }}
-            className="absolute w-[230px] sm:w-[250px] h-[230px] sm:h-[250px] pointer-events-none"
+            className="hub-rim absolute w-[230px] sm:w-[250px] h-[230px] sm:h-[250px] pointer-events-none"
           >
             {/* 4 Segmented Mechanical Arc Plates */}
             <svg viewBox="0 0 250 250" className="w-full h-full">
@@ -443,7 +458,10 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
 
           {/* Central Touch Button (The tactile interactive disk) */}
           <motion.button
+            ref={centerRef}
             type="button"
+            data-hub-toggle
+            aria-controls={branchesId}
             aria-label={isBranchesVisible ? "إغلاق مركز المحور" : "فتح المحور"}
             aria-expanded={isBranchesVisible}
             disabled={interactionLocked}
@@ -452,11 +470,12 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
             }}
             whileHover={{ scale: isBranchesVisible ? 1.04 : 1.03 }}
             transition={{ type: 'spring', stiffness: 350, damping: 22 }}
+            style={{ touchAction: 'manipulation' }}
             onPointerDown={handleCenterMouseDown}
             onPointerCancel={() => { if (state === 'pressing') updateState('closed'); }}
             onPointerLeave={() => { if (state === 'pressing') updateState('closed'); }}
             onClick={handleCenterClick}
-            className={`group relative w-[180px] sm:w-[200px] h-[180px] sm:h-[200px] rounded-full cursor-pointer transition-all duration-300 flex flex-col items-center justify-center select-none ${
+            className={`hub-toggle group relative w-[180px] sm:w-[200px] h-[180px] sm:h-[200px] rounded-full cursor-pointer transition-all duration-300 flex flex-col items-center justify-center select-none ${
               isPressing 
                 ? 'shadow-[inset_0_8px_25px_rgba(0,0,0,0.9),0_0_20px_rgba(245,158,11,0.6)]' 
                 : isBranchesVisible
@@ -474,7 +493,7 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
             }`} />
 
             {/* Inner Metallic Bezel with Brushed Texture */}
-            <div className="relative w-[164px] sm:w-[184px] h-[164px] sm:h-[184px] rounded-full bg-gradient-to-b from-[#141c2e] via-[#090d16] to-[#04060b] border border-slate-700/60 flex flex-col items-center justify-center overflow-hidden">
+            <div className="hub-toggle-face relative w-[164px] sm:w-[184px] h-[164px] sm:h-[184px] rounded-full bg-gradient-to-b from-[#141c2e] via-[#090d16] to-[#04060b] border border-slate-700/60 flex flex-col items-center justify-center overflow-hidden">
               
               {/* Subtle Concentric Metallic Ring */}
               <div className="absolute inset-2 rounded-full border border-amber-500/15 pointer-events-none" />
@@ -524,7 +543,7 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
 
               {/* "محور" Typography and Logo Aperture Emblem */}
               <div className="flex items-center gap-2">
-                <span className="text-xl sm:text-2xl font-black text-white tracking-wide font-['Cairo']">
+                <span className="hub-title text-xl sm:text-2xl font-black text-white tracking-wide font-['Cairo']">
                   محور
                 </span>
 
@@ -549,7 +568,7 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
 
               {/* Status Hint below Hub */}
               <div className="mt-1 text-[10px] font-bold text-amber-400/80 tracking-wider">
-                منظومة متكاملة
+                {isBranchesVisible ? 'الأقسام مفتوحة' : 'افتح الأقسام'}
               </div>
             </div>
           </motion.button>
@@ -559,27 +578,23 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
       {/* ======================================================== */}
       {/* BOTTOM ACTION & FEEDBACK AREA                            */}
       {/* ======================================================== */}
-      <div className="mt-4 sm:mt-6 flex flex-col items-center gap-2 min-h-[60px]">
+      <div className="hub-actions mt-4 sm:mt-6 flex flex-col items-center gap-2 min-h-[60px]">
         {/* Closed State Callout (Step 01 from reference image) */}
         {!isBranchesVisible && (
-          <motion.div 
+          <motion.button
+            type="button"
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center gap-1.5 cursor-pointer group"
+            className="hub-action"
+            disabled={interactionLocked}
+            aria-controls={branchesId}
+            aria-expanded={isBranchesVisible}
+            style={{ touchAction: 'manipulation' }}
             onClick={handleCenterClick}
           >
-            <span className="text-sm sm:text-base font-bold text-slate-200 group-hover:text-amber-400 transition-colors font-['Cairo'] flex items-center gap-2">
-              <span>اضغط لفتح المحور</span>
-              <Sparkles className="w-4 h-4 text-amber-400 animate-bounce" />
-            </span>
-            <div className="w-6 h-8 rounded-full border-2 border-amber-500/60 flex items-start justify-center p-1 group-hover:border-amber-400 transition-colors">
-              <motion.div 
-                animate={{ y: reducedMotion ? 0 : [0, 8, 0] }}
-                transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
-                className="w-1.5 h-2 rounded-full bg-amber-400"
-              />
-            </div>
-          </motion.div>
+            <Sparkles size={18} aria-hidden="true" />
+            فتح أقسام محور
+          </motion.button>
         )}
 
         {/* Open State Close Button (Step 06 from reference image) */}
@@ -590,8 +605,11 @@ export const MahwarWheel: React.FC<MahwarWheelProps> = ({
             className="flex flex-col items-center gap-1.5"
           >
             <button
+              type="button"
               onClick={handleClose}
-              className="group flex items-center justify-center w-11 h-11 rounded-full bg-slate-900/90 hover:bg-slate-800 border border-slate-700 hover:border-amber-500 text-slate-300 hover:text-amber-400 shadow-xl transition-all cursor-pointer"
+              aria-label="إغلاق المحور"
+              style={{ touchAction: 'manipulation' }}
+              className="hub-close group flex items-center justify-center w-11 h-11 rounded-full bg-slate-900/90 hover:bg-slate-800 border border-slate-700 hover:border-amber-500 text-slate-300 hover:text-amber-400 shadow-xl transition-all cursor-pointer"
               title="إغلاق المحور"
             >
               <X className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
