@@ -74,7 +74,7 @@ export function ClientLogin({ admin = false }: { admin?: boolean }) {
   );
   if (user && !admin && user.selectedRole === null)
     return (
-      <section className="figma-content">
+      <section className="figma-content account-journey account-journey--roles">
         <div className="figma-card role-choice">
           <p className="eyebrow">تم إنشاء حسابك</p>
           <h1>كيف تبدأ مع محور؟</h1>
@@ -111,7 +111,7 @@ export function ClientLogin({ admin = false }: { admin?: boolean }) {
     );
   if (user && !admin)
     return (
-      <section className="figma-content">
+      <section className="figma-content account-journey">
         <header className="figma-intro">
           <h1>حساب واحد. أكثر من دور.</h1>
           <p className="muted">
