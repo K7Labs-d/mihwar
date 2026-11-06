@@ -8,6 +8,7 @@ import './components/client/account-pages.css';
 import './components/broker/lessor-activation.css';
 import './components/product/customer-pages.css';
 import './components/mahwar/mihwar-wheel.css';
+import './components/product/remaining-sections.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

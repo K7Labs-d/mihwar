@@ -1,0 +1,261 @@
+/* Complete the existing charcoal and gold theme without changing page behavior. */
+.product-screen .equipment-profile {
+  padding: 16px;
+  border-color: #f9b83e44;
+  border-radius: 14px;
+  background: var(--tint);
+}
+
+.product-screen .equipment-profile p {
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.product-screen .equipment-rate {
+  border-color: var(--line);
+  border-radius: 14px;
+  background: var(--raised);
+}
+
+.product-screen .equipment-rate dd {
+  color: var(--accent);
+}
+
+.product-screen .equipment-state {
+  max-width: 100%;
+  white-space: normal;
+  line-height: 1.7;
+}
+
+.product-screen--admin.admin-layout {
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 20px;
+}
+
+.product-screen--admin .admin-sidebar {
+  padding: 16px;
+}
+
+.product-screen--admin .admin-sidebar nav {
+  gap: 8px;
+}
+
+.product-screen--admin .admin-sidebar .quiet-button {
+  justify-content: flex-start;
+  padding-inline: 12px;
+  background: var(--raised);
+  font-size: 14px;
+}
+
+.product-screen--admin .admin-sidebar .quiet-button[aria-current] {
+  border-color: #f9b83e44;
+  background: var(--tint);
+  color: var(--accent);
+}
+
+.product-screen--admin .admin-stats {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  direction: rtl;
+}
+
+.product-screen--admin .admin-stats .figma-card {
+  padding: 16px;
+}
+
+.product-screen--admin .admin-stats h2 {
+  margin-block: 8px;
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.product-screen--admin .stat-value {
+  color: var(--accent);
+}
+
+.product-screen--admin .admin-operation-grid {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.product-screen--admin .admin-operation-grid .quiet-button {
+  width: 100%;
+  min-width: 0;
+}
+
+.product-screen--admin :is(.inbox-heading h1, .product-page-header h1) {
+  font-size: clamp(26px, 6.5vw, 32px);
+  line-height: 1.5;
+}
+
+.product-screen--admin :is(.admin-requests, .broker-review) {
+  padding: 0;
+}
+
+.product-screen--admin :is(.inbox-stats > div, .inbox-item, .inbox-detail-card) {
+  border-color: var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.product-screen--admin .inbox-stats {
+  gap: 12px;
+}
+
+.product-screen--admin .inbox-stats strong {
+  color: var(--accent);
+}
+
+.product-screen--admin :is(.inbox-stats span, .inbox-item-copy span, .inbox-item-copy time) {
+  color: var(--muted);
+}
+
+.product-screen--admin .inbox-filters :is(input, select) {
+  min-height: 48px;
+  padding: 10px 12px;
+  border-color: transparent;
+  border-radius: 12px;
+  background: var(--raised);
+  color: #f5f5f6;
+  font: inherit;
+  font-size: 16px;
+}
+
+.product-screen--admin .table-scroll {
+  padding: 0;
+  border-radius: 14px;
+}
+
+.product-screen--admin .admin-table th {
+  padding: 12px;
+}
+
+.product-screen--admin .admin-table td {
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.product-screen--admin .figma-review-record .review-grid > div {
+  padding: 12px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--raised);
+}
+
+.product-screen--admin .figma-review-record .review-grid dd {
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.live-map-theme.lm {
+  --lm-gold: #f9b83e;
+  --lm-ink: #f5f5f6;
+  --lm-muted: #92939b;
+  padding: 32px 0 24px;
+  font-family: inherit;
+}
+
+.live-map-theme .lm-heading {
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.live-map-theme .lm-heading h1 {
+  font-size: clamp(26px, 6.5vw, 32px);
+  line-height: 1.5;
+}
+
+.live-map-theme .lm-heading h1 span {
+  color: var(--muted);
+}
+
+.live-map-theme :is(.lm-modes, .lm-dna, .lm-time, .lm-reopen) {
+  border-color: var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: none;
+}
+
+.live-map-theme .lm-modes button {
+  min-height: 44px;
+  border-radius: 11px;
+}
+
+.live-map-theme .lm-modes button[aria-pressed="true"] {
+  background: var(--accent);
+  color: #16130c;
+}
+
+.live-map-theme .lm-map {
+  border-color: var(--line);
+  border-radius: 18px;
+  background: radial-gradient(ellipse at 40% 36%, #f9b83e08, transparent 52%), #101114;
+  box-shadow: none;
+}
+
+.live-map-theme .lm-filters button {
+  min-height: 44px;
+  border-radius: 12px;
+  color: #b8b9c0;
+}
+
+.live-map-theme .lm-filters button[aria-pressed="true"] {
+  border-color: #f9b83e44;
+  background: var(--raised);
+  color: var(--accent);
+}
+
+.live-map-theme .lm-play {
+  background: var(--accent);
+  color: #16130c;
+}
+
+.live-map-theme :is(.lm-footnote, .lm-dna-area, .lm-dna-details > small) {
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.live-map-theme :is(button, input):focus-visible {
+  outline-color: var(--accent);
+}
+
+@media (max-width: 900px) {
+  .product-screen--admin.admin-layout {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .product-screen--admin .admin-sidebar {
+    width: 100%;
+    padding: 12px;
+  }
+
+  .product-screen--admin .admin-sidebar nav {
+    display: flex;
+    overflow-x: auto;
+  }
+
+  .product-screen--admin .admin-sidebar .quiet-button {
+    width: auto;
+    flex: none;
+    white-space: nowrap;
+  }
+
+  .product-screen--admin .admin-sidebar > :is(h2, a) {
+    display: none;
+  }
+
+  .product-screen--admin .admin-workspace {
+    width: 100%;
+  }
+}
+
+@media (max-width: 560px) {
+  .product-screen--admin .admin-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .product-screen--admin .inbox-stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
