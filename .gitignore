@@ -15,3 +15,7 @@ audit.vite.config.mjs
 *.sqlite
 *.sqlite-wal
 *.sqlite-shm
+
+# Motion Studio renders (regenerated from source by make.mjs) and its Python bytecode
+marketing/motion/*/out/
+__pycache__/

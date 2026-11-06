@@ -1,0 +1,11 @@
+/* Engine base. Grouping properties (opacity, filter, clip-path, overflow) flatten 3D,
+   so containers keep transform-style: preserve-3d and only leaves get opacity/blur. */
+html, body { margin: 0; padding: 0; background: #000; overflow: hidden; }
+#stage { position: relative; overflow: hidden; }
+.shot { position: absolute; inset: 0; transform-style: preserve-3d; perspective-origin: 50% 50%; }
+.cam { position: absolute; inset: 0; transform-style: preserve-3d; transform-origin: 50% 50%; }
+.layer { position: absolute; inset: 0; transform-style: preserve-3d; }
+.txt { transform-style: preserve-3d; white-space: nowrap; }
+.txt .w { display: inline-block; backface-visibility: hidden; will-change: transform; }
+svg { overflow: visible; }
+* { caret-color: transparent; }

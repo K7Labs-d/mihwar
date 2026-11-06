@@ -1,0 +1,26 @@
+/* MIHWAR brand tokens. Colours were measured from the rendered pages of
+   "MIHWAR Product Dossier 2026" (p.1 and p.2); faces are the ones embedded in that PDF. */
+@font-face { font-family: 'Noto Sans Arabic'; src: url('/brand/fonts/NotoSansArabic-VF.woff2') format('woff2'); font-weight: 100 900; }
+@font-face { font-family: 'Noto Kufi Arabic'; src: url('/brand/fonts/NotoKufiArabic-VF.woff2') format('woff2'); font-weight: 100 900; }
+@font-face { font-family: 'Noto Sans'; src: url('/brand/fonts/NotoSans-Latin-VF.woff2') format('woff2'); font-weight: 100 900; }
+
+:root {
+  --bg: #090b0e;        /* page background */
+  --surface: #111418;   /* cards */
+  --raised: #171b20;    /* raised panels */
+  --line: #1b1f24;      /* hairlines */
+  --ink: #f2efe8;       /* headlines */
+  --body: #adb0b4;      /* body copy */
+  --gold: #c6a15b;      /* mark, UI accents */
+  --gold-hi: #d8bd7a;   /* gold headline words */
+  --gold-dim: #5d533a;  /* gold at low emphasis */
+  --ar: 'Noto Sans Arabic', sans-serif;
+  --kufi: 'Noto Kufi Arabic', sans-serif;
+  --lat: 'Noto Sans', sans-serif;
+}
+
+#stage { background: var(--bg); color: var(--ink); font-family: var(--ar); }
+.gold { color: var(--gold-hi); }
+.ink { color: var(--ink); }
+.muted { color: var(--body); }
+.latin { font-family: var(--lat); direction: ltr; }

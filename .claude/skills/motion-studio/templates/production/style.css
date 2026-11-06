@@ -1,0 +1,5 @@
+/* Production styles for the 1920x1080 master. Colours come from brand.css tokens only. */
+.h1 { font-size: 96px; font-weight: 600; line-height: 1.5; color: var(--ink); }
+.h2 { font-size: 80px; font-weight: 600; line-height: 1.5; color: var(--ink); }
+.gold { color: var(--gold-hi); }
+.wordmark { font-family: var(--kufi); font-size: 170px; font-weight: 500; line-height: 1.4; color: var(--ink); }
