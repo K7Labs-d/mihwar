@@ -9,7 +9,9 @@ export class EquipmentApiError extends Error {
 const isEquipment = (value: any): value is Equipment => {
   if (!value || typeof value.id !== 'string' || value.id.length !== 36 || value.currency !== 'SAR' || !Number.isSafeInteger(value.version) || value.version < 1
     || !Number.isFinite(Date.parse(value.createdAt)) || !Number.isFinite(Date.parse(value.updatedAt))) return false;
-  const { id, currency, version, createdAt, updatedAt, ...input } = value;
+  if (value.reviewStatus !== undefined && !['pending', 'approved', 'rejected'].includes(value.reviewStatus)) return false;
+  if (value.rejectionReason !== undefined && value.rejectionReason !== null && typeof value.rejectionReason !== 'string') return false;
+  const { id, currency, version, createdAt, updatedAt, reviewStatus, rejectionReason, ...input } = value;
   return !!validateEquipmentInput(input).data;
 };
 async function call(path: string, options?: RequestInit) {

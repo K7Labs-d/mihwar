@@ -50,7 +50,7 @@ export function LiveMap() {
     setDismissed(true);
     (field.current?.querySelector<HTMLButtonElement>(`[data-node="${selected}"]`) ?? replayButton.current)?.focus({ preventScroll: true });
   };
-  return <section className="lm" aria-label="خريطة محور التفاعلية — محاكاة" data-phase={scene.phase} data-playing={clock.playing}
+  return <section className="lm account-journey live-map-theme" aria-label="خريطة محور التفاعلية — محاكاة" data-phase={scene.phase} data-playing={clock.playing}
     onKeyDown={event => { if (event.key === 'Escape' && sheetVisible) { event.preventDefault(); closeSheet(); } }}>
     <header className="lm-heading">
       <div><p className="lm-eyebrow"><Radio className="lm-icon" aria-hidden="true" /><span dir="ltr">MIHWAR / LIVE MAP</span></p>

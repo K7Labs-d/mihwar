@@ -43,7 +43,7 @@ export function AdminOverview({ page }: { page: Page }) {
   const canOpenPage = permittedDestinations.some((destination) => destination.id === page);
   if (!user?.adminSession || !canOpenPage)
     return (
-      <section className="figma-content">
+      <section className="figma-content account-journey product-screen product-screen--admin">
         <div className="figma-card empty-state">
           <h1>غير مصرح</h1>
           <p>لا يملك حسابك صلاحية الوصول إلى هذه الصفحة الإدارية.</p>
@@ -56,7 +56,7 @@ export function AdminOverview({ page }: { page: Page }) {
   return (
     <>
       <div className="figma-context">إدارة محور / {getPage(page).title}</div>
-      <div className="figma-content admin-layout">
+      <div className="figma-content admin-layout account-journey product-screen product-screen--admin">
         <aside className="figma-card admin-sidebar">
           <h2>الإدارة</h2>
           <nav aria-label="الإدارة">
