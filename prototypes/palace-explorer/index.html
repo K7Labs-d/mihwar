@@ -1,0 +1,1286 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>مستكشف القصر</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800&family=Tajawal:wght@400;500;700&display=swap">
+<style>
+/* Layout: one-screen split — live 3D stage beside a details rail; on phones the rail stacks under the stage.
+   Single dark look by choice: Mihwar black + champagne gold. */
+:root {
+  --ink: #0d1012;
+  --surface: #14171a;
+  --raised: #1b1f23;
+  --line: #2a2f34;
+  --text: #eee7d8;
+  --muted: #9da2a5;
+  --gold: #c9ac70;
+  --gold-hi: #e2c88f;
+  --on-gold: #17130b;
+  --glass: rgba(13, 16, 18, 0.76);
+  --sky-top: #1f2b38;
+  --sky-mid: #6a7480;
+  --sky-low: #d6aa78;
+  --font-body: 'Tajawal', 'Cairo', 'Segoe UI', Tahoma, Arial, sans-serif;
+  --font-num: 'Cairo', 'Tajawal', 'Segoe UI', Tahoma, Arial, sans-serif;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body { margin: 0; background: var(--ink); color: var(--text); font-family: var(--font-body); font-size: 15px; }
+[hidden] { display: none !important; }
+button { font-family: inherit; }
+button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+.app {
+  height: 100%; box-sizing: border-box; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 12px;
+  padding-block: 12px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; }
+.mark { width: 30px; height: 30px; border-radius: 8px; background: var(--gold); display: grid; place-items: center; }
+.mark::before { content: ""; width: 12px; height: 12px; border: 2px solid var(--on-gold); border-radius: 50%; }
+.brand strong { display: block; font-family: var(--font-num); font-size: 17px; line-height: 1.1; }
+.brand span { font-size: 12px; color: var(--muted); }
+.badge { margin: 0; font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; }
+
+.main { display: grid; grid-template-columns: minmax(0, 1fr) 390px; gap: 12px; min-height: 0; }
+.stage {
+  position: relative; min-height: 0; border-radius: 16px; overflow: hidden; border: 1px solid var(--line);
+  background: linear-gradient(to bottom, var(--sky-top) 0%, var(--sky-mid) 48%, var(--sky-low) 100%);
+}
+#scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; outline: none; }
+.labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+
+.pin {
+  position: absolute; left: 0; top: 0; pointer-events: auto; cursor: pointer; white-space: nowrap;
+  font: 500 12px/1.2 var(--font-body); color: var(--text); background: var(--glass);
+  border: 1px solid rgba(201, 172, 112, 0.45); border-radius: 999px; padding: 5px 10px;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); will-change: transform;
+}
+.pin:hover, .pin.active { background: var(--gold); color: var(--on-gold); border-color: var(--gold); }
+.pin.zone { display: flex; flex-direction: column; align-items: center; padding: 0; background: none; border: 0; backdrop-filter: none; -webkit-backdrop-filter: none; }
+.pin.zone b { font-weight: 500; background: var(--glass); border: 1px solid rgba(201, 172, 112, 0.45); border-radius: 999px; padding: 5px 11px; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.pin.zone:hover b, .pin.zone.active b { background: var(--gold); color: var(--on-gold); border-color: var(--gold); }
+.pin.zone::after { content: ""; width: 1px; height: 16px; background: var(--gold); }
+.pin.room { font-size: 11px; padding: 3px 8px; }
+.pin.axis {
+  pointer-events: none; cursor: default; width: 22px; height: 22px; padding: 0; display: grid; place-items: center;
+  font: 700 11px/1 var(--font-num); color: var(--gold-hi); border-color: rgba(201, 172, 112, 0.7);
+}
+.pin.dim { pointer-events: none; cursor: default; font: 700 12px/1 var(--font-num); background: var(--gold); color: var(--on-gold); border-color: var(--gold); padding: 4px 8px; }
+
+.bar {
+  position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 8px; flex-wrap: wrap; pointer-events: none;
+}
+.bar > * { pointer-events: auto; }
+.floorbar { position: absolute; top: 10px; left: 10px; display: flex; pointer-events: none; }
+.floorbar > * { pointer-events: auto; }
+.floors, .tools { display: flex; gap: 6px; flex-wrap: wrap; }
+.floors { background: var(--glass); border: 1px solid var(--line); border-radius: 12px; padding: 4px; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.floors button, .tools button {
+  border: 1px solid var(--line); background: var(--glass); color: var(--text); border-radius: 9px; padding: 7px 12px;
+  font-size: 13px; cursor: pointer; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+.floors button { border-color: transparent; background: transparent; }
+.floors button[aria-pressed="true"] { background: var(--gold); color: var(--on-gold); }
+.tools button:hover, .floors button:hover { border-color: var(--gold); }
+
+.legend {
+  position: absolute; bottom: 10px; right: 10px; max-width: calc(100% - 20px); display: flex; flex-wrap: wrap; gap: 6px 12px;
+  background: var(--glass); border: 1px solid var(--line); border-radius: 10px; padding: 7px 10px; font-size: 12px;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); box-sizing: border-box;
+}
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i, .list .dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; flex: none; }
+.hint {
+  position: absolute; bottom: 12px; left: 0; right: 0; margin: 0; text-align: center; pointer-events: none; transition: opacity .4s;
+}
+.hint span { display: inline-block; font-size: 12px; background: var(--glass); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; }
+.tip {
+  position: absolute; left: 0; top: 0; pointer-events: none; z-index: 3; background: var(--surface); border: 1px solid var(--gold);
+  border-radius: 10px; padding: 7px 10px; font-size: 13px; white-space: nowrap; box-shadow: 0 6px 24px rgba(0,0,0,.35);
+}
+.tip small { display: block; color: var(--muted); font-family: var(--font-num); font-size: 12px; margin-top: 2px; }
+.fail { position: absolute; inset: 0; display: grid; place-items: center; padding: 24px; text-align: center; background: var(--ink); color: var(--text); line-height: 1.8; }
+
+.panel { min-height: 0; overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px; }
+.crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+.crumbs button { background: none; border: 0; color: var(--gold); padding: 2px 0; cursor: pointer; font-size: 12px; }
+.crumbs .sep { opacity: .5; }
+.kicker { display: flex; align-items: center; gap: 8px; margin: 14px 0 6px; font-size: 12px; color: var(--gold); }
+.panel h2 { font-family: var(--font-num); font-weight: 800; font-size: 25px; line-height: 1.3; margin: 0 0 6px; text-wrap: balance; }
+.lede { color: var(--muted); font-size: 14px; line-height: 1.75; margin: 0 0 4px; }
+.sec { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 20px 0 8px; font-size: 13px; font-weight: 700; }
+.tag { font-size: 11px; font-weight: 500; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+.tag.calc { color: var(--gold); border-color: rgba(201, 172, 112, .45); }
+.metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; margin: 0; background: var(--line); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.metrics div { background: var(--raised); padding: 10px 12px; min-width: 0; }
+.metrics dt { font-size: 12px; color: var(--muted); margin-bottom: 3px; }
+.metrics dd { margin: 0; font-family: var(--font-num); font-weight: 700; font-size: 19px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.metrics dd small { font-size: 12px; font-weight: 600; color: var(--muted); margin-inline-start: 4px; }
+.metrics .wide { grid-column: 1 / -1; }
+.metrics .foot { display: block; font-family: var(--font-body); font-size: 11px; font-weight: 400; color: var(--muted); margin-top: 3px; }
+.list { display: grid; gap: 2px; }
+.list button {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 4px 10px; width: 100%; text-align: start;
+  background: transparent; border: 1px solid transparent; border-radius: 10px; padding: 8px 10px; color: var(--text); font-size: 14px; cursor: pointer;
+}
+.list button:hover, .list button[aria-current="true"] { background: var(--raised); border-color: var(--line); }
+.list button[aria-current="true"] { border-color: rgba(201, 172, 112, .5); }
+.list .val { font-family: var(--font-num); font-variant-numeric: tabular-nums; font-size: 13px; color: var(--muted); }
+.list .bar2 { grid-column: 2 / 4; height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.list .bar2 i { display: block; height: 100%; background: var(--gold); }
+.spec { margin: 0; border-top: 1px solid var(--line); }
+.spec div { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 14px; line-height: 1.6; }
+.spec dt { color: var(--muted); }
+.spec dd { margin: 0; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text); background: var(--raised); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; }
+.note { font-size: 12px; color: var(--muted); line-height: 1.8; margin: 18px 0 0; padding-top: 12px; border-top: 1px dashed var(--line); }
+.ltr { direction: ltr; unicode-bidi: isolate; }
+
+@media (max-width: 860px) {
+  .main { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(280px, 1fr) auto; }
+  .main { grid-template-rows: minmax(320px, 1fr) auto; }
+  .panel { max-height: 40dvh; padding: 14px; }
+  .panel h2 { font-size: 21px; }
+  .badge { display: none; }
+}
+@media (max-width: 600px) {
+  .legend { display: none; }
+  .floorbar { top: auto; bottom: 10px; left: 0; right: 0; justify-content: center; }
+  .pin { font-size: 11px; padding: 4px 8px; }
+  .pin.zone b { padding: 4px 8px; }
+  .pin.room { font-size: 10px; padding: 3px 6px; }
+}
+@media (max-width: 480px) {
+  .floors button, .tools button { padding: 6px 9px; font-size: 12px; }
+  .legend { font-size: 11px; gap: 4px 9px; }
+  .hint span { font-size: 11px; }
+}
+@media (prefers-reduced-motion: reduce) { .hint { transition: none; } }
+</style>
+</head>
+<body>
+<div class="app" dir="rtl" lang="ar">
+  <header class="top">
+    <div class="brand"><span class="mark" aria-hidden="true"></span><div><strong>محور</strong><span>مستكشف المشاريع</span></div></div>
+    <p class="badge">نموذج أولي · المواصفات توضيحية والمساحات محسوبة من النموذج</p>
+  </header>
+  <main class="main">
+    <section class="stage" id="stage" aria-label="عرض ثلاثي الأبعاد للقصر">
+      <canvas id="scene" aria-hidden="true"></canvas>
+      <div class="labels" id="labels"></div>
+      <div class="tip" id="tip" hidden></div>
+      <div class="bar">
+        <div class="tools">
+          <button id="btn-home" type="button">الموقع كاملًا</button>
+          <button id="btn-up" type="button" hidden>رجوع</button>
+        </div>
+      </div>
+      <div class="floorbar"><div class="floors" id="floors" role="group" aria-label="الأدوار" hidden></div></div>
+      <div class="legend" id="legend" hidden></div>
+      <p class="hint" id="hint"><span>اسحب للتدوير · قرّب بالعجلة أو بإصبعين · اضغط على أي مبنى</span></p>
+      <div class="fail" id="fail" hidden><p>تعذّر تشغيل العرض ثلاثي الأبعاد في هذا المتصفح.<br>افتح الصفحة في متصفح حديث يدعم WebGL.</p></div>
+    </section>
+    <aside class="panel" id="panel" aria-live="polite"></aside>
+  </main>
+</div>
+
+<script>
+  setTimeout(function () { if (!window.__palaceReady) { var f = document.getElementById('fail'); if (f) f.hidden = false; } }, 15000);
+</script>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+/* ============ helpers ============ */
+const R = (x0, z0, x1, z1) => ({ x0, z0, x1, z1 });
+const rw = r => r.x1 - r.x0, rd = r => r.z1 - r.z0, ra = r => rw(r) * rd(r);
+const rcx = r => (r.x0 + r.x1) / 2, rcz = r => (r.z0 + r.z1) / 2;
+const inR = (r, x, z, e = 0) => x > r.x0 - e && x < r.x1 + e && z > r.z0 - e && z < r.z1 + e;
+const sum = (a, f) => a.reduce((s, v) => s + f(v), 0);
+const nf = (n, d = 0) => Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const ltr = s => '\u2066' + s + '\u2069';
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const GOLD = 0xc9ac70;
+
+/* ============ data: the palace as an engineering model ============ */
+const PLOT = R(-75, -55, 75, 55);
+const WALL_H = 3.2, GATE = [-6, 6];
+const NAME = 'قصر الواحة';
+
+const USES = {
+  majlis:  { label: 'مجالس واستقبال', color: '#c9ac70' },
+  dining:  { label: 'طعام', color: '#d39f74' },
+  living:  { label: 'معيشة وعمل', color: '#cbbd9c' },
+  sleep:   { label: 'نوم', color: '#8fa6bb' },
+  wet:     { label: 'مطابخ ودورات مياه', color: '#78a39c' },
+  service: { label: 'خدمات وتخزين', color: '#9b9c86' },
+  move:    { label: 'حركة واتصال', color: '#b9b1a3' },
+  mep:     { label: 'كهروميكانيك', color: '#c88c69' },
+  open:    { label: 'مكشوف', color: '#a5b889' },
+  worship: { label: 'عبادة', color: '#e2cf9d' },
+};
+
+const SPEC = {
+  majlis:  [['الأرضية', 'رخام طبيعي مصقول'], ['الجدران', 'جبس بزخارف هندسية ودهان مطفي'], ['السقف', 'جبس معلق بإضاءة مخفية'], ['الإنارة', 'ثريا مركزية وإنارة خطية'], ['التكييف', 'وحدات مخفية بمجاري هواء']],
+  dining:  [['الأرضية', 'رخام طبيعي'], ['الجدران', 'ألواح خشب جوز حتى 1.2 م'], ['السقف', 'جبس معلق'], ['الإنارة', 'ثريات معلقة فوق الطاولة'], ['التكييف', 'مخفي بمجاري هواء']],
+  living:  [['الأرضية', 'بورسلان كبير المقاس'], ['الجدران', 'دهان مطفي'], ['السقف', 'جبس معلق'], ['الإنارة', 'إنارة مخفية قابلة للتعتيم'], ['التكييف', 'مخفي بمجاري هواء']],
+  sleep:   [['الأرضية', 'باركيه خشب بلوط'], ['الجدران', 'ورق جدران وألواح خلف السرير'], ['السقف', 'جبس معلق'], ['الإنارة', 'إنارة مخفية وأباجورات'], ['التكييف', 'وحدة مخفية مستقلة']],
+  wet:     [['الأرضية', 'بورسلان مقاوم للانزلاق'], ['الجدران', 'بورسلان حتى السقف'], ['السقف', 'ألواح مقاومة للرطوبة'], ['التهوية', 'شفط ميكانيكي'], ['التمديدات', 'مياه حارة وباردة وصرف']],
+  service: [['الأرضية', 'إيبوكسي'], ['الجدران', 'دهان قابل للغسل'], ['السقف', 'خرسانة مدهونة'], ['الإنارة', 'إنارة LED خطية'], ['التهوية', 'مراوح شفط']],
+  move:    [['الأرضية', 'رخام طبيعي'], ['الدرج', 'رخام بدرابزين نحاسي'], ['المصعد', 'مصعد ركاب 6 أشخاص'], ['الإنارة', 'إنارة مخفية'], ['السلامة', 'كواشف دخان']],
+  mep:     [['الأرضية', 'خرسانة مقواة'], ['التهوية', 'طبيعية مع شبك حماية'], ['الحماية', 'تأريض ومانعة صواعق'], ['الوصول', 'باب خدمة مستقل'], ['الصيانة', 'ممرات صيانة حول المعدات']],
+  open:    [['الأرضية', 'حجر طبيعي مقاوم للحرارة'], ['الحماية', 'درابزين بارتفاع 1.1 م'], ['التصريف', 'ميول 2% نحو المصارف'], ['الإنارة', 'خارجية مقاومة للماء']],
+  worship: [['الأرضية', 'سجاد مصليات فوق عزل'], ['الجدران', 'حجر وجبس مزخرف'], ['السقف', 'قبة بإضاءة طبيعية'], ['الصوت', 'نظام صوتي موزع'], ['التكييف', 'مخفي بمجاري هواء']],
+};
+const BUILD_SPEC = [['الهيكل', 'خرسانة مسلحة بأعمدة وجسور'], ['الواجهات', 'حجر جيري بعقود ونوافذ مقوسة'], ['العزل', 'حراري ومائي للجدران والسطح'], ['الزجاج', 'مزدوج عاكس للحرارة'], ['الأسقف', 'بلاطات خرسانية مسطحة']];
+
+const ZONES = [
+  {
+    id: 'main', name: 'المبنى الرئيسي', kind: 'building', base: 0.6, bay: 3.6, plinth: R(-24, -22, 24, 15.5),
+    desc: 'دوران وسطح، يتوسطهما بهو مزدوج الارتفاع تعلوه قبة. المجالس في الواجهة الأمامية والخدمات في الخلف.',
+    dome: { x: 0, z: 3, r: 6, drum: 2.4 }, portico: true,
+    floors: [
+      { key: 'g', name: 'الدور الأرضي', h: 5.5, mass: [R(-22, -20, 22, 10)], entries: [{ axis: 'z', c: 10, a: -2.5, b: 2.5 }],
+        rooms: [
+          { key: 'majlis-men', name: 'مجلس الرجال', use: 'majlis', f: 'majlis', r: R(-22, -2, -7, 10) },
+          { key: 'dining-men', name: 'مقلط الرجال', use: 'dining', f: 'dining', r: R(-22, -10, -7, -2) },
+          { key: 'hall', name: 'البهو الرئيسي', use: 'move', f: 'hall', r: R(-7, -4, 7, 10), h: 9.4, note: 'فراغ مزدوج الارتفاع تعلوه القبة.' },
+          { key: 'stair', name: 'الدرج والمصعد', use: 'move', f: 'stairs', r: R(-7, -10, 7, -4) },
+          { key: 'majlis-women', name: 'مجلس النساء', use: 'majlis', f: 'majlis', r: R(7, -2, 22, 10) },
+          { key: 'dining-family', name: 'صالة الطعام العائلية', use: 'dining', f: 'dining', r: R(7, -10, 22, -2) },
+          { key: 'office', name: 'المكتب', use: 'living', f: 'office', r: R(-22, -20, -12, -10) },
+          { key: 'wc', name: 'دورات المياه', use: 'wet', f: 'wc', r: R(-12, -20, -7, -10) },
+          { key: 'family', name: 'الصالة العائلية', use: 'living', f: 'living', r: R(-7, -20, 7, -10) },
+          { key: 'kitchen', name: 'المطبخ الرئيسي', use: 'wet', f: 'kitchen', r: R(10, -20, 22, -10) },
+          { key: 'pantry', name: 'التحضير والمخزن', use: 'service', f: 'pantry', r: R(7, -20, 10, -10) },
+        ] },
+      { key: '1', name: 'الدور الأول', h: 4.5,
+        mass: [R(-22, -20, 22, 4), R(-7, 4, 7, 10)], voids: [R(-7, -4, 7, 10)],
+        slab: [R(-22, -20, 22, -4), R(-22, -4, -7, 10), R(7, -4, 22, 10)],
+        rooms: [
+          { key: 'master', name: 'الجناح الرئيسي', use: 'sleep', f: 'bed', r: R(-22, -20, -7, -4) },
+          { key: 'study', name: 'المكتب الخاص', use: 'living', f: 'office', r: R(-22, -4, -7, 4) },
+          { key: 'lounge', name: 'الصالة العلوية', use: 'living', f: 'living', r: R(-7, -20, 7, -10) },
+          { key: 'stair', name: 'الدرج والمصعد', use: 'move', f: 'stairs', r: R(-7, -10, 7, -4) },
+          { key: 'bed-1', name: 'غرفة نوم 1', use: 'sleep', f: 'bed', r: R(7, -20, 14.5, -10) },
+          { key: 'bed-2', name: 'غرفة نوم 2', use: 'sleep', f: 'bed', r: R(14.5, -20, 22, -10) },
+          { key: 'bed-3', name: 'غرفة نوم 3', use: 'sleep', f: 'bed', r: R(7, -10, 14.5, 4) },
+          { key: 'bed-4', name: 'غرفة نوم 4', use: 'sleep', f: 'bed', r: R(14.5, -10, 22, 4) },
+          { key: 'terrace-w', name: 'التراس الغربي', use: 'open', f: 'terrace', open: true, r: R(-22, 4, -7, 10) },
+          { key: 'terrace-e', name: 'التراس الشرقي', use: 'open', f: 'terrace', open: true, r: R(7, 4, 22, 10) },
+        ] },
+      { key: 'r', name: 'السطح', h: 3.2, roof: true,
+        mass: [R(-4, -17, 4, -11)], slab: [R(-22, -20, 22, 4), R(-7, 4, 7, 10)],
+        rooms: [
+          { key: 'stair', name: 'غرفة الدرج والمصعد', use: 'move', f: 'stairs', r: R(-4, -17, 4, -11) },
+          { key: 'mep', name: 'منطقة المعدات الميكانيكية', use: 'mep', f: 'ac', open: true, r: R(9, -18, 20, -8) },
+        ] },
+    ],
+  },
+  {
+    id: 'guest', name: 'جناح الضيافة', kind: 'building', base: 0.3, bay: 3.4, plinth: R(35, -33, 65, -5), pergola: R(22, -12, 36, -8),
+    desc: 'جناح مستقل لاستقبال الضيوف بمجلس ومقلط وجناحين للنوم، يصله بالمبنى الرئيسي ممر مظلل.',
+    floors: [{ key: 'g', name: 'الدور الأرضي', h: 5, mass: [R(36, -32, 64, -6)], entries: [{ axis: 'x', c: 36, a: -11.5, b: -8.5 }],
+      rooms: [
+        { key: 'majlis', name: 'مجلس الضيافة', use: 'majlis', f: 'majlis', r: R(36, -20, 52, -6) },
+        { key: 'dining', name: 'مقلط الضيافة', use: 'dining', f: 'dining', r: R(52, -20, 64, -6) },
+        { key: 'suite-1', name: 'جناح ضيف 1', use: 'sleep', f: 'bed', r: R(36, -32, 46, -20) },
+        { key: 'suite-2', name: 'جناح ضيف 2', use: 'sleep', f: 'bed', r: R(46, -32, 56, -20) },
+        { key: 'kitchen', name: 'مطبخ الضيافة', use: 'wet', f: 'kitchen', r: R(56, -32, 64, -20) },
+      ] }],
+  },
+  {
+    id: 'service', name: 'ملحق الخدمات', kind: 'building', base: 0.3, bay: 3.2, plinth: R(-67, -47, -39, -25),
+    desc: 'المطبخ الخارجي والمغسلة وغرفة الكهرباء وسكن العاملين، بمدخل خدمة مستقل عن مداخل الضيوف.',
+    floors: [{ key: 'g', name: 'الدور الأرضي', h: 4.2, mass: [R(-66, -46, -40, -26)], entries: [{ axis: 'z', c: -26, a: -61, b: -58 }],
+      rooms: [
+        { key: 'kitchen', name: 'المطبخ الخارجي', use: 'wet', f: 'kitchen', r: R(-66, -46, -54, -36) },
+        { key: 'laundry', name: 'المغسلة والكي', use: 'service', f: 'laundry', r: R(-54, -46, -46, -36) },
+        { key: 'power', name: 'غرفة الكهرباء والمولد', use: 'mep', f: 'gen', r: R(-46, -46, -40, -36) },
+        { key: 'staff', name: 'سكن العاملين', use: 'sleep', f: 'dorm', r: R(-66, -36, -50, -26) },
+        { key: 'drivers', name: 'سكن السائقين', use: 'sleep', f: 'dorm', r: R(-50, -36, -40, -26) },
+      ] }],
+  },
+  {
+    id: 'garage', name: 'الكراج', kind: 'building', base: 0.15, bay: 4, facade: 'slot', plinth: R(-67, -15, -39, 7),
+    desc: 'مواقف مغطاة مع ورشة وتخزين، وبوابة عريضة على طريق الخدمة.',
+    floors: [{ key: 'g', name: 'الدور الأرضي', h: 4, mass: [R(-66, -14, -40, 6)], entries: [{ axis: 'z', c: 6, a: -64.5, b: -47.5 }],
+      rooms: [
+        { key: 'parking', name: 'مواقف السيارات', use: 'service', f: 'cars', r: R(-66, -14, -46, 6) },
+        { key: 'workshop', name: 'الورشة والتخزين', use: 'service', f: 'workshop', r: R(-46, -14, -40, 6) },
+      ] }],
+  },
+  {
+    id: 'mosque', name: 'المصلى', kind: 'building', base: 0.45, bay: 3.2, plinth: R(-35, 29, -17, 47),
+    desc: 'مصلى القصر بقبة ومئذنة، قريب من البوابة لخدمة الضيوف والعاملين.',
+    dome: { x: -26, z: 36, r: 4.2, drum: 1.6 }, minaret: { x: -36.5, z: 47.5 },
+    floors: [{ key: 'g', name: 'الدور الأرضي', h: 5.5, mass: [R(-34, 30, -18, 46)], entries: [{ axis: 'z', c: 46, a: -28, b: -24 }],
+      rooms: [
+        { key: 'prayer', name: 'قاعة الصلاة', use: 'worship', f: 'prayer', r: R(-34, 30, -18, 42) },
+        { key: 'ablution', name: 'الوضوء', use: 'wet', f: 'ablution', r: R(-34, 42, -18, 46) },
+      ] }],
+  },
+  { id: 'pool', name: 'المسبح', kind: 'pool', deck: R(30, 8, 62, 30), water: R(34, 13, 58, 25), depth: [1.2, 2.0],
+    desc: 'مسبح خارجي بمنطقة جلوس محيطة، بين الواجهة الأمامية وجناح الضيافة.',
+    spec: [['التشطيب', 'موزاييك زجاجي'], ['الفلترة', 'رملية بمضخة متغيرة السرعة'], ['الإنارة', 'إنارة غاطسة'], ['المحيط', 'حجر مقاوم للحرارة']] },
+  { id: 'gardens', name: 'الحدائق', kind: 'gardens',
+    patches: [R(-70, 22, -38, 50), R(-16, 21, -8, 46), R(8, 34, 70, 50), R(8, 21, 28, 34), R(-30, -50, 30, -26)],
+    desc: 'مسطحات خضراء ونخيل في الواجهة والحديقة الخلفية.',
+    spec: [['الري', 'تنقيط للنخيل ورشاشات للمسطحات'], ['التشجير', 'نخيل ومسطحات عشبية'], ['الإنارة', 'إنارة أرضية موجهة']] },
+  { id: 'wall', name: 'السور والبوابة', kind: 'wall',
+    desc: 'سور محيطي بشُرَف نجدية وبوابة رئيسية على الشارع الجنوبي.',
+    spec: [['الإنشاء', 'بلوك خرساني بأعمدة'], ['التكسية', 'حجر مطابق للواجهات'], ['البوابة', 'حديد مشغول بلون ذهبي'], ['الحماية', 'كاميرات عند البوابة']] },
+];
+
+const PAVING = [R(-4, 21, 4, 55), R(-26, 15, 26, 21), R(-40, 15, -26, 21), R(-66, 6, -40, 21), R(22, -12, 36, -8),
+  R(26, 15, 30, 21), R(-72, -30, -66, 21), R(-28, 46.5, -4, 50)];
+const ROUND = { x: 0, z: 34, r: 7.5 };
+
+/* indexes */
+const BY_ID = new Map();
+for (const Z of ZONES) {
+  BY_ID.set(Z.id, { type: 'zone', zone: Z });
+  (Z.floors || []).forEach((fl, k) => {
+    fl.id = `${Z.id}-${fl.key}`; fl.k = k; fl.zone = Z;
+    BY_ID.set(fl.id, { type: 'floor', zone: Z, floor: fl });
+    for (const room of fl.rooms) { room.id = `${fl.id}-${room.key}`; room.floor = fl; room.zone = Z; BY_ID.set(room.id, { type: 'room', zone: Z, floor: fl, room }); }
+  });
+}
+
+/* ============ renderer, scene, camera ============ */
+const stage = document.getElementById('stage');
+const canvas = document.getElementById('scene');
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
+} catch (err) {
+  document.getElementById('fail').hidden = false;
+  throw err;
+}
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0xd6aa78, 300, 820);
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+
+const camera = new THREE.PerspectiveCamera(38, 1, 0.5, 2500);
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.maxPolarAngle = THREE.MathUtils.degToRad(82);
+controls.minDistance = 5;
+controls.maxDistance = 420;
+controls.screenSpacePanning = false;
+
+scene.add(new THREE.HemisphereLight(0xd6e4f2, 0x9c7a50, 0.55));
+const sun = new THREE.DirectionalLight(0xffd9a8, 2.6);
+sun.position.set(-90, 120, 75);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -115, right: 115, top: 115, bottom: -115, near: 10, far: 420 });
+sun.shadow.camera.updateProjectionMatrix();
+sun.shadow.bias = -0.0004;
+sun.shadow.normalBias = 0.04;
+scene.add(sun);
+
+/* ============ materials & textures ============ */
+function std(color, roughness = 0.85, metalness = 0, extra = {}) {
+  return new THREE.MeshStandardMaterial({ color, roughness, metalness, envMapIntensity: 0.55, ...extra });
+}
+function facadeTexture(kind) {
+  const c = document.createElement('canvas'); c.width = 256; c.height = 512;
+  const e = document.createElement('canvas'); e.width = 256; e.height = 512;
+  const g = c.getContext('2d'), ge = e.getContext('2d');
+  g.fillStyle = '#e8dbc3'; g.fillRect(0, 0, 256, 512);
+  g.fillStyle = 'rgba(110, 86, 52, 0.08)';
+  for (let y = 18; y < 512; y += 30) g.fillRect(0, y, 256, 2);
+  g.fillStyle = '#d6c4a2'; g.fillRect(0, 0, 256, 22);
+  g.fillStyle = '#cdb993'; g.fillRect(0, 490, 256, 22);
+  ge.fillStyle = '#000'; ge.fillRect(0, 0, 256, 512);
+  const arch = (ctx, x, y, w, h) => {
+    ctx.beginPath(); ctx.moveTo(x, y + h); ctx.lineTo(x, y + w / 2);
+    ctx.arc(x + w / 2, y + w / 2, w / 2, Math.PI, 0); ctx.lineTo(x + w, y + h); ctx.closePath();
+  };
+  if (kind === 'arch') {
+    g.fillStyle = '#cbb48a'; arch(g, 62, 92, 132, 350); g.fill();
+    g.fillStyle = '#2a3037'; arch(g, 76, 106, 104, 322); g.fill();
+    g.fillStyle = '#b39663'; g.fillRect(126, 150, 4, 278); g.fillRect(76, 262, 104, 4);
+    ge.fillStyle = '#ffc47a'; arch(ge, 76, 106, 104, 322); ge.fill();
+  } else if (kind === 'slot') {
+    g.fillStyle = '#cbb48a'; g.fillRect(24, 54, 208, 70);
+    g.fillStyle = '#2a3037'; g.fillRect(32, 62, 192, 54);
+    g.fillStyle = '#b39663'; for (let x = 78; x < 224; x += 48) g.fillRect(x, 62, 4, 54);
+    ge.fillStyle = '#ffc47a'; ge.fillRect(32, 62, 192, 54);
+  }
+  const map = new THREE.CanvasTexture(c), em = new THREE.CanvasTexture(e);
+  for (const t of [map, em]) { t.colorSpace = THREE.SRGBColorSpace; t.wrapS = THREE.RepeatWrapping; t.anisotropy = 4; }
+  return { map, em };
+}
+const TEX = { arch: facadeTexture('arch'), slot: facadeTexture('slot'), blank: facadeTexture('blank') };
+
+const M = {
+  sand: std('#cdad80', 1), plot: std('#dcc7a2', 1), paving: std('#bcae98', 0.95), asphalt: std('#4b4a48', 0.95),
+  grass: std('#6c8b4b', 1), stone: std('#e2d3b6', 0.85), water: std('#3d9db0', 0.08, 0.1, { transparent: true, opacity: 0.88 }),
+  wallStone: std('#d9c7a5', 0.9), gold: std('#c9a65e', 0.32, 0.75, { envMapIntensity: 1 }), trunk: std('#8a6a45', 1),
+  frond: std('#56743a', 0.95, 0, { side: THREE.DoubleSide, flatShading: true }), dash: std('#e9e2d0', 0.9),
+  slab: std('#e7ddca', 0.9), wall: std('#f1ebdf', 0.9), glass: std('#bcd7e0', 0.1, 0, { transparent: true, opacity: 0.35 }),
+  grid: new THREE.MeshBasicMaterial({ color: GOLD, transparent: true, opacity: 0.55 }),
+};
+const FM = {
+  wood: std('#7a5a3c', 0.7), fabric: std('#ece3d2', 0.95), cushion: std('#b88f5a', 0.95), rug: std('#7d2f2a', 1),
+  chair: std('#5d4630', 0.8), linen: std('#f4efe6', 0.95), dark: std('#2c3034', 0.6), metal: std('#9aa3a8', 0.4, 0.6),
+  counter: std('#d9d4cc', 0.5), white: std('#f4f4f2', 0.5), plant: std('#4f7a3a', 1), stone2: std('#d0c3ab', 0.6),
+  pray1: std('#3f6b4f', 1), pray2: std('#4f7d5e', 1), genset: std('#b88c3c', 0.6, 0.3),
+  cars: ['#f2f2f0', '#1d1f22', '#7b8a96', '#b9a27a', '#6b2f2a'].map(c => std(c, 0.35, 0.5)),
+};
+
+/* shared unit geometries */
+const BOX = new THREE.BoxGeometry(1, 1, 1);
+const CYL = new THREE.CylinderGeometry(1, 1, 1, 28);
+const BOX_EDGES = new THREE.EdgesGeometry(BOX);
+
+function bx(parent, mat, cx, cz, w, d, h, y0, ry = 0, cast = true, recv = true) {
+  const o = new THREE.Mesh(BOX, mat);
+  o.scale.set(Math.max(w, 0.01), Math.max(h, 0.01), Math.max(d, 0.01));
+  o.position.set(cx, y0 + h / 2, cz); o.rotation.y = ry;
+  o.castShadow = cast; o.receiveShadow = recv; parent.add(o); return o;
+}
+function cy(parent, mat, cx, cz, r, h, y0, cast = true) {
+  const o = new THREE.Mesh(CYL, mat); o.scale.set(r, h, r); o.position.set(cx, y0 + h / 2, cz);
+  o.castShadow = cast; o.receiveShadow = true; parent.add(o); return o;
+}
+function walkEdges(r, step, cb) {
+  const E = [[r.x0, r.z0, r.x1, r.z0, 0, 1], [r.x1, r.z0, r.x1, r.z1, -1, 0], [r.x1, r.z1, r.x0, r.z1, 0, -1], [r.x0, r.z1, r.x0, r.z0, 1, 0]];
+  for (const [ax, az, bxx, bzz, nx, nz] of E) {
+    const len = Math.hypot(bxx - ax, bzz - az), n = Math.max(1, Math.round(len / step)), s = len / n;
+    const rotY = nz !== 0 ? 0 : Math.PI / 2;
+    for (let i = 0; i < n; i++) { const t = (i + 0.5) / n; cb(ax + (bxx - ax) * t, az + (bzz - az) * t, rotY, s, nx, nz); }
+  }
+}
+const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _p = new THREE.Vector3(), _s = new THREE.Vector3(), _Y = new THREE.Vector3(0, 1, 0);
+function instanced(parent, geo, mat, items) { // items: [x, y, z, rotY, sx, sy, sz]
+  if (!items.length) return null;
+  const im = new THREE.InstancedMesh(geo, mat, items.length);
+  items.forEach((it, i) => { _p.set(it[0], it[1], it[2]); _q.setFromAxisAngle(_Y, it[3] || 0); _s.set(it[4] ?? 1, it[5] ?? 1, it[6] ?? 1); _m.compose(_p, _q, _s); im.setMatrixAt(i, _m); });
+  im.instanceMatrix.needsUpdate = true; im.castShadow = true; im.receiveShadow = true; parent.add(im); return im;
+}
+const CREN = new THREE.ConeGeometry(0.34, 0.62, 4); CREN.rotateY(Math.PI / 4);
+
+/* ============ buildings ============ */
+const edgeMat = new THREE.LineBasicMaterial({ color: GOLD });
+function zoneMat(Z, color, rough = 0.85, metal = 0, extra = {}) { const m = std(color, rough, metal, extra); Z.mats.push(m); return m; }
+function facadeMat(Z, bays, kind) {
+  const key = kind + ':' + bays;
+  if (Z.matCache[key]) return Z.matCache[key];
+  const map = TEX[kind].map.clone(), em = TEX[kind].em.clone();
+  for (const t of [map, em]) { t.repeat.set(bays, 1); t.needsUpdate = true; }
+  const m = std('#ffffff', 0.85, 0, { map, emissiveMap: em, emissive: 0xffffff, emissiveIntensity: 0.16 });
+  Z.mats.push(m); Z.facades.push(m); Z.matCache[key] = m; return m;
+}
+function massBox(Z, parent, r, y, h, kind) {
+  const w = rw(r), d = rd(r);
+  const fx = d < 2.4 ? facadeMat(Z, 1, 'blank') : facadeMat(Z, Math.max(1, Math.round(d / Z.bay)), kind);
+  const fz = w < 2.4 ? facadeMat(Z, 1, 'blank') : facadeMat(Z, Math.max(1, Math.round(w / Z.bay)), kind);
+  const o = new THREE.Mesh(BOX, [fx, fx, Z.roofMat, Z.roofMat, fz, fz]);
+  o.scale.set(w, h, d); o.position.set(rcx(r), y + h / 2, rcz(r)); o.castShadow = true; o.receiveShadow = true; parent.add(o);
+  const e = new THREE.LineSegments(BOX_EDGES, edgeMat); e.scale.copy(o.scale); e.position.copy(o.position); Z.edges.add(e);
+  return o;
+}
+function rim(Z, k, yTop, parent) {
+  const fl = Z.floors[k], up = Z.floors[k + 1];
+  const segs = [], crens = [];
+  for (const r of fl.mass) {
+    const others = fl.mass.filter(o => o !== r).concat(up ? up.mass : []);
+    walkEdges(r, 1.2, (x, z, rotY, len, nx, nz) => {
+      if (others.some(o => inR(o, x, z, 0.35))) return;
+      const cx = x + nx * 0.15, cz = z + nz * 0.15;
+      segs.push([cx, yTop + 0.55, cz, rotY, len + 0.02, 1.1, 0.3]);
+      crens.push([cx, yTop + 1.1 + 0.3, cz, rotY]);
+    });
+  }
+  instanced(parent, BOX, Z.rimMat, segs);
+  instanced(parent, CREN, Z.rimMat, crens);
+}
+function buildDome(Z, parent, y) {
+  const d = Z.dome, g = new THREE.Group(); parent.add(g);
+  const drum = new THREE.Mesh(new THREE.CylinderGeometry(d.r, d.r, d.drum, 48), facadeMat(Z, 1, 'blank'));
+  drum.position.set(d.x, y + d.drum / 2, d.z); drum.castShadow = true; g.add(drum);
+  const ring = new THREE.Mesh(new THREE.CylinderGeometry(d.r + 0.25, d.r + 0.25, 0.35, 48), Z.goldMat);
+  ring.position.set(d.x, y + d.drum, d.z); g.add(ring);
+  const shell = new THREE.Mesh(new THREE.SphereGeometry(d.r, 48, 24, 0, Math.PI * 2, 0, Math.PI / 2), Z.goldMat);
+  shell.position.set(d.x, y + d.drum, d.z); shell.castShadow = true; g.add(shell);
+  cy(g, Z.goldMat, d.x, d.z, 0.18, 1.2, y + d.drum + d.r - 0.1);
+  const ball = new THREE.Mesh(new THREE.SphereGeometry(0.32, 16, 12), Z.goldMat); ball.position.set(d.x, y + d.drum + d.r + 1.25, d.z); g.add(ball);
+  return g;
+}
+function buildBuilding(Z) {
+  Z.root = new THREE.Group(); Z.root.userData.zone = Z; scene.add(Z.root);
+  Z.edges = new THREE.Group(); Z.edges.visible = false; scene.add(Z.edges);
+  Z.mats = []; Z.facades = []; Z.matCache = {};
+  Z.roofMat = zoneMat(Z, '#d9caad', 0.92);
+  Z.rimMat = zoneMat(Z, '#e5d6b9', 0.88);
+  Z.goldMat = zoneMat(Z, '#c9a65e', 0.32, 0.75, { envMapIntensity: 1 });
+  const plinthMat = zoneMat(Z, '#cbb893', 0.9);
+  Z.baseG = new THREE.Group(); Z.root.add(Z.baseG);
+  bx(Z.baseG, plinthMat, rcx(Z.plinth), rcz(Z.plinth), rw(Z.plinth), rd(Z.plinth), Z.base, 0);
+  Z.ext = [];
+  let y = Z.base;
+  Z.floors.forEach((fl, k) => {
+    fl.y = y;
+    const g = new THREE.Group(); Z.root.add(g); Z.ext.push(g);
+    for (const r of fl.mass) massBox(Z, g, r, y, fl.h, fl.roof ? 'blank' : (Z.facade || 'arch'));
+    rim(Z, k, y + fl.h, g);
+    y += fl.h;
+  });
+  Z.top = y;
+  Z.extras = new THREE.Group(); Z.root.add(Z.extras);
+  const last = Z.floors[Z.floors.length - 1];
+  if (Z.dome) Z.domeG = buildDome(Z, Z.root, last.roof ? last.y : Z.top);
+  if (Z.portico) {
+    const colMat = zoneMat(Z, '#efe4cf', 0.7), top = Z.floors[1].y + Z.floors[1].h;
+    for (let x = -7; x <= 7.01; x += 2) cy(Z.extras, colMat, x, 13.2, 0.42, top - 0.8 - Z.base, Z.base);
+    bx(Z.extras, Z.rimMat, 0, 12, 17, 4.4, 0.8, top - 0.8);
+    bx(Z.extras, Z.goldMat, 0, 14.25, 17, 0.12, 0.25, top - 0.55);
+    bx(Z.extras, plinthMat, 0, 16, 12, 1, 0.4, 0);
+    bx(Z.extras, plinthMat, 0, 16.9, 12, 0.9, 0.2, 0);
+  }
+  if (Z.pergola) {
+    const p = Z.pergola, wood = zoneMat(Z, '#8a6a48', 0.8);
+    for (let x = p.x0 + 0.5; x <= p.x1 - 0.4; x += 2.2) for (const z of [p.z0 + 0.25, p.z1 - 0.25]) cy(Z.baseG, wood, x, z, 0.14, 3.4, 0);
+    for (const z of [p.z0 + 0.25, p.z1 - 0.25]) bx(Z.baseG, wood, rcx(p), z, rw(p), 0.2, 0.3, 3.4);
+    for (let x = p.x0 + 0.3; x <= p.x1; x += 0.6) bx(Z.baseG, wood, x, rcz(p), 0.12, rd(p) + 0.4, 0.14, 3.7);
+  }
+  if (Z.minaret) {
+    const m = Z.minaret, shaft = zoneMat(Z, '#e9dcc3', 0.85);
+    cy(Z.extras, shaft, m.x, m.z, 1.15, 13, 0);
+    cy(Z.extras, Z.rimMat, m.x, m.z, 1.7, 0.5, 11.2);
+    cy(Z.extras, shaft, m.x, m.z, 0.85, 3.2, 13);
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(1.0, 2.4, 24), Z.goldMat); cone.position.set(m.x, 16.2 + 1.2, m.z); cone.castShadow = true; Z.extras.add(cone);
+  }
+  computeZone(Z);
+}
+const WALL_T = 0.25;
+const clearArea = room => Math.max(0, rw(room.r) - WALL_T) * Math.max(0, rd(room.r) - WALL_T);
+function computeZone(Z) {
+  for (const fl of Z.floors) {
+    fl.gross = sum(fl.mass, ra) - sum(fl.voids || [], ra);
+    fl.net = sum(fl.rooms.filter(r => !r.open), r => clearArea(r));
+  }
+  Z.footprint = sum(Z.floors[0].mass, ra);
+  Z.gross = sum(Z.floors, f => f.gross);
+  Z.net = sum(Z.floors, f => f.net);
+  const box = new THREE.Box3().setFromObject(Z.root);
+  Z.highest = box.max.y;
+  const last = Z.floors[Z.floors.length - 1];
+  Z.roofLevel = last.roof ? last.y : Z.top;
+  const f0 = Z.floors[0].mass;
+  Z.pin = new THREE.Vector3(sum(f0, r => rcx(r) * ra(r)) / Z.footprint, Z.highest + 1.2, sum(f0, r => rcz(r) * ra(r)) / Z.footprint);
+  const xs = new Set(), zs = new Set();
+  for (const room of Z.floors[0].rooms) { xs.add(room.r.x0); xs.add(room.r.x1); zs.add(room.r.z0); zs.add(room.r.z1); }
+  Z.axes = { xs: [...xs].sort((a, b) => a - b), zs: [...zs].sort((a, b) => a - b) };
+}
+
+/* ============ interiors (built on demand) ============ */
+function mergeSpans(spans) {
+  const s = spans.slice().sort((a, b) => a[0] - b[0]), out = [];
+  for (const sp of s) { const l = out[out.length - 1]; if (l && sp[0] <= l[1] + 0.01) l[1] = Math.max(l[1], sp[1]); else out.push([sp[0], sp[1]]); }
+  return out;
+}
+function cutSpan(span, gaps) {
+  let out = [span];
+  for (const [s, t] of gaps) out = out.flatMap(([a, b]) => (t <= a || s >= b) ? [[a, b]] : [[a, s], [t, b]].filter(([p, q]) => q - p > 0.05));
+  return out;
+}
+function buildWalls(g, fl, y, h) {
+  const slab = fl.slab || fl.mass;
+  const onSlab = (x, z) => slab.some(r => inR(r, x, z));
+  const lines = new Map();
+  const line = (axis, c) => { const k = axis + c.toFixed(2); if (!lines.has(k)) lines.set(k, { axis, c, spans: [], gaps: [] }); return lines.get(k); };
+  for (const room of fl.rooms) {
+    if (room.open) continue;
+    const r = room.r;
+    for (const [axis, c, a, b, ox, oz] of [['z', r.z0, r.x0, r.x1, 0, -1], ['z', r.z1, r.x0, r.x1, 0, 1], ['x', r.x0, r.z0, r.z1, -1, 0], ['x', r.x1, r.z0, r.z1, 1, 0]]) {
+      const L = line(axis, c); L.spans.push([a, b]);
+      const m = (a + b) / 2, [px, pz] = axis === 'z' ? [m, c + oz * 0.3] : [c + ox * 0.3, m];
+      if (onSlab(px, pz) && b - a >= 2.4) L.gaps.push([m - 0.6, m + 0.6]);
+    }
+  }
+  for (const e of fl.entries || []) line(e.axis, e.c).gaps.push([e.a, e.b]);
+  for (const L of lines.values()) for (const span of mergeSpans(L.spans)) for (const [s, t] of cutSpan(span, L.gaps)) {
+    if (L.axis === 'z') bx(g, M.wall, (s + t) / 2, L.c, t - s + 0.25, 0.25, h, y);
+    else bx(g, M.wall, L.c, (s + t) / 2, 0.25, t - s, h, y);
+  }
+}
+function furnish(g, room, y) {
+  const r = room.r, X = rcx(r), Zc = rcz(r), W = rw(r), D = rd(r), i = 0.45, F = FM;
+  switch (room.f) {
+    case 'majlis': {
+      const s = 0.85, front = 1.8, L = D - 2 * i - s - front, zc = r.z0 + i + s + L / 2;
+      bx(g, F.fabric, X, r.z0 + i + s / 2, W - 2 * i, s, 0.42, y);
+      bx(g, F.cushion, X, r.z0 + i + 0.12, W - 2 * i, 0.24, 0.85, y);
+      for (const sx of [-1, 1]) {
+        bx(g, F.fabric, sx < 0 ? r.x0 + i + s / 2 : r.x1 - i - s / 2, zc, s, L, 0.42, y);
+        bx(g, F.cushion, sx < 0 ? r.x0 + i + 0.12 : r.x1 - i - 0.12, zc, 0.24, L, 0.85, y);
+      }
+      const rugW = W - 2 * (i + s + 0.7), rugD = D - 2 * i - s - front - 0.8, rz = r.z0 + i + s + 0.5 + rugD / 2;
+      if (rugW > 1 && rugD > 1) {
+        bx(g, F.rug, X, rz, rugW, rugD, 0.02, y, 0, false);
+        const n = Math.max(1, Math.floor(rugW / 3.4));
+        for (let t = 0; t < n; t++) bx(g, F.wood, X - rugW / 2 + (t + 0.5) * rugW / n, rz, 0.9, 0.9, 0.38, y + 0.02);
+      }
+      room.seats = Math.floor((W - 2 * i) / 0.7) + 2 * Math.floor(L / 0.7);
+      break;
+    }
+    case 'dining': {
+      const along = W >= D, L = (along ? W : D) - 4.4, wt = 1.4;
+      if (along) bx(g, F.wood, X, Zc, L, wt, 0.76, y); else bx(g, F.wood, X, Zc, wt, L, 0.76, y);
+      const n = Math.max(2, Math.floor(L / 0.95));
+      for (let t = 0; t < n; t++) {
+        const o = -L / 2 + (t + 0.5) * L / n;
+        for (const s of [-1, 1]) {
+          if (along) bx(g, F.chair, X + o, Zc + s * (wt / 2 + 0.38), 0.5, 0.5, 0.95, y);
+          else bx(g, F.chair, X + s * (wt / 2 + 0.38), Zc + o, 0.5, 0.5, 0.95, y);
+        }
+      }
+      room.seats = n * 2;
+      if (along) bx(g, F.wood, X, r.z0 + i + 0.25, Math.min(W - 2 * i, 5), 0.5, 0.9, y);
+      else bx(g, F.wood, r.x0 + i + 0.25, Zc, 0.5, Math.min(D - 2 * i, 5), 0.9, y);
+      break;
+    }
+    case 'bed': {
+      const bw = Math.min(2.2, W - 2.4), bl = 2.3, z0 = r.z0 + i;
+      bx(g, F.wood, X, z0 + 0.08, bw + 0.5, 0.16, 1.3, y);
+      bx(g, F.linen, X, z0 + 0.16 + bl / 2, bw, bl, 0.55, y);
+      bx(g, F.cushion, X, z0 + 0.5, bw - 0.3, 0.4, 0.18, y + 0.55);
+      for (const s of [-1, 1]) bx(g, F.wood, X + s * (bw / 2 + 0.55), z0 + 0.3, 0.55, 0.45, 0.55, y);
+      bx(g, F.wood, r.x1 - i - 0.3, Zc + 0.5, 0.6, Math.min(D - 2 * i - 3.4, 4.5), 2.2, y);
+      if (D > 9 && W > 6.5) {
+        const zs = r.z1 - i - 1.6;
+        bx(g, F.fabric, X - 0.6, zs, 2.6, 0.85, 0.42, y); bx(g, F.wood, X - 0.6, zs - 1.1, 1.2, 0.7, 0.4, y);
+      }
+      if (W >= 12) { bx(g, F.white, r.x0 + i + 1.6, r.z1 - i - 1.4, 1.8, 0.9, 0.55, y); bx(g, F.wall, r.x0 + 3.6, r.z1 - 1.6, 0.15, 3.2, 2.2, y); }
+      break;
+    }
+    case 'living': {
+      bx(g, F.rug, X, Zc, Math.min(W - 2, 6), Math.min(D - 2, 4.5), 0.02, y, 0, false);
+      bx(g, F.fabric, X, Zc - 1.6, 3.4, 0.9, 0.42, y); bx(g, F.cushion, X, Zc - 2.0, 3.4, 0.22, 0.82, y);
+      bx(g, F.fabric, X - 2.2, Zc - 0.3, 0.9, 2.2, 0.42, y);
+      bx(g, F.wood, X, Zc, 1.4, 0.8, 0.4, y + 0.02);
+      bx(g, F.dark, X, r.z1 - i - 0.2, Math.min(W - 2 * i, 3.6), 0.35, 1.2, y);
+      break;
+    }
+    case 'office': {
+      bx(g, F.wood, X, r.z0 + i + 0.2, Math.min(W - 2 * i, 6), 0.4, 2.2, y);
+      bx(g, F.wood, X, r.z0 + i + 1.7, 2.2, 0.95, 0.76, y);
+      bx(g, F.chair, X, r.z0 + i + 2.6, 0.6, 0.6, 1.1, y);
+      bx(g, F.fabric, X, r.z1 - i - 1.0, 2.4, 0.85, 0.42, y); bx(g, F.wood, X, r.z1 - i - 2.2, 1, 0.6, 0.4, y);
+      break;
+    }
+    case 'kitchen': {
+      bx(g, F.counter, X, r.z0 + i + 0.33, W - 2 * i, 0.66, 0.92, y);
+      bx(g, F.counter, r.x0 + i + 0.33, Zc + 0.33, 0.66, D - 2 * i - 0.66, 0.92, y);
+      if (W > 6) bx(g, F.counter, X + 0.5, Zc + 0.6, Math.min(W - 5, 4), 1.2, 0.92, y);
+      bx(g, F.metal, r.x1 - i - 0.45, r.z0 + i + 0.45, 0.9, 0.8, 2.0, y);
+      break;
+    }
+    case 'pantry': case 'workshop': {
+      for (const s of [-1, 1]) bx(g, F.wood, s < 0 ? r.x0 + i + 0.25 : r.x1 - i - 0.25, Zc, 0.5, D - 2 * i, 2.0, y);
+      if (room.f === 'workshop') bx(g, F.wood, X, Zc, 1.0, Math.min(D - 4, 3), 0.9, y);
+      break;
+    }
+    case 'stairs': {
+      const n = 12, run = 0.3, rise = 0.19, ws = 1.6, sx = r.x0 + i + 0.2;
+      for (let t = 0; t < n; t++) bx(g, F.stone2, sx + (t + 0.5) * run, Zc - 0.6, run, ws, rise * (t + 1), y);
+      bx(g, F.dark, r.x1 - i - 1.1, Zc, 2.0, 2.0, 2.3, y);
+      break;
+    }
+    case 'hall': {
+      cy(g, M.gold, X, Zc, 3.1, 0.02, y, false); cy(g, F.stone2, X, Zc, 2.9, 0.03, y, false);
+      cy(g, F.wood, X, Zc, 1.3, 0.78, y); cy(g, M.gold, X, Zc, 0.35, 0.6, y + 0.78);
+      for (const [dx, dz] of [[-5.5, -2.5], [5.5, -2.5], [-5.5, 8.5], [5.5, 8.5]]) { cy(g, F.stone2, X + dx, rcz(r) - 3 + dz, 0.45, 0.6, y); cy(g, F.plant, X + dx, rcz(r) - 3 + dz, 0.55, 1.2, y + 0.6); }
+      break;
+    }
+    case 'cars': {
+      const per = Math.floor((W - 2 * i) / 3.1), rows = [r.z0 + i + 2.5, r.z0 + i + 2.5 + 5.2 + 0.6];
+      let n = 0;
+      for (const zc of rows) for (let t = 0; t < per; t++) {
+        const xc = r.x0 + i + 1.55 + t * 3.1, mat = F.cars[(n * 3 + (zc > rows[0] ? 1 : 0)) % F.cars.length];
+        bx(g, F.dark, xc, zc, 1.8, 3.4, 0.3, y); bx(g, mat, xc, zc, 1.9, 4.6, 0.75, y + 0.25); bx(g, F.dark, xc, zc + 0.2, 1.7, 2.3, 0.55, y + 1.0);
+        n++;
+      }
+      room.capacity = n;
+      break;
+    }
+    case 'dorm': {
+      const per = Math.floor((W - 2 * i) / 1.7); let n = 0;
+      for (const zc of [r.z0 + i + 1.05, r.z1 - i - 1.05]) for (let t = 0; t < per; t++) { bx(g, F.linen, r.x0 + i + 0.85 + t * 1.7, zc, 0.9, 2.0, 0.5, y); n++; }
+      bx(g, F.wood, X, Zc, Math.min(W - 3, 6), 0.6, 1.8, y);
+      room.beds = n;
+      break;
+    }
+    case 'wc': {
+      const n = Math.max(1, Math.floor((W - 2 * i) / 1.5));
+      for (let t = 0; t <= n; t++) bx(g, F.wall, r.x0 + i + t * (W - 2 * i) / n, r.z0 + i + 0.9, 0.06, 1.8, 2.0, y);
+      for (let t = 0; t < n; t++) bx(g, F.white, r.x0 + i + (t + 0.5) * (W - 2 * i) / n, r.z0 + i + 0.35, 0.45, 0.6, 0.45, y);
+      bx(g, F.counter, X, r.z1 - i - 0.3, W - 2 * i, 0.6, 0.85, y);
+      break;
+    }
+    case 'prayer': {
+      let rows = 0;
+      for (let x = r.x0 + i + 2.6; x < r.x1 - i - 0.6; x += 1.3) { bx(g, rows % 2 ? F.pray2 : F.pray1, x, Zc, 1.0, D - 2 * i - 0.6, 0.03, y, 0, false); rows++; }
+      bx(g, M.gold, r.x0 + i + 0.2, Zc, 0.4, 1.8, 2.3, y);
+      bx(g, F.wood, r.x0 + i + 0.9, Zc + 2.2, 1.2, 0.8, 1.4, y);
+      room.rows = rows; room.perRow = Math.floor((D - 2 * i - 0.6) / 0.6);
+      break;
+    }
+    case 'ablution': {
+      bx(g, F.counter, X, r.z0 + i + 0.3, W - 2 * i, 0.5, 0.35, y + 0.55);
+      const n = Math.floor((W - 2 * i) / 0.9);
+      for (let t = 0; t < n; t++) bx(g, F.stone2, r.x0 + i + 0.45 + t * 0.9, r.z0 + i + 1.0, 0.4, 0.4, 0.4, y);
+      room.stations = n;
+      break;
+    }
+    case 'ac': {
+      const cols = Math.floor((W - 1) / 2.8), rows = Math.floor((D - 1) / 2.6); let n = 0;
+      for (let a = 0; a < cols; a++) for (let b = 0; b < rows; b++) {
+        const xc = r.x0 + 0.5 + 1.4 + a * 2.8, zc = r.z0 + 0.5 + 1.3 + b * 2.6;
+        bx(g, F.metal, xc, zc, 2.2, 1.2, 1.5, y); cy(g, F.dark, xc - 0.55, zc, 0.42, 0.05, y + 1.5); cy(g, F.dark, xc + 0.55, zc, 0.42, 0.05, y + 1.5); n++;
+      }
+      room.units = n;
+      break;
+    }
+    case 'gen': {
+      bx(g, F.genset, X, Zc + 1.2, 1.6, 3.2, 1.8, y);
+      bx(g, F.dark, X, r.z0 + i + 0.25, W - 2 * i - 0.4, 0.5, 2.1, y);
+      break;
+    }
+    case 'laundry': {
+      const n = Math.floor((W - 2 * i) / 0.75);
+      for (let t = 0; t < n; t++) bx(g, F.white, r.x0 + i + 0.375 + t * 0.75, r.z0 + i + 0.35, 0.65, 0.65, 0.9, y);
+      bx(g, F.wood, X, Zc + 1, 2.4, 0.9, 0.9, y);
+      break;
+    }
+    case 'terrace': {
+      for (const fx of [0.3, 0.7]) {
+        const xc = r.x0 + W * fx;
+        cy(g, F.wood, xc, Zc, 0.55, 0.74, y);
+        for (const [dx, dz] of [[0.95, 0], [-0.95, 0], [0, 0.95], [0, -0.95]]) bx(g, F.chair, xc + dx, Zc + dz, 0.5, 0.5, 0.85, y);
+      }
+      for (let x = r.x0 + 1; x < r.x1 - 0.5; x += 3) { cy(g, F.stone2, x, r.z1 - 0.8, 0.35, 0.5, y); cy(g, F.plant, x, r.z1 - 0.8, 0.45, 0.8, y + 0.5); }
+      break;
+    }
+  }
+}
+function interiorFor(Z, k) {
+  const fl = Z.floors[k];
+  if (fl.int) return fl.int;
+  const g = new THREE.Group(); g.userData.interior = fl; g.visible = false; scene.add(g);
+  const y = fl.y;
+  for (const r of fl.slab || fl.mass) bx(g, M.slab, rcx(r), rcz(r), rw(r), rd(r), 0.3, y - 0.27, 0, false, true);
+  for (const room of fl.rooms) {
+    room.mat = std(USES[room.use].color, 0.85, 0, { emissive: new THREE.Color(GOLD), emissiveIntensity: 0 });
+    bx(g, room.mat, rcx(room.r), rcz(room.r), rw(room.r) - 0.12, rd(room.r) - 0.12, 0.06, y + 0.03, 0, false, true);
+    furnish(g, room, y + 0.09);
+  }
+  buildWalls(g, fl, y + 0.03, Math.min(2.4, fl.h - 0.8));
+  const slab = fl.slab || fl.mass;
+  for (const v of fl.voids || []) walkEdges(v, 1.2, (x, z, rotY, len, nx, nz) => {
+    if (!slab.some(r => inR(r, x - nx * 0.3, z - nz * 0.3))) return;
+    const cx = x - nx * 0.06, cz = z - nz * 0.06;
+    bx(g, M.glass, cx, cz, len, 0.06, 1.0, y + 0.09, rotY, false, false);
+    bx(g, M.gold, cx, cz, len, 0.09, 0.06, y + 1.09, rotY);
+  });
+  const { xs, zs } = Z.axes, ext = 3;
+  for (const x of xs) bx(g, M.grid, x, (zs[0] + zs[zs.length - 1]) / 2, 0.05, zs[zs.length - 1] - zs[0] + ext * 2, 0.02, y + 0.1, 0, false, false);
+  for (const z of zs) bx(g, M.grid, (xs[0] + xs[xs.length - 1]) / 2, z, xs[xs.length - 1] - xs[0] + ext * 2, 0.05, 0.02, y + 0.1, 0, false, false);
+  fl.int = g;
+  return g;
+}
+
+/* ============ site ============ */
+function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function siteRoot(Z) {
+  Z.root = new THREE.Group(); Z.root.userData.zone = Z; scene.add(Z.root);
+  Z.edges = new THREE.Group(); Z.edges.visible = false; scene.add(Z.edges);
+  Z.mats = []; Z.facades = [];
+}
+function edgeBox(Z, o) { const e = new THREE.LineSegments(BOX_EDGES, edgeMat); e.scale.copy(o.scale); e.position.copy(o.position); e.rotation.copy(o.rotation); Z.edges.add(e); }
+function buildSite() {
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(2400, 2400), M.sand);
+  ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+  bx(scene, M.plot, 0, 0, rw(PLOT), rd(PLOT), 0.02, 0, 0, false);
+  bx(scene, M.asphalt, 0, 66, 600, 14, 0.03, 0, 0, false);
+  bx(scene, M.paving, 0, 57.6, 600, 3.2, 0.12, 0, 0, false);
+  const dashes = []; for (let x = -290; x < 290; x += 8) dashes.push([x, 0.035, 66, 0, 3.5, 0.01, 0.2]);
+  instanced(scene, BOX, M.dash, dashes);
+  for (const r of PAVING) bx(scene, M.paving, rcx(r), rcz(r), rw(r), rd(r), 0.06, 0, 0, false);
+  cy(scene, M.paving, ROUND.x, ROUND.z, ROUND.r, 0.07, 0, false);
+  cy(scene, M.grass, ROUND.x, ROUND.z, 5.4, 0.1, 0, false);
+  cy(scene, M.stone, ROUND.x, ROUND.z, 3.2, 0.6, 0.1);
+  cy(scene, M.water, ROUND.x, ROUND.z, 2.85, 0.62, 0.1, false);
+  cy(scene, M.stone, ROUND.x, ROUND.z, 0.5, 1.8, 0.1); cy(scene, M.stone, ROUND.x, ROUND.z, 1.2, 0.25, 1.9);
+
+  /* gardens + palms */
+  const G = ZONES.find(z => z.id === 'gardens'); siteRoot(G);
+  const gm = std('#6c8b4b', 1); G.mats.push(gm);
+  for (const r of G.patches) edgeBox(G, bx(G.root, gm, rcx(r), rcz(r), rw(r), rd(r), 0.1, 0, 0, false));
+  const rnd = mulberry(7), blocked = PAVING.concat(ZONES.filter(z => z.plinth).map(z => z.plinth), [ZONES.find(z => z.id === 'pool').deck]);
+  const palms = [];
+  const tryPalm = (x, z) => { if (blocked.some(r => inR(r, x, z, 2.2)) || Math.hypot(x - ROUND.x, z - ROUND.z) < ROUND.r + 2) return; palms.push([x, z, 6.5 + rnd() * 3, rnd() * Math.PI]); };
+  for (let z = 23; z <= 52; z += 4.6) for (const x of [-6.6, 6.6]) tryPalm(x, z);
+  for (const r of G.patches) for (let x = r.x0 + 3; x < r.x1 - 2; x += 8.5) for (let z = r.z0 + 3; z < r.z1 - 2; z += 8.5) tryPalm(x + (rnd() - 0.5) * 3, z + (rnd() - 0.5) * 3);
+  instanced(G.root, new THREE.CylinderGeometry(0.2, 0.32, 1, 7).translate(0, 0.5, 0), M.trunk, palms.map(p => [p[0], 0, p[1], p[3], 1, p[2], 1]));
+  const crown = new THREE.ConeGeometry(2.7, 1.4, 9, 1, true); crown.rotateX(Math.PI);
+  instanced(G.root, crown, M.frond, palms.map(p => [p[0], p[2] - 0.2, p[1], p[3]]));
+  instanced(G.root, new THREE.ConeGeometry(1.6, 1.6, 7), M.frond, palms.map(p => [p[0], p[2] + 0.2, p[1], p[3] + 0.4]));
+  G.palms = palms.length; G.area = sum(G.patches, ra);
+  G.pin = new THREE.Vector3(rcx(G.patches[2]), 8, rcz(G.patches[2]));
+
+  /* pool */
+  const P = ZONES.find(z => z.id === 'pool'); siteRoot(P);
+  const deckM = std('#e8dfcf', 0.8), cope = std('#f4efe4', 0.6), water = std('#3aa3b8', 0.06, 0.1, { transparent: true, opacity: 0.9 });
+  P.mats.push(deckM, cope, water);
+  edgeBox(P, bx(P.root, deckM, rcx(P.deck), rcz(P.deck), rw(P.deck), rd(P.deck), 0.22, 0, 0, false));
+  const wr = P.water;
+  bx(P.root, water, rcx(wr), rcz(wr), rw(wr), rd(wr), 0.06, 0.14, 0, false);
+  walkEdges(wr, 2, (x, z, rotY, len, nx, nz) => bx(P.root, cope, x - nx * 0.25, z - nz * 0.25, len + 0.05, 0.5, 0.08, 0.22, rotY, false));
+  for (let x = 36; x <= 56; x += 4) { bx(P.root, FM.white, x, 28.2, 0.7, 1.9, 0.35, 0.22); }
+  for (const x of [38, 54]) { cy(P.root, FM.wood, x, 10.4, 0.06, 2.4, 0.22); const u = new THREE.Mesh(new THREE.ConeGeometry(1.6, 0.6, 12), deckM); u.position.set(x, 2.8, 10.4); u.castShadow = true; P.root.add(u); }
+  P.pin = new THREE.Vector3(rcx(wr), 3, rcz(wr));
+
+  /* perimeter wall + gate */
+  const W = ZONES.find(z => z.id === 'wall'); siteRoot(W);
+  const wm = std('#d6c3a0', 0.9), gm2 = std('#c9a65e', 0.32, 0.75, { envMapIntensity: 1, transparent: true, opacity: 0.92 });
+  W.mats.push(wm, gm2);
+  const t = 0.6, P0 = PLOT;
+  const sides = [R(P0.x0, P0.z0, P0.x1, P0.z0 + t), R(P0.x0, P0.z0, P0.x0 + t, P0.z1), R(P0.x1 - t, P0.z0, P0.x1, P0.z1),
+    R(P0.x0, P0.z1 - t, GATE[0] - 1, P0.z1), R(GATE[1] + 1, P0.z1 - t, P0.x1, P0.z1)];
+  const cr = [];
+  for (const s of sides) {
+    edgeBox(W, bx(W.root, wm, rcx(s), rcz(s), rw(s), rd(s), WALL_H, 0));
+    const horiz = rw(s) > rd(s), len = Math.max(rw(s), rd(s)), n = Math.round(len / 1.4);
+    for (let k = 0; k < n; k++) { const f = (k + 0.5) / n; cr.push([horiz ? s.x0 + rw(s) * f : rcx(s), WALL_H + 0.3, horiz ? rcz(s) : s.z0 + rd(s) * f, horiz ? 0 : Math.PI / 2]); }
+  }
+  instanced(W.root, CREN, wm, cr);
+  for (const x of [GATE[0] - 1, GATE[1] + 1]) { edgeBox(W, bx(W.root, wm, x, P0.z1 - 0.3, 2, 2, 6.2, 0)); cy(W.root, gm2, x, P0.z1 - 0.3, 0.45, 0.9, 6.2); }
+  bx(W.root, wm, 0, P0.z1 - 0.3, GATE[1] - GATE[0] + 2, 1.2, 0.8, 5.4);
+  bx(W.root, gm2, 0, P0.z1 - 0.3, GATE[1] - GATE[0], 0.12, 4.6, 0.1);
+  W.pin = new THREE.Vector3(0, 9, P0.z1);
+}
+
+/* ============ build everything ============ */
+buildSite();
+for (const Z of ZONES) if (Z.kind === 'building') buildBuilding(Z);
+const BUILDINGS = ZONES.filter(z => z.kind === 'building');
+
+/* ============ state & view ============ */
+const state = { zone: null, floor: 0, room: null, hover: null };
+let pickables = [];
+
+function setGhost(Z, on) {
+  if (Z.ghost === on) return; Z.ghost = on;
+  for (const m of Z.mats) { m.transparent = on || !!m.userData.wasTransparent; m.opacity = on ? 0.13 : (m.userData.baseOpacity ?? 1); m.depthWrite = !on; m.needsUpdate = true; }
+  Z.root.traverse(o => { if (o.isMesh) o.castShadow = !on; });
+}
+for (const Z of ZONES) if (Z.mats) for (const m of Z.mats) { m.userData.wasTransparent = m.transparent; m.userData.baseOpacity = m.opacity; }
+
+function applyView() {
+  const Z = state.zone, inside = !!(Z && Z.kind === 'building');
+  pickables = [];
+  if (inside) interiorFor(Z, state.floor);
+  for (const B of BUILDINGS) {
+    const isSel = inside && B === Z;
+    setGhost(B, inside && !isSel);
+    B.ext.forEach((g, k) => { g.visible = !isSel || k < state.floor; });
+    B.extras.visible = !isSel;
+    if (B.domeG) B.domeG.visible = !isSel || !!(B.floors[state.floor] && B.floors[state.floor].roof);
+    B.floors.forEach((fl, k) => { if (fl.int) fl.int.visible = isSel && k === state.floor; });
+    if (!inside) pickables.push(B.root);
+  }
+  if (inside) pickables.push(Z.floors[state.floor].int);
+  for (const S of ZONES) if (S.kind !== 'building' && !inside) pickables.push(S.root);
+  refreshHighlights();
+  buildLabels();
+  renderFloors();
+  renderLegend();
+  document.getElementById('btn-up').hidden = !Z;
+  if (Z) hideHint();
+}
+
+const selBox = new THREE.LineSegments(BOX_EDGES, new THREE.LineBasicMaterial({ color: GOLD, transparent: true, opacity: 0.95, depthTest: false }));
+selBox.renderOrder = 5; selBox.visible = false; scene.add(selBox);
+function refreshHighlights() {
+  for (const Z of ZONES) {
+    const lit = !Z.ghost && (state.hover === Z || (state.zone === Z && Z.kind !== 'building'));
+    Z.edges.visible = lit && !(state.zone && state.zone.kind === 'building' && state.zone === Z);
+    for (const m of Z.facades) m.emissiveIntensity = lit ? 1.15 : 0.16;
+  }
+  const Z = state.zone, sr = state.room;
+  selBox.visible = !!sr;
+  if (sr) { const h = Math.min(2.4, sr.floor.h - 0.8); selBox.scale.set(rw(sr.r), h, rd(sr.r)); selBox.position.set(rcx(sr.r), sr.floor.y + 0.03 + h / 2, rcz(sr.r)); }
+  if (Z && Z.kind === 'building') for (const room of Z.floors[state.floor].rooms) {
+    if (!room.mat) continue;
+    room.mat.emissiveIntensity = room === state.room ? 0.55 : (room === state.hover ? 0.3 : 0);
+  }
+}
+
+/* ============ camera choreography ============ */
+let anim = null;
+function flyTo(target, radius, polar = 0.9, ms = 1100, az = null) {
+  const vfov = THREE.MathUtils.degToRad(camera.fov), hfov = 2 * Math.atan(Math.tan(vfov / 2) * camera.aspect);
+  const dist = Math.min(controls.maxDistance, radius / Math.sin(Math.min(vfov, hfov) / 2));
+  const cur = camera.position.clone().sub(controls.target), azim = az ?? Math.atan2(cur.x, cur.z);
+  const pos = new THREE.Vector3(Math.sin(polar) * Math.sin(azim), Math.cos(polar), Math.sin(polar) * Math.cos(azim)).multiplyScalar(dist).add(target);
+  if (reduceMotion || ms === 0) { camera.position.copy(pos); controls.target.copy(target); controls.update(); anim = null; return; }
+  anim = { t0: performance.now(), ms, p0: camera.position.clone(), p1: pos, q0: controls.target.clone(), q1: target.clone() };
+}
+controls.addEventListener('start', () => { anim = null; hideHint(); });
+const OVERVIEW = { target: new THREE.Vector3(0, 0, 3), polar: 0.98, az: 0.62, get radius() { return size.w < 640 ? 62 : 86; } };
+
+/* ============ navigation ============ */
+function go(id, opts = {}) {
+  const fly = opts.fly !== false;
+  const hit = id && id !== 'site' ? BY_ID.get(id) : null;
+  if (!hit) {
+    state.zone = null; state.room = null; state.floor = 0;
+    applyView(); renderPanel();
+    if (fly) flyTo(OVERVIEW.target, OVERVIEW.radius, OVERVIEW.polar);
+    setHash('site'); return;
+  }
+  const Z = hit.zone;
+  state.zone = Z; state.room = hit.room || null;
+  state.floor = hit.floor ? hit.floor.k : (Z.kind === 'building' && state.zone === Z && opts.keepFloor ? state.floor : 0);
+  applyView(); renderPanel();
+  setHash(id);
+  if (!fly) return;
+  if (Z.kind === 'building') {
+    const fl = Z.floors[state.floor];
+    if (state.room) {
+      const r = state.room.r, rad = Math.max(Math.hypot(rw(r), rd(r)) / 2, 4.5) * 1.15;
+      flyTo(new THREE.Vector3(rcx(r), fl.y + 0.8, rcz(r)), rad, 0.72, 900);
+    } else {
+      const fp = Z.floors[0].mass.concat(Z.floors[state.floor].slab || []);
+      const x0 = Math.min(...fp.map(r => r.x0)), x1 = Math.max(...fp.map(r => r.x1)), z0 = Math.min(...fp.map(r => r.z0)), z1 = Math.max(...fp.map(r => r.z1));
+      flyTo(new THREE.Vector3((x0 + x1) / 2, fl.y + 1, (z0 + z1) / 2), Math.hypot(x1 - x0, z1 - z0) / 2 * 1.12, 0.78, 1100);
+    }
+  } else if (Z.kind === 'pool') flyTo(new THREE.Vector3(rcx(Z.deck), 0, rcz(Z.deck)), Math.hypot(rw(Z.deck), rd(Z.deck)) / 2 * 1.05, 0.9);
+  else if (Z.kind === 'gardens') flyTo(new THREE.Vector3(0, 0, 0), 84, 0.92);
+  else flyTo(new THREE.Vector3(0, 0, 0), 92, 1.0);
+}
+function goUp() {
+  const Z = state.zone;
+  if (!Z) return;
+  if (state.room) go(Z.floors[state.floor].id);
+  else go('site');
+}
+function setHash(id) { try { history.replaceState(null, '', '#' + id); } catch (e) { /* hash routing is optional */ } }
+window.addEventListener('hashchange', () => { const id = location.hash.slice(1); if (id && id !== currentId()) go(id); });
+function currentId() { return state.room ? state.room.id : state.zone ? (state.zone.kind === 'building' ? state.zone.floors[state.floor].id : state.zone.id) : 'site'; }
+
+/* ============ picking ============ */
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+function pick(e) {
+  const rect = canvas.getBoundingClientRect();
+  ndc.set(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  const hits = ray.intersectObjects(pickables, true);
+  for (const h of hits) {
+    let o = h.object;
+    while (o && !o.userData.zone && !o.userData.interior) o = o.parent;
+    if (!o) continue;
+    if (o.userData.zone) return o.userData.zone;
+    const fl = o.userData.interior, p = h.point.clone();
+    if (h.face && !h.object.isInstancedMesh) p.add(h.face.normal.clone().transformDirection(h.object.matrixWorld).multiplyScalar(0.2));
+    const room = fl.rooms.find(r => inR(r.r, p.x, p.z, 0.05));
+    if (room) return room;
+  }
+  return null;
+}
+let down = null, hoverQueued = null;
+canvas.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; hideHint(); });
+canvas.addEventListener('pointerup', e => {
+  if (!down) return;
+  const moved = Math.hypot(e.clientX - down[0], e.clientY - down[1]); down = null;
+  if (moved > 6) return;
+  const t = pick(e);
+  if (!t) { if (state.room) go(state.room.floor.id, { fly: false }); return; }
+  go(t.id ?? t.id);
+});
+canvas.addEventListener('pointermove', e => {
+  if (e.pointerType !== 'mouse' || e.buttons) return;
+  if (!hoverQueued) requestAnimationFrame(() => { const ev = hoverQueued; hoverQueued = null; setHover(pick(ev), ev); });
+  hoverQueued = e;
+});
+canvas.addEventListener('pointerleave', () => setHover(null));
+const tip = document.getElementById('tip');
+function setHover(t, e) {
+  if (t !== state.hover) { state.hover = t; refreshHighlights(); }
+  canvas.style.cursor = t ? 'pointer' : '';
+  if (!t || !e) { tip.hidden = true; return; }
+  const rect = stage.getBoundingClientRect();
+  tip.innerHTML = `${esc(t.name)}<small>${esc(hoverLine(t))}</small>`;
+  tip.hidden = false;
+  const x = Math.min(e.clientX - rect.left + 14, rect.width - tip.offsetWidth - 8), y = Math.max(e.clientY - rect.top - tip.offsetHeight - 12, 8);
+  tip.style.transform = `translate(${x}px, ${y}px)`;
+}
+function hoverLine(t) {
+  if (t.r) return `${nf(ra(t.r), 1)} م² · ${USES[t.use].label}`;
+  if (t.kind === 'building') return `مسطح البناء ${nf(t.gross)} م²`;
+  if (t.kind === 'pool') return `سطح الماء ${nf(ra(t.water))} م²`;
+  if (t.kind === 'gardens') return `${nf(t.area)} م² مسطحات خضراء`;
+  return `${nf(2 * (rw(PLOT) + rd(PLOT)))} م طول السور`;
+}
+
+/* ============ labels projected from 3D ============ */
+const labelsEl = document.getElementById('labels');
+let labels = [];
+function addLabel(text, pos, cls, onClick) {
+  const el = document.createElement(onClick ? 'button' : 'div');
+  if (onClick) { el.type = 'button'; el.addEventListener('click', onClick); }
+  el.className = 'pin ' + cls;
+  if (cls.includes('zone')) el.innerHTML = `<b>${esc(text)}</b>`; else el.textContent = text;
+  labelsEl.appendChild(el);
+  labels.push({ el, pos, anchor: cls.includes('zone') ? 'translate(-50%, -100%)' : 'translate(-50%, -50%)', vis: true });
+  return el;
+}
+function buildLabels() {
+  labelsEl.textContent = ''; labels = [];
+  const Z = state.zone;
+  if (!Z || Z.kind !== 'building') {
+    for (const S of ZONES) {
+      const el = addLabel(S.name, S.pin, 'zone' + (state.zone === S ? ' active' : ''), () => go(S.id));
+      el.addEventListener('mouseenter', () => { state.hover = S; refreshHighlights(); });
+      el.addEventListener('mouseleave', () => { state.hover = null; refreshHighlights(); });
+    }
+    return;
+  }
+  const fl = Z.floors[state.floor], y = fl.y;
+  for (const room of fl.rooms) {
+    const el = addLabel(room.name, new THREE.Vector3(rcx(room.r), y + 1.2, rcz(room.r)), 'room' + (state.room === room ? ' active' : ''), () => go(room.id));
+    el.addEventListener('mouseenter', () => { state.hover = room; refreshHighlights(); });
+    el.addEventListener('mouseleave', () => { state.hover = null; refreshHighlights(); });
+  }
+  const { xs, zs } = Z.axes, zMax = zs[zs.length - 1], xMax = xs[xs.length - 1];
+  xs.forEach((x, i) => addLabel(AX[i], new THREE.Vector3(x, y + 0.1, zMax + 3.8), 'axis'));
+  zs.forEach((z, i) => addLabel(String(i + 1), new THREE.Vector3(xMax + 3.8, y + 0.1, z), 'axis'));
+  if (state.room) {
+    const r = state.room.r;
+    addLabel(`${nf(rw(r), 2)} م`, new THREE.Vector3(rcx(r), y + 2.7, r.z1), 'dim');
+    addLabel(`${nf(rd(r), 2)} م`, new THREE.Vector3(r.x1, y + 2.7, rcz(r)), 'dim');
+  }
+}
+const AX = 'ABCDEFGHJKLMNPQ';
+const size = { w: 1, h: 1 };
+const _v = new THREE.Vector3();
+function updateLabels() {
+  for (const L of labels) {
+    _v.copy(L.pos).project(camera);
+    const vis = _v.z < 1 && Math.abs(_v.x) < 1.05 && Math.abs(_v.y) < 1.05;
+    if (vis !== L.vis) { L.el.style.visibility = vis ? '' : 'hidden'; L.vis = vis; }
+    if (vis) L.el.style.transform = `translate(${((_v.x * 0.5 + 0.5) * size.w).toFixed(1)}px, ${((-_v.y * 0.5 + 0.5) * size.h).toFixed(1)}px) ${L.anchor}`;
+  }
+}
+
+/* ============ stage controls ============ */
+const floorsEl = document.getElementById('floors'), legendEl = document.getElementById('legend'), hintEl = document.getElementById('hint');
+function renderFloors() {
+  const Z = state.zone;
+  if (!Z || Z.kind !== 'building' || Z.floors.length < 2) { floorsEl.hidden = true; return; }
+  floorsEl.hidden = false;
+  floorsEl.innerHTML = Z.floors.map(fl => `<button type="button" data-go="${fl.id}" aria-pressed="${fl.k === state.floor}">${esc(fl.name)}</button>`).join('');
+}
+function renderLegend() {
+  const Z = state.zone;
+  if (!Z || Z.kind !== 'building') { legendEl.hidden = true; return; }
+  const uses = [...new Set(Z.floors[state.floor].rooms.map(r => r.use))];
+  legendEl.innerHTML = uses.map(u => `<span><i style="background:${USES[u].color}"></i>${esc(USES[u].label)}</span>`).join('');
+  legendEl.hidden = false;
+}
+function hideHint() { hintEl.style.opacity = '0'; }
+document.getElementById('btn-home').addEventListener('click', () => go('site'));
+document.getElementById('btn-up').addEventListener('click', goUp);
+document.addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (b) go(b.dataset.go); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') goUp(); });
+
+/* ============ details panel ============ */
+const panel = document.getElementById('panel');
+const metric = (label, value, unit = '', foot = '', wide = false) =>
+  `<div${wide ? ' class="wide"' : ''}><dt>${esc(label)}</dt><dd>${value}${unit ? `<small>${esc(unit)}</small>` : ''}${foot ? `<span class="foot">${esc(foot)}</span>` : ''}</dd></div>`;
+const specList = rows => `<dl class="spec">${rows.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>`;
+const crumbs = parts => `<nav class="crumbs" aria-label="المسار">${parts.map((p, i) => i === parts.length - 1 ? `<span>${esc(p.label)}</span>` : `<button type="button" data-go="${p.id}">${esc(p.label)}</button><span class="sep">‹</span>`).join('')}</nav>`;
+const NOTE = '<p class="note">المساحات والأبعاد والكميات محسوبة مباشرة من هندسة النموذج. المواصفات والتشطيبات أمثلة توضيحية لعرض الفكرة.</p>';
+const CALC = '<span class="tag calc">محسوبة من النموذج</span>', DEMO = '<span class="tag">توضيحية</span>';
+
+function renderPanel() {
+  const Z = state.zone;
+  panel.innerHTML = !Z ? sitePanel() : state.room ? roomPanel(state.room) : Z.kind === 'building' ? zonePanel(Z) : sitePartPanel(Z);
+  panel.scrollTop = 0;
+}
+function sitePanel() {
+  const foot = sum(BUILDINGS, z => z.footprint), gross = sum(BUILDINGS, z => z.gross), spaces = sum(BUILDINGS, z => sum(z.floors, f => f.rooms.length));
+  const items = ZONES.map(z => `<button type="button" data-go="${z.id}"><span class="dot" style="background:${z.kind === 'building' ? 'var(--gold)' : z.kind === 'pool' ? '#3aa3b8' : z.kind === 'gardens' ? '#6c8b4b' : '#d6c3a0'}"></span><span>${esc(z.name)}</span><span class="val">${esc(hoverLine(z).replace(/^[^0-9]*/, ''))}</span></button>`).join('');
+  return `${crumbs([{ label: NAME }])}
+    <p class="kicker">الموقع العام · نموذج تجريبي</p>
+    <h2>${NAME}</h2>
+    <p class="lede">اضغط على أي مبنى لتدخله دورًا دورًا، ثم اضغط على أي غرفة لتشوف بطاقتها الكاملة: مساحتها وأبعادها ومحاورها وجيرانها ومواصفاتها.</p>
+    <div class="sec">مؤشرات الموقع ${CALC}</div>
+    <dl class="metrics">
+      ${metric('مساحة الأرض', nf(ra(PLOT)), 'م²', ltr(`${nf(rw(PLOT))} × ${nf(rd(PLOT))}`) + ' م')}
+      ${metric('مسطحات البناء', nf(gross), 'م²', 'مجموع مساحات الأدوار')}
+      ${metric('نسبة التغطية', nf(foot / ra(PLOT) * 100, 1), '%', `بصمة المباني ${nf(foot)} م²`)}
+      ${metric('الفراغات المصممة', nf(spaces), 'فراغ', `موزعة على ${BUILDINGS.length} مبانٍ`)}
+    </dl>
+    <div class="sec">عناصر الموقع</div>
+    <div class="list">${items}</div>${NOTE}`;
+}
+function zonePanel(Z) {
+  const fl = Z.floors[state.floor], maxG = Math.max(...Z.floors.map(f => f.gross));
+  const levels = Z.floors.filter(f => !f.roof).length, hasRoof = Z.floors.some(f => f.roof);
+  const floors = Z.floors.map(f => `<button type="button" data-go="${f.id}" aria-current="${f === fl}"><span class="dot" style="background:var(--gold)"></span><span>${esc(f.name)}</span><span class="val">${nf(f.gross)} م²</span><span class="bar2"><i style="width:${(f.gross / maxG * 100).toFixed(1)}%"></i></span></button>`).join('');
+  const rooms = fl.rooms.map(r => `<button type="button" data-go="${r.id}"><span class="dot" style="background:${USES[r.use].color}"></span><span>${esc(r.name)}</span><span class="val">${nf(ra(r.r), 1)} م²</span></button>`).join('');
+  return `${crumbs([{ id: 'site', label: NAME }, { label: Z.name }])}
+    <p class="kicker">مبنى · ${esc(fl.name)}</p>
+    <h2>${esc(Z.name)}</h2>
+    <p class="lede">${esc(Z.desc)}</p>
+    <div class="sec">أرقام المبنى ${CALC}</div>
+    <dl class="metrics">
+      ${metric('مسطح البناء', nf(Z.gross), 'م²', 'بدون الفراغات المزدوجة')}
+      ${metric('البصمة على الأرض', nf(Z.footprint), 'م²')}
+      ${metric('الأدوار', `${levels}${hasRoof ? ' + سطح' : ''}`)}
+      ${metric('كفاءة المساحة', nf(Z.net / Z.gross * 100, 1), '%', 'الصافي بعد الجدران ÷ الإجمالي')}
+      ${metric('منسوب السطح', nf(Z.roofLevel, 2), 'م', 'من منسوب الأرض الطبيعية')}
+      ${metric('أعلى نقطة', nf(Z.highest, 2), 'م', Z.dome || Z.minaret ? 'شاملة القبة والمئذنة' : 'شاملة الشُرَف')}
+    </dl>
+    ${Z.floors.length > 1 ? `<div class="sec">الأدوار</div><div class="list">${floors}</div>` : ''}
+    <div class="sec">فراغات ${esc(fl.name)} <span class="tag">${fl.rooms.length} فراغ · ${nf(sum(fl.rooms, r => ra(r.r)), 1)} م²</span></div>
+    <div class="list">${rooms}</div>
+    <div class="sec">المواصفات العامة ${DEMO}</div>${specList(BUILD_SPEC)}${NOTE}`;
+}
+function sharedLen(a, b) {
+  const e = 0.01;
+  if (Math.abs(a.x1 - b.x0) < e || Math.abs(a.x0 - b.x1) < e) return Math.min(a.z1, b.z1) - Math.max(a.z0, b.z0);
+  if (Math.abs(a.z1 - b.z0) < e || Math.abs(a.z0 - b.z1) < e) return Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0);
+  return 0;
+}
+function axesLabel(room) {
+  const { xs, zs } = room.zone.axes, r = room.r;
+  const lo = (arr, v) => { let k = 0; arr.forEach((a, i) => { if (a <= v + 0.01) k = i; }); return k; };
+  const hi = (arr, v) => { const i = arr.findIndex(a => a >= v - 0.01); return i < 0 ? arr.length - 1 : i; };
+  return `${AX[lo(xs, r.x0)]}–${AX[hi(xs, r.x1)]} / ${lo(zs, r.z0) + 1}–${hi(zs, r.z1) + 1}`;
+}
+function roomPanel(room) {
+  const Z = room.zone, fl = room.floor, w = rw(room.r), d = rd(room.r), a = w * d, per = 2 * (w + d);
+  const h = room.open ? null : (room.h ?? fl.h - 0.6);
+  const conditioned = !room.open && !['mep', 'service'].includes(room.use);
+  const tr = Math.ceil(a / 18 * 2) / 2;
+  const near = fl.rooms.filter(o => o !== room && sharedLen(room.r, o.r) >= 1)
+    .map(o => `<button type="button" data-go="${o.id}"><span class="dot" style="background:${USES[o.use].color}"></span><span>${esc(o.name)}</span><span class="val">جدار مشترك ${nf(sharedLen(room.r, o.r), 1)} م</span></button>`).join('');
+  const cap = room.seats ? metric('سعة الجلوس', nf(room.seats), 'شخص', 'من الأثاث المرسوم') :
+    room.capacity ? metric('سعة المواقف', nf(room.capacity), 'سيارة', 'من المواقف المرسومة') :
+    room.beds ? metric('عدد الأسرّة', nf(room.beds), 'سرير', 'من الأثاث المرسوم') :
+    room.rows ? metric('سعة المصلين', nf(room.rows * room.perRow), 'مصلٍّ', `${room.rows} صفوف × ${room.perRow}، بافتراض 0.6 م للمصلي`) :
+    room.units ? metric('وحدات التكييف', nf(room.units), 'وحدة', 'من المعدات المرسومة') :
+    room.stations ? metric('نقاط الوضوء', nf(room.stations), 'نقطة', 'من المقاعد المرسومة') : '';
+  return `${crumbs([{ id: 'site', label: NAME }, { id: Z.floors.length > 1 ? fl.id : Z.id, label: Z.name }, ...(Z.floors.length > 1 ? [{ id: fl.id, label: fl.name }] : []), { label: room.name }])}
+    <p class="kicker"><span class="chip"><span class="dot" style="background:${USES[room.use].color};width:9px;height:9px;border-radius:3px;display:inline-block"></span>${esc(USES[room.use].label)}</span></p>
+    <h2>${esc(room.name)}</h2>
+    <p class="lede">${esc(Z.name)} · ${esc(fl.name)} · منسوب الأرضية ${ltr('+' + nf(fl.y, 2))} م${room.note ? ` · ${esc(room.note)}` : ''}</p>
+    <div class="sec">الأرقام الهندسية ${CALC}</div>
+    <dl class="metrics">
+      ${metric('المساحة', nf(a, 2), 'م²', 'من محور الجدار إلى محوره')}
+      ${metric('المساحة الصافية', room.open ? nf(a, 2) : nf(clearArea(room), 2), 'م²', room.open ? 'فراغ مكشوف' : 'بعد خصم جدران 25 سم')}
+      ${metric('الأبعاد', `<span class="ltr">${nf(w, 2)} × ${nf(d, 2)}</span>`, 'م')}
+      ${metric('الارتفاع الصافي', h ? nf(h, 2) : 'مكشوف', h ? 'م' : '', room.h ? 'مزدوج الارتفاع' : '')}
+      ${metric('الحجم', h ? nf(a * h, 1) : '—', h ? 'م³' : '')}
+      ${metric('المحيط', nf(per, 2), 'م')}
+      ${metric('مساحة الجدران', h ? nf(per * h, 1) : '—', h ? 'م²' : '', h ? 'إجمالية قبل خصم الفتحات' : '')}
+      ${metric('المحاور', `<span class="ltr">${axesLabel(room)}</span>`)}
+      ${conditioned ? metric('حمل تبريد تقديري', nf(tr, 1), 'طن', 'قاعدة أولية للتقدير: 1 طن لكل 18 م²', true) : ''}
+      ${cap ? cap.replace('<div>', '<div class="wide">') : ''}
+    </dl>
+    ${near ? `<div class="sec">الفراغات المجاورة ${CALC}</div><div class="list">${near}</div>` : ''}
+    <div class="sec">التشطيبات والأنظمة ${DEMO}</div>${specList(SPEC[room.use])}${NOTE}`;
+}
+function sitePartPanel(Z) {
+  let m = '';
+  if (Z.kind === 'pool') {
+    const w = Z.water, avg = (Z.depth[0] + Z.depth[1]) / 2;
+    m = metric('سطح الماء', nf(ra(w)), 'م²', ltr(`${nf(rw(w))} × ${nf(rd(w))}`) + ' م') + metric('حجم الماء', nf(ra(w) * avg, 1), 'م³', `بعمق متوسط ${nf(avg, 1)} م`)
+      + metric('العمق', `<span class="ltr">${nf(Z.depth[0], 1)} – ${nf(Z.depth[1], 1)}</span>`, 'م') + metric('محيط الحوض', nf(2 * (rw(w) + rd(w))), 'م')
+      + metric('منطقة الجلوس', nf(ra(Z.deck) - ra(w)), 'م²', 'السطح المحيط بالحوض', true);
+  } else if (Z.kind === 'gardens') {
+    m = metric('المسطحات الخضراء', nf(Z.area), 'م²', `${Z.patches.length} أحواض`) + metric('النخيل', nf(Z.palms), 'نخلة', 'من النموذج')
+      + metric('نسبة التشجير', nf(Z.area / ra(PLOT) * 100, 1), '%', 'من مساحة الأرض') + metric('الممرات المرصوفة', nf(sum(PAVING, ra) + Math.PI * ROUND.r ** 2), 'م²', 'تقريبي مع الدوار');
+  } else {
+    const per = 2 * (rw(PLOT) + rd(PLOT)), net = per - (GATE[1] - GATE[0]);
+    m = metric('طول السور', nf(per), 'م', 'محيط الأرض') + metric('ارتفاع السور', nf(WALL_H, 1), 'م')
+      + metric('عرض البوابة', nf(GATE[1] - GATE[0]), 'م') + metric('مساحة الوجه الواحد', nf(net * WALL_H, 1), 'م²', 'بعد خصم البوابة');
+  }
+  return `${crumbs([{ id: 'site', label: NAME }, { label: Z.name }])}
+    <p class="kicker">عنصر في الموقع</p>
+    <h2>${esc(Z.name)}</h2>
+    <p class="lede">${esc(Z.desc)}</p>
+    <div class="sec">الأرقام ${CALC}</div><dl class="metrics">${m}</dl>
+    <div class="sec">المواصفات ${DEMO}</div>${specList(Z.spec)}${NOTE}`;
+}
+
+/* ============ loop ============ */
+function resize() {
+  const w = stage.clientWidth, h = stage.clientHeight;
+  size.w = w; size.h = h;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / Math.max(h, 1); camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(stage);
+resize();
+
+function ease(k) { return k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2; }
+function tick(now) {
+  requestAnimationFrame(tick);
+  if (anim) {
+    const k = Math.min(1, (now - anim.t0) / anim.ms), e = ease(k);
+    camera.position.lerpVectors(anim.p0, anim.p1, e);
+    controls.target.lerpVectors(anim.q0, anim.q1, e);
+    if (k === 1) anim = null;
+  }
+  controls.update();
+  renderer.render(scene, camera);
+  updateLabels();
+  if (!window.__palaceReady) window.__palaceReady = true;
+}
+
+/* first frame: wide establishing shot, then settle on the site (or the linked section) */
+const start = location.hash.slice(1);
+{
+  const t = OVERVIEW.target, dist = 300, pol = 1.2, az = OVERVIEW.az + 0.9;
+  camera.position.set(Math.sin(pol) * Math.sin(az) * dist, Math.cos(pol) * dist + 40, Math.sin(pol) * Math.cos(az) * dist).add(t);
+  controls.target.copy(t); controls.update();
+}
+applyView(); renderPanel();
+flyTo(OVERVIEW.target, OVERVIEW.radius, OVERVIEW.polar, 2200, OVERVIEW.az);
+if (start && start !== 'site' && BY_ID.has(start)) setTimeout(() => go(start), reduceMotion ? 0 : 1200);
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
