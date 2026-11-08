@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>فحص العرض</title>
+<style>
+/* Layout: one column checklist. Single dark look matching Mihwar. */
+:root {
+  --ink: #0d1012; --surface: #14171a; --line: #2a2f34; --text: #eee7d8; --muted: #9da2a5;
+  --gold: #c9ac70; --ok: #5cc28a; --bad: #e8806f; --run: #e0b45a;
+  --font: 'Segoe UI', Tahoma, Arial, sans-serif;
+  color-scheme: dark;
+}
+html, body { min-height: 100%; }
+body { margin: 0; background: var(--ink); color: var(--text); font: 15px/1.7 var(--font); }
+[hidden] { display: none !important; }
+.wrap { max-width: 760px; margin: 0 auto; padding-block: 20px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font-size: 22px; margin: 0 0 4px; }
+.lede { color: var(--muted); margin: 0 0 16px; }
+.prev { border: 1px solid var(--run); border-radius: 12px; padding: 10px 14px; margin: 0 0 16px; color: var(--run); }
+ol { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+li { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; align-items: start; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+li b { display: block; font-weight: 600; }
+li small { display: block; color: var(--muted); font-size: 12px; overflow-wrap: anywhere; direction: ltr; text-align: right; unicode-bidi: plaintext; }
+.st { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700; color: var(--ink); background: var(--line); }
+.ok .st { background: var(--ok); } .bad .st { background: var(--bad); } .run .st { background: var(--run); }
+canvas#view { display: block; width: 100%; max-width: 100%; height: 160px; margin-top: 8px; border-radius: 10px; background: #1b1f23; }
+.sum { margin-top: 16px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--gold); }
+button { font: inherit; margin-top: 12px; border: 1px solid var(--gold); background: var(--gold); color: #17130b; border-radius: 10px; padding: 8px 16px; cursor: pointer; }
+button:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap" dir="rtl" lang="ar">
+  <h1>فحص العرض ثلاثي الأبعاد</h1>
+  <p class="lede">الصفحة تختبر قدرات هذا الجهاز خطوة خطوة. لو ظهر لك هذا السطر، فالعارض يعرض الصفحات بشكل سليم. صوّر الشاشة بعد ما تخلص الخطوات وأرسلها.</p>
+  <p class="prev" id="prev" hidden></p>
+  <ol id="steps"></ol>
+  <canvas id="view" hidden></canvas>
+  <div class="sum" id="sum" hidden></div>
+  <button type="button" id="again">إعادة الفحص</button>
+</div>
+
+<script>
+  /* classic part: runs even where modules or import maps are not supported */
+  (function () {
+    var KEY = 'diag.step', prev = null;
+    try { prev = localStorage.getItem(KEY); } catch (e) { /* storage may be blocked */ }
+    if (prev && prev !== 'done') {
+      var p = document.getElementById('prev');
+      p.textContent = 'الفحص السابق انقطع أثناء: «' + prev + '». هذا غالبًا سبب الصفحة البيضاء.';
+      p.hidden = false;
+    }
+    window.diagStep = function (label) { try { localStorage.setItem(KEY, label); } catch (e) { /* ignore */ } };
+    window.diagRow = function (title) {
+      var li = document.createElement('li'); li.className = 'run';
+      li.innerHTML = '<span class="st">…</span><div><b></b><small></small></div>';
+      li.querySelector('b').textContent = title;
+      document.getElementById('steps').appendChild(li);
+      return {
+        done: function (ok, detail) { li.className = ok ? 'ok' : 'bad'; li.querySelector('.st').textContent = ok ? '✓' : '✗'; li.querySelector('small').textContent = detail || ''; }
+      };
+    };
+    var r = window.diagRow('تشغيل JavaScript');
+    r.done(true, navigator.userAgent);
+    document.getElementById('again').addEventListener('click', function () { try { localStorage.removeItem(KEY); } catch (e) {} location.reload(); });
+    setTimeout(function () { if (!window.__diagModule) { var m = window.diagRow('تشغيل وحدات JavaScript الحديثة'); m.done(false, 'لم تبدأ خلال 15 ثانية: المتصفح لا يدعم import maps أو وحدات ES، أو التحميل محجوب'); } }, 15000);
+  })();
+</script>
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js" } }
+</script>
+<script type="module">
+window.__diagModule = true;
+const row = window.diagRow, step = window.diagStep;
+const results = [];
+const run = async (title, fn) => {
+  step(title);
+  const r = row(title);
+  await new Promise(res => requestAnimationFrame(() => setTimeout(res, 50)));   // paint the row before risky work
+  try { const out = await fn(); r.done(out.ok !== false, out.detail); results.push([title, out.ok !== false]); return out; }
+  catch (err) { r.done(false, (err && err.message) || String(err)); results.push([title, false]); return { ok: false }; }
+};
+
+await run('التخزين المحلي', () => { localStorage.setItem('diag.t', '1'); localStorage.removeItem('diag.t'); return { detail: 'يعمل' }; });
+
+const gl2 = await run('WebGL 2', () => {
+  const c = document.createElement('canvas'), gl = c.getContext('webgl2');
+  if (!gl) return { ok: false, detail: 'المتصفح رفض إنشاء سياق WebGL 2' };
+  const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+  const gpu = dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
+  const half = !!gl.getExtension('EXT_color_buffer_half_float'), flt = !!gl.getExtension('EXT_color_buffer_float');
+  const info = `GPU: ${gpu} · max texture ${gl.getParameter(gl.MAX_TEXTURE_SIZE)} · MSAA ${gl.getParameter(gl.MAX_SAMPLES)} · float RT ${flt || half}`;
+  gl.getExtension('WEBGL_lose_context')?.loseContext();
+  return { detail: info, ok: true, gpu };
+});
+if (!gl2.ok) await run('WebGL 1', () => {
+  const c = document.createElement('canvas'), gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+  return gl ? { detail: 'يعمل، لكن المحرك يحتاج WebGL 2' , ok: false } : { ok: false, detail: 'غير متاح: تسريع كرت الشاشة مقفل أو غير مدعوم' };
+});
+
+let THREE = null;
+await run('تحميل محرك العرض (three.js) من jsDelivr', async () => { THREE = await import('three'); return { detail: 'r' + THREE.REVISION }; });
+
+await run('WebAssembly (يحتاجه عرض مسح الدرون)', async () => {
+  const bytes = new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0]);
+  await WebAssembly.compile(bytes);
+  return { detail: 'مسموح' };
+});
+
+await run('Web Worker من blob', () => new Promise((res, rej) => {
+  const url = URL.createObjectURL(new Blob(['postMessage(42)'], { type: 'text/javascript' }));
+  const w = new Worker(url); const t = setTimeout(() => rej(new Error('لا رد خلال 5 ثوان')), 5000);
+  w.onmessage = e => { clearTimeout(t); w.terminate(); res({ detail: 'يعمل (' + e.data + ')' }); };
+  w.onerror = e => { clearTimeout(t); rej(new Error(e.message || 'خطأ في العامل')); };
+}));
+
+if (THREE && gl2.ok) {
+  const view = document.getElementById('view'); view.hidden = false;
+  let renderer = null;
+  await run('رسم مشهد بسيط', () => {
+    renderer = new THREE.WebGLRenderer({ canvas: view, antialias: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2)); renderer.setSize(view.clientWidth, 160, false);
+    const scene = new THREE.Scene(); scene.background = new THREE.Color(0x1b1f23);
+    const cam = new THREE.PerspectiveCamera(40, view.clientWidth / 160, 0.1, 100); cam.position.set(2.4, 1.6, 3.2); cam.lookAt(0, 0, 0);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 2));
+    const box = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.4, 1.4), new THREE.MeshStandardMaterial({ color: 0xc9ac70, roughness: 0.4 }));
+    scene.add(box);
+    const spin = () => { box.rotation.y += 0.01; renderer.render(scene, cam); requestAnimationFrame(spin); };
+    spin();
+    return { detail: 'المكعب الذهبي يدور تحت' };
+  });
+  const w = Math.round(Math.min(screen.width, 1600) * Math.min(devicePixelRatio || 1, 2)), h = Math.round(Math.min(screen.height, 1000) * Math.min(devicePixelRatio || 1, 2));
+  for (const [label, opts] of [
+    ['ذاكرة: هدف رسم عشري بحجم الشاشة', { type: THREE.HalfFloatType }],
+    ['ذاكرة: هدف رسم عشري مع تنعيم ×4 (الجودة العالية)', { type: THREE.HalfFloatType, samples: 4 }],
+    ['ذاكرة: خريطة ظلال 4096', { depth: true, size: 4096 }],
+  ]) {
+    await run(label, () => {
+      const rt = opts.size ? new THREE.WebGLRenderTarget(opts.size, opts.size, { depthBuffer: true }) : new THREE.WebGLRenderTarget(w, h, opts);
+      renderer.setRenderTarget(rt); renderer.clear(); renderer.setRenderTarget(null);
+      const gl = renderer.getContext(), err = gl.getError();
+      rt.dispose();
+      return err ? { ok: false, detail: 'خطأ WebGL ' + err } : { detail: opts.size ? `${opts.size}×${opts.size}` : `${w}×${h}${opts.samples ? ' · MSAA ' + opts.samples : ''}` };
+    });
+  }
+}
+step('done');
+const bad = results.filter(r => !r[1]).map(r => r[0]);
+const sum = document.getElementById('sum'); sum.hidden = false;
+sum.textContent = bad.length ? 'اكتمل الفحص. البنود اللي فشلت: ' + bad.join('، ') + '.' : 'اكتمل الفحص وكل البنود نجحت. الجهاز يقدر يشغّل العرض، فالمشكلة في مكان ثاني.';
+</script>
+</body>
+</html>

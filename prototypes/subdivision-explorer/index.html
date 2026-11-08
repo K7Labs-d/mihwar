@@ -341,6 +341,11 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
 <script>
   (function () {
+    /* self-recovery: if the previous visit never finished starting (a crashed or frozen frame), start light this time */
+    try {
+      if (localStorage.getItem('site.boot') === 'started') { localStorage.setItem('palace.q', 'lite'); window.__recovered = true; }
+      localStorage.setItem('site.boot', 'started');
+    } catch (e) { /* storage may be blocked */ }
     var MSG = {
       nogl: ['هذا المتصفح ما سمح بتشغيل العرض ثلاثي الأبعاد (WebGL).', 'غالبًا تسريع كرت الشاشة مقفل في المتصفح أو التطبيق. افتح الرابط في Chrome أو Safari مباشرة، أو فعّل «استخدام تسريع الأجهزة» من إعدادات المتصفح.'],
       lost: ['توقف كرت الشاشة عن العرض، غالبًا لنفاد الذاكرة.', 'غيّرت الجودة إلى «خفيفة». اضغط إعادة المحاولة.'],
@@ -351,6 +356,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     window.palaceFail = function (kind, detail) {
       if (window.__palaceFailed && kind !== 'lost') return;
       window.__palaceFailed = kind;
+      if (kind === 'nogl' || kind === 'net') { try { localStorage.setItem('site.boot', 'ok'); } catch (e) { /* ignore */ } }
       var m = MSG[kind] || MSG.error, f = document.getElementById('fail'), l = document.getElementById('loading');
       document.getElementById('fail-title').textContent = m[0];
       document.getElementById('fail-hint').textContent = m[1];
@@ -412,7 +418,7 @@ const store = {
 };
 const coarse = window.matchMedia('(pointer: coarse)').matches || Math.min(screen.width, screen.height) < 700;
 const QUALITY = {
-  high: { dpr: Math.min(window.devicePixelRatio || 1, 2), shadow: 4096, ao: true, bloom: true, samples: 4 },
+  high: { dpr: Math.min(window.devicePixelRatio || 1, 1.5), shadow: 4096, ao: true, bloom: true, samples: 4 },
   balanced: { dpr: Math.min(window.devicePixelRatio || 1, 1.25), shadow: 2048, ao: false, bloom: true, samples: 2 },
   lite: { dpr: 1, shadow: 1024, ao: false, bloom: false, samples: 0, direct: true },
 };
@@ -1595,6 +1601,8 @@ function tick(now) {
   lastT = moving ? now : 0;
   if (!window.__palaceReady) {
     window.__palaceReady = true; window.__palaceStep = '';
+    store.set('site.boot', 'ok');
+    if (window.__recovered) { toast('التحميل السابق ما اكتمل، فبدأت بجودة «خفيفة». تقدر ترفعها من خيارات العرض.'); setTimeout(() => toast(''), 7000); }
     document.getElementById('loading').hidden = true;
     if (window.__palaceFailed === 'timeout') { document.getElementById('fail').hidden = true; window.__palaceFailed = false; }
   }
