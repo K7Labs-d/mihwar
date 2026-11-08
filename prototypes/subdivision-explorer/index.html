@@ -196,6 +196,35 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .json { width: 100%; box-sizing: border-box; background: var(--raised); color: var(--text); border: 1px solid var(--line); border-radius: 8px; font: 12px/1.5 ui-monospace, monospace; direction: ltr; padding: 8px; }
 .toast { position: absolute; left: 12px; right: 12px; bottom: 54px; z-index: 4; margin: 0 auto; width: fit-content; max-width: calc(100% - 24px); background: var(--surface); border: 1px solid var(--gold); border-radius: 12px; padding: 9px 14px; font-size: 13px; line-height: 1.6; text-align: center; }
 
+.flight { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+.flight > * { pointer-events: auto; }
+.flying .legend, .flying .hint, .flying .opts { display: none !important; }
+.hud {
+  position: absolute; top: 56px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; max-width: calc(100% - 20px); box-sizing: border-box;
+  background: var(--glass); border: 1px solid var(--line); border-radius: 12px; padding: 6px 8px; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+.hud > div { display: grid; justify-items: center; min-width: 66px; }
+.hud span { font-size: 11px; color: var(--muted); }
+.hud b { font: 700 18px/1.25 var(--font-num); font-variant-numeric: tabular-nums; }
+.hud small { font-size: 11px; color: var(--muted); }
+.hud .warn b { color: #ff8a7a; }
+.fbtns { position: absolute; left: 10px; top: 56px; display: grid; gap: 6px; }
+.fbtns button { border: 1px solid var(--line); background: var(--glass); color: var(--text); border-radius: 9px; padding: 7px 12px; font-size: 13px; cursor: pointer; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.fbtns button:hover { border-color: var(--gold); }
+.fbtns button[aria-pressed="true"], .tools button[aria-pressed="true"] { background: var(--gold); color: var(--on-gold); border-color: var(--gold); }
+.below { position: absolute; left: 50%; top: 118px; transform: translateX(-50%); display: flex; gap: 8px; align-items: center; max-width: calc(100% - 20px); box-sizing: border-box; background: var(--surface); border: 1px solid var(--gold); border-radius: 12px; padding: 5px 6px 5px 12px; font-size: 13px; }
+.below span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.minimap { position: absolute; left: 10px; bottom: 10px; width: 200px; height: 140px; border-radius: 10px; border: 1px solid var(--line); }
+.keys { position: absolute; right: 10px; bottom: 10px; margin: 0; max-width: min(420px, calc(100% - 240px)); font-size: 12px; line-height: 2; background: var(--glass); border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.keys kbd { font: 700 11px/1 var(--font-num); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 2px 5px; margin: 0 1px; background: var(--raised); color: var(--text); }
+.stick { display: none; position: absolute; bottom: 14px; width: 116px; height: 116px; border-radius: 50%; background: rgba(13, 16, 18, .45); border: 1px solid rgba(255, 255, 255, .28); touch-action: none; }
+.stick.left { left: 14px; } .stick.right { right: 14px; }
+.stick i { position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; background: var(--gold); opacity: .88; pointer-events: none; }
+@media (pointer: coarse) {
+  .stick { display: block; }
+  .keys, .minimap { display: none; }
+}
+
 @media (max-width: 860px) {
   .main { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(280px, 1fr) auto; }
   .main { grid-template-rows: minmax(320px, 1fr) auto; }
@@ -204,6 +233,13 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   .badge { display: none; }
 }
 @media (max-width: 600px) {
+  .hud { top: 52px; width: calc(100% - 20px); justify-content: space-between; gap: 0; padding: 5px 4px; }
+  .hud > div { min-width: 0; }
+  .hud span, .hud small { font-size: 10px; }
+  .hud b { font-size: 14px; }
+  .fbtns { top: 116px; left: 10px; right: 10px; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
+  .fbtns button { padding: 5px 8px; font-size: 12px; }
+  .below { top: auto; bottom: 140px; font-size: 12px; }
   .legend { display: none; }
   .floorbar { top: auto; bottom: 10px; left: 0; right: 0; justify-content: center; }
   .pin { font-size: 11px; padding: 4px 8px; }
@@ -232,6 +268,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
       <div class="bar">
         <div class="tools">
           <button id="btn-home" type="button">المخطط كاملًا</button>
+          <button id="btn-fly" type="button" aria-pressed="false">طيران بالدرون</button>
           <button id="btn-opts" type="button" aria-expanded="false" aria-controls="opts">خيارات العرض</button>
         </div>
       </div>
@@ -242,6 +279,28 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
       </div>
       <div class="legend" id="legend"><span><i style="background:#3fae6a"></i>متاحة</span><span><i style="background:#e0a83a"></i>محجوزة</span><span><i style="background:#c4553f"></i>مباعة</span></div>
       <div class="toast" id="toast" role="status" hidden></div>
+      <div class="flight" id="flight" hidden>
+        <div class="hud" aria-label="بيانات الطيران">
+          <div><span>الارتفاع</span><b id="h-alt">0</b><small>م</small></div>
+          <div><span>السرعة</span><b id="h-spd">0</b><small>كم/س</small></div>
+          <div><span>الاتجاه</span><b id="h-hdg">0°</b><small id="h-card">شمال</small></div>
+          <div><span>عن الإقلاع</span><b id="h-home">0</b><small>م</small></div>
+          <div><span>زمن الطيران</span><b id="h-time">0:00</b><small>&nbsp;</small></div>
+          <div class="warn" id="h-warn" hidden><span>تنبيه</span><b>عائق</b><small>توقف الدرون</small></div>
+        </div>
+        <div class="fbtns">
+          <button type="button" id="f-cam" aria-pressed="false">كاميرا الدرون</button>
+          <button type="button" id="f-fast" aria-pressed="false">سرعة عالية</button>
+          <button type="button" id="f-land">هبوط</button>
+          <button type="button" id="f-home">عودة للإقلاع</button>
+          <button type="button" id="f-exit">إنهاء الطيران</button>
+        </div>
+        <div class="below" id="below" hidden><span id="below-text"></span><button type="button" class="btn" id="below-open">تفاصيل القطعة</button></div>
+        <canvas class="minimap" id="minimap" width="400" height="280" aria-label="خريطة مصغرة لموقع الدرون"></canvas>
+        <p class="keys"><kbd>W</kbd><kbd>S</kbd> أمام وخلف · <kbd>A</kbd><kbd>D</kbd> يسار ويمين · <kbd>Q</kbd><kbd>E</kbd> دوران · <kbd>R</kbd><kbd>F</kbd> صعود ونزول · <kbd>Shift</kbd> سرعة · <kbd>C</kbd> الكاميرا · <kbd>L</kbd> هبوط · <kbd>H</kbd> عودة · اسحب بالماوس للالتفات، واضغط على أي قطعة ليطير لها</p>
+        <div class="stick left" id="stick-l" aria-label="عصا الارتفاع والدوران"><i></i></div>
+        <div class="stick right" id="stick-r" aria-label="عصا الحركة"><i></i></div>
+      </div>
       <p class="hint" id="hint"><span>اسحب للتدوير · قرّب بالعجلة أو بإصبعين · اضغط على أي قطعة</span></p>
       <div class="loading" id="loading"><span>يجهّز المخطط والخامات…</span></div>
       <div class="fail" id="fail" role="alert" hidden><div class="fail-box"><p class="fail-title" id="fail-title">تعذّر تشغيل العرض ثلاثي الأبعاد.</p><p class="fail-hint" id="fail-hint"></p><p class="fail-detail" id="fail-detail" dir="auto"></p><button type="button" id="fail-retry">إعادة المحاولة</button></div></div>
@@ -797,11 +856,12 @@ const FACE = { N: 'شمالية', S: 'جنوبية', E: 'شرقية', W: 'غرب
 const STATUS = { avail: { label: 'متاحة', color: '#3fae6a' }, res: { label: 'محجوزة', color: '#e0a83a' }, sold: { label: 'مباعة', color: '#c4553f' } };
 const STAGES = ['لم يبدأ البناء', 'حفر وقواعد', 'هيكل خرساني', 'تشطيب خارجي', 'فيلا مكتملة'];
 const TYPES = { villa: 'فيلا من المطوّر', land: 'أرض سكنية' };
-const ROWS = [   // each block row holds two plot rows: [southern row frontage, northern row frontage]
-  { z0: 18, front: [['S', 36], ['N', 15]], type: 'villa', phase: 1 },
-  { z0: 93, front: [['S', 15], ['N', 15]], type: 'villa', phase: 2 },
-  { z0: -78, front: [['S', 15], ['N', 36]], type: 'land' },
-  { z0: -153, front: [['S', 15], ['N', 15]], type: 'land' },
+// world axes: x = east, -z = north (three.js is right-handed with y up)
+const ROWS = [   // each block row holds two plot rows: [row whose street is on its -z (north) side, row whose street is on its +z (south) side]
+  { z0: 18, front: [['N', 36], ['S', 15]], type: 'villa', phase: 1 },
+  { z0: 93, front: [['N', 15], ['S', 15]], type: 'villa', phase: 2 },
+  { z0: -78, front: [['N', 15], ['S', 36]], type: 'land' },
+  { z0: -153, front: [['N', 15], ['S', 15]], type: 'land' },
 ];
 const sameR = (a, b) => a.x0 === b.x0 && a.z0 === b.z0 && a.x1 === b.x1 && a.z1 === b.z1;
 const gapR = (a, b) => Math.max(0, Math.max(a.x0, b.x0) - Math.min(a.x1, b.x1), Math.max(a.z0, b.z0) - Math.min(a.z1, b.z1));
@@ -826,7 +886,7 @@ const BLOCKS = [], PLOTS = [], PLOT_BY = new Map();
         const pr = R(x, z0, x + w, z0 + PLOT_D); x += w;
         const corner = k === 0 || k === FRONT_WS.length - 1;
         const P = {
-          id: num, key: 'plot-' + num, block: B, r: pr, w, d: PLOT_D, area: w * PLOT_D, type: row.type, phase: row.phase || null,
+          id: num, key: 'plot-' + num, block: B, r: pr, w, d: PLOT_D, area: w * PLOT_D, type: row.type, phase: row.phase || null, low: ri === 0,
           face: corner ? [face, k === 0 ? 'W' : 'E'] : [face], frontW: fw, corner,
           sideW: corner ? (((c === 0 && k === 0) || (c === 3 && k === FRONT_WS.length - 1)) ? 15 : 20) : null,
           park: gapR(pr, PARK) < 21, mosque: gapR(pr, MOSQUE) < 21,
@@ -905,7 +965,7 @@ function faceWindows(list, r, y, bay, skip) {
 }
 function villaRect(P) {
   const x0 = P.r.x0 + 2, vw = P.w - 4;
-  return P.face[0] === 'S' ? R(x0, P.r.z0 + 6, x0 + vw, P.r.z0 + 22) : R(x0, P.r.z1 - 22, x0 + vw, P.r.z1 - 6);
+  return P.low ? R(x0, P.r.z0 + 6, x0 + vw, P.r.z0 + 22) : R(x0, P.r.z1 - 22, x0 + vw, P.r.z1 - 6);
 }
 function buildPlot(P) {
   const pr = P.r, built = P.stage >= 3, front = P.face[0];
@@ -919,7 +979,7 @@ function buildPlot(P) {
     blk(g, DIRT, rcx(vr), rcz(vr), rw(vr) + 3, rd(vr) + 3, 0.05, 0.1, 0, false);
     for (const x of xs) for (const z of zs) { buf.pads.push([x, 0.4, z, 0, 1.5, 0.5, 1.5]); buf.bars.push([x, 1.2, z, 0, 0.05, 1.2, 0.05]); }
     const heap = new THREE.Mesh(new THREE.ConeGeometry(3.4, 2.2, 10), DIRT);
-    heap.position.set(rcx(pr) + (hash2(P.id, 1, 1) - 0.5) * 6, 1.15, front === 'S' ? pr.z1 - 4 : pr.z0 + 4); heap.castShadow = true; heap.receiveShadow = true; g.add(heap);
+    heap.position.set(rcx(pr) + (hash2(P.id, 1, 1) - 0.5) * 6, 1.15, P.low ? pr.z1 - 4 : pr.z0 + 4); heap.castShadow = true; heap.receiveShadow = true; g.add(heap);
     return;
   }
   blk(g, CONCRETE, rcx(vr), rcz(vr), rw(vr), rd(vr), base, 0);
@@ -932,30 +992,30 @@ function buildPlot(P) {
   }
   villaBox(g, vr, base, H0, true);
   villaBox(g, vr, base + H0, H1, false);
-  const annex = front === 'S' ? R(vr.x0 + 1, vr.z1 - 6, vr.x1 - 1, vr.z1) : R(vr.x0 + 1, vr.z0, vr.x1 - 1, vr.z0 + 6);
+  const annex = P.low ? R(vr.x0 + 1, vr.z1 - 6, vr.x1 - 1, vr.z1) : R(vr.x0 + 1, vr.z0, vr.x1 - 1, vr.z0 + 6);
   villaBox(g, annex, base + H0 + H1, 3.2, false);
   rimRect(vr, base + H0 + H1, (x, z) => inR(annex, x, z, 0.35));
   rimRect(annex, base + H0 + H1 + 3.2);
-  const list = P.stage === 4 ? buf.win : buf.open, frontZ = front === 'S' ? vr.z0 : vr.z1;
+  const list = P.stage === 4 ? buf.win : buf.open, frontZ = P.low ? vr.z0 : vr.z1;
   const isDoor = (x, z) => Math.abs(z - frontZ) < 0.01 && Math.abs(x - rcx(vr)) < 2;
   faceWindows(list, vr, base + 0.95, 3.2, isDoor);
   faceWindows(list, vr, base + H0 + 0.85, 3.2);
-  const ry = front === 'S' ? Math.PI : 0;
+  const ry = P.low ? Math.PI : 0;
   const door = new THREE.Mesh(planarUV(new THREE.ShapeGeometry(archShape(1.8, 3.0, true), 16)), P.stage === 4 ? V.wood : VO.glass);
-  door.rotation.y = ry; door.position.set(rcx(vr), base, frontZ + (front === 'S' ? -0.03 : 0.03)); g.add(door);
+  door.rotation.y = ry; door.position.set(rcx(vr), base, frontZ + (P.low ? -0.03 : 0.03)); g.add(door);
   if (P.stage === 3) {                                   // scaffolding on the street facade
-    const sz = frontZ + (front === 'S' ? -1.0 : 1.0);
-    for (const x of lin(vr.x0 - 0.5, vr.x1 + 0.5, Math.round(rw(vr) / 2.4) + 1)) buf.scaff.push([x, 4.5, sz, 0, 0.05, 9, 0.05], [x, 4.5, sz + (front === 'S' ? -1 : 1), 0, 0.05, 9, 0.05]);
+    const sz = frontZ + (P.low ? -1.0 : 1.0);
+    for (const x of lin(vr.x0 - 0.5, vr.x1 + 0.5, Math.round(rw(vr) / 2.4) + 1)) buf.scaff.push([x, 4.5, sz, 0, 0.05, 9, 0.05], [x, 4.5, sz + (P.low ? -1 : 1), 0, 0.05, 9, 0.05]);
     for (const y of [2, 4.3, 6.6, 8.8]) buf.scaff.push([rcx(vr), y, sz, 0, rw(vr) + 1.2, 0.05, 0.05]);
     return;
   }
   /* finished villa: boundary wall with driveway gate, front garden, a palm */
-  const wallH = 2.6, gate = [rcx(pr) - 3.5, rcx(pr) + 1.5], fz = front === 'S' ? pr.z0 + 0.15 : pr.z1 - 0.15;
+  const wallH = 2.6, gate = [rcx(pr) - 3.5, rcx(pr) + 1.5], fz = P.low ? pr.z0 + 0.15 : pr.z1 - 0.15;
   for (const [a, b] of [[pr.x0, gate[0]], [gate[1], pr.x1]]) blk(g, V.stone, (a + b) / 2, fz, b - a, 0.25, wallH, 0.1);
   for (const x of [pr.x0 + 0.15, pr.x1 - 0.15]) blk(g, V.stone, x, rcz(pr), 0.25, PLOT_D, wallH, 0.1);
-  blk(g, V.stone, rcx(pr), front === 'S' ? pr.z1 - 0.15 : pr.z0 + 0.15, P.w, 0.25, wallH, 0.1);
+  blk(g, V.stone, rcx(pr), P.low ? pr.z1 - 0.15 : pr.z0 + 0.15, P.w, 0.25, wallH, 0.1);
   bx(g, V.metalDoor, (gate[0] + gate[1]) / 2, fz, gate[1] - gate[0], 0.08, 2.3, 0.1, 0, false);
-  const gz = front === 'S' ? pr.z0 + 3 : pr.z1 - 3;
+  const gz = P.low ? pr.z0 + 3 : pr.z1 - 3;
   blk(g, M.grass, pr.x1 - 4.5, gz, 7, 4, 0.14, 0.1, 0, false);
   buf.palms.push([pr.x1 - 3, gz, 5.5 + hash2(P.id, 2, 2) * 2, hash2(P.id, 4, 4) * 6, 0.04, -0.03]);
 }
@@ -1053,7 +1113,7 @@ function buildSubdivision() {
   machine('grader', -60, -85.5, Math.PI / 2); machine('roller', 70, -85.5, -Math.PI / 2); machine('truck', 130, -110, 0);
   machine('loader', 130, -128, Math.PI); machine('truck', -130, -60, Math.PI); machine('excavator', -255, -120, 0.4);
   const exc = PLOTS.filter(P => P.stage === 1).slice(0, 3);
-  exc.forEach((P, k) => machine('excavator', rcx(P.r) + 6, rcz(P.r) + (P.face[0] === 'S' ? 9 : -9), k * 1.3));
+  exc.forEach((P, k) => machine('excavator', rcx(P.r) + 6, rcz(P.r) + (P.low ? 9 : -9), k * 1.3));
   /* instanced collections */
   placeWindows(siteG, V, 1.3, 2.3, true, buf.win);
   placeWindows(siteG, VO, 1.3, 2.3, true, buf.open);
@@ -1134,7 +1194,7 @@ function place(L, anchor) {
   return vis ? `translate(${((_v.x * 0.5 + 0.5) * size.w).toFixed(1)}px, ${((-_v.y * 0.5 + 0.5) * size.h).toFixed(1)}px) ${anchor}` : null;
 }
 function updateLabels() {
-  const far = camera.position.distanceTo(controls.target) > 330;
+  const far = !flight.on && camera.position.distanceTo(controls.target) > 330;
   for (const Z of ZPINS) {
     const t = far ? place(Z, 'translate(-50%, -100%)') : null;
     if (!!t !== Z.vis) { Z.el.style.visibility = t ? '' : 'hidden'; Z.vis = !!t; }
@@ -1196,13 +1256,15 @@ function go(key, opts = {}) {
   state.sel = P || null;
   refreshOverlay(); renderPanel();
   try { history.replaceState(null, '', '#' + (P ? P.key : 'site')); } catch (e) { /* optional */ }
-  if (!P) { flyTo(OVERVIEW.target, OVERVIEW.radius, OVERVIEW.polar); fitSun(new THREE.Vector3(), 300); return; }
+  if (!P) { if (flight.on) return; flyTo(OVERVIEW.target, OVERVIEW.radius, OVERVIEW.polar); fitSun(new THREE.Vector3(), 300); return; }
   hideHint();
+  if (flight.on) { if (opts.fly !== false) flightGoto(P); return; }   // while flying, the drone flies there
   if (opts.fly !== false) flyTo(new THREE.Vector3(rcx(P.r), 2, rcz(P.r)), 30, 0.92, 1000);
   fitSun(new THREE.Vector3(rcx(P.r), 0, rcz(P.r)), 70);
 }
 function goBlock(B) {
   state.sel = null; refreshOverlay(); renderPanel(); hideHint();
+  if (flight.on) { flight.landing = false; flight.airborne = true; flight.auto = { x: rcx(B.r), z: rcz(B.r), alt: 45 }; return; }
   const c = new THREE.Vector3(rcx(B.r), 0, rcz(B.r)); flyTo(c, 70, 0.88); fitSun(c, 90);
 }
 window.addEventListener('hashchange', () => { const k = location.hash.slice(1); if (PLOT_BY.has(k) && state.sel?.key !== k) go(k); });
@@ -1336,7 +1398,7 @@ document.getElementById('panel').addEventListener('click', e => {
     try { navigator.clipboard.writeText(text).then(() => done(true), () => done(false)); } catch (err) { done(false); }
   }
 });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (pick.step) cancelAlign(); else if (state.sel) go(null); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (flight.on) exitFlight(); else if (pick.step) cancelAlign(); else if (state.sel) go(null); } });
 
 /* ============ drone scan: Gaussian Splatting layer ============ */
 const SPARK_URL = 'https://cdn.jsdelivr.net/npm/@sparkjsdev/spark@2.4.0/dist/spark.module.js';
@@ -1488,7 +1550,7 @@ optsEl.addEventListener('click', e => {
   if (b.dataset.overlay) setOverlay(b.dataset.overlay === 'on');
   syncOpts();
 });
-document.getElementById('btn-home').addEventListener('click', () => go(null));
+document.getElementById('btn-home').addEventListener('click', () => { if (flight.on) exitFlight(); go(null); });
 function resize() {
   const w = stage.clientWidth, h = stage.clientHeight;
   size.w = w; size.h = h;
@@ -1507,7 +1569,9 @@ function tick(now) {
     camera.position.lerpVectors(anim.p0, anim.p1, e); controls.target.lerpVectors(anim.q0, anim.q1, e);
     if (k === 1) anim = null;
   }
-  const moving = controls.update() || !!anim || !!(splat && spark);
+  const dt = Math.min(0.1, (now - (tick.prev || now)) / 1000); tick.prev = now;
+  if (flight.on) flightStep(dt, now);
+  const moving = (flight.on || controls.update()) || !!anim || !!(splat && spark);
   if (wasMoving && !moving) invalidate(1);
   wasMoving = moving;
   if (!moving && frames <= 0) { lastT = 0; return; }
@@ -1539,6 +1603,249 @@ flyTo(OVERVIEW.target, OVERVIEW.radius, OVERVIEW.polar, 2200, OVERVIEW.az);
 if (PLOT_BY.has(start)) setTimeout(() => go(start), reduceMotion ? 0 : 1200);
 window.__palaceStep = 'أول رسم';
 requestAnimationFrame(tick);
+
+
+/* ============ drone flight mode ============ */
+const flight = {
+  on: false, cam: 'chase', fast: false, airborne: false, landing: false, auto: null, warn: false,
+  pos: new THREE.Vector3(), vel: new THREE.Vector3(), vy: 0, yaw: Math.PI, yawRate: 0, gimbal: -0.35, look: 0.18,
+  home: new THREE.Vector3(-30, 0, 9), airTime: 0, keys: new Set(), stick: { l: [0, 0], r: [0, 0] },
+  camPos: new THREE.Vector3(), camLook: new THREE.Vector3(), lastSun: 0,
+};
+const FLY_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyQ', 'KeyE', 'KeyR', 'KeyF', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space']);
+const MAX_ALT = 120;
+
+/* obstacles the drone must stay above, from the same plan data as the model */
+const OBST = [];
+for (const P of PLOTS) {
+  if (P.stage >= 3) { OBST.push({ r: villaRect(P), h: 0.35 + 4.0 + 3.8 + 1.4 }); OBST.push({ r: P.r, h: 2.8, wall: true }); }
+  else if (P.stage === 2) OBST.push({ r: villaRect(P), h: 0.35 + 4.0 + 3.8 + 1.1 });
+}
+for (const P of PLOTS) if (P.stage >= 3) { const vr = villaRect(P); OBST.push({ r: P.low ? R(vr.x0 + 1, vr.z1 - 6, vr.x1 - 1, vr.z1) : R(vr.x0 + 1, vr.z0, vr.x1 - 1, vr.z0 + 6), h: 0.35 + 4.0 + 3.8 + 3.2 + 1.3 }); }
+OBST.push({ r: R(45, -145, 85, -112), h: 8.5 + 1.4 }, { r: R(60, -136.5, 70, -120.5), h: 19.5 }, { r: R(86.5, -110.5, 89.5, -107.5), h: 27.5 });
+function groundAt(x, z) {
+  if (!state.model) return 0;
+  let h = 0;
+  for (const o of OBST) if (inR(o.r, x, z, o.wall ? 0.3 : 0.8)) h = Math.max(h, o.h);
+  return h;
+}
+
+/* a generic quadcopter (not a replica of any brand) */
+const droneG = new THREE.Group(); droneG.visible = false; droneG.scale.setScalar(2.2); scene.add(droneG);
+const tiltG = new THREE.Group(); droneG.add(tiltG);
+const DM = {
+  body: phys({ color: 0x3b4046, roughness: 0.42, metalness: 0.25, clearcoat: 0.7 }), dark: phys({ color: 0x1c1f22, roughness: 0.5, metalness: 0.2 }),
+  blade: phys({ color: 0x2a2e33, roughness: 0.4 }), blur: new THREE.MeshBasicMaterial({ color: 0xaab3bb, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide }),
+  lens: phys({ color: 0x0b1220, roughness: 0.04, metalness: 0.5, clearcoat: 1 }),
+  red: std({ color: 0x330000, emissive: 0xff2a2a, emissiveIntensity: 3 }), green: std({ color: 0x002a00, emissive: 0x2aff5a, emissiveIntensity: 3 }),
+};
+rb(tiltG, DM.body, 0, 0, 0.15, 0.3, 0.09, -0.045, 0.035);
+rb(tiltG, DM.body, 0, -0.01, 0.11, 0.18, 0.05, 0.04, 0.025);
+const PROPS = [];
+for (const [x, z] of [[0.16, 0.14], [-0.16, 0.14], [0.16, -0.14], [-0.16, -0.14]]) {
+  const len = Math.hypot(x, z); rb(tiltG, DM.dark, x / 2, z / 2, 0.022, len, 0.018, -0.01, 0.008, Math.atan2(x, z));
+  cy(tiltG, DM.dark, x, z, 0.022, 0.035, -0.012);
+  const p = new THREE.Group(); p.position.set(x, 0.03, z); tiltG.add(p);
+  rb(p, DM.blade, 0, 0, 0.2, 0.016, 0.004, 0, 0.002);
+  const disc = new THREE.Mesh(new THREE.CircleGeometry(0.105, 24).rotateX(-Math.PI / 2), DM.blur); disc.userData.noAO = true; p.add(disc);
+  PROPS.push({ p, disc });
+  const led = new THREE.Mesh(new THREE.SphereGeometry(0.008, 8, 6), z > 0 ? (x > 0 ? DM.green : DM.red) : DM.red); led.position.set(x, -0.02, z); tiltG.add(led);
+}
+const gimbalG = new THREE.Group(); gimbalG.position.set(0, -0.065, 0.13); tiltG.add(gimbalG);
+rb(gimbalG, DM.dark, 0, 0, 0.05, 0.04, 0.04, -0.02, 0.012);
+const lens = new THREE.Mesh(new THREE.SphereGeometry(0.014, 16, 12), DM.lens); lens.position.set(0, 0, 0.022); gimbalG.add(lens);
+droneG.traverse(o => { if (o.isMesh) { o.castShadow = true; o.userData.noAO = true; } });
+
+/* HUD, mini-map, controls */
+const FL = id => document.getElementById(id);
+const flightEl = FL('flight'), hud = { alt: FL('h-alt'), spd: FL('h-spd'), hdg: FL('h-hdg'), card: FL('h-card'), home: FL('h-home'), time: FL('h-time'), warn: FL('h-warn') };
+const CARD = ['شمال', 'شمال شرق', 'شرق', 'جنوب شرق', 'جنوب', 'جنوب غرب', 'غرب', 'شمال غرب'];
+const mini = FL('minimap'), mctx = mini.getContext('2d'), MB = R(-285, -185, 285, 185);
+const mapBg = document.createElement('canvas');
+function drawMapBg() {
+  const W = mini.width, H = mini.height, s = Math.min(W / rw(MB), H / rd(MB)), g = mapBg.getContext('2d');
+  mapBg.width = W; mapBg.height = H;
+  const X = x => (x - MB.x0) * s, Z = z => (z - MB.z0) * s;
+  g.fillStyle = '#2a2622'; g.fillRect(0, 0, W, H);
+  g.fillStyle = '#4a4e52'; for (const st of STREETS) g.fillRect(X(st.r.x0), Z(st.r.z0), rw(st.r) * s, rd(st.r) * s);
+  g.fillStyle = '#4f7a3a'; g.fillRect(X(PARK.x0), Z(PARK.z0), rw(PARK) * s, rd(PARK) * s);
+  g.fillStyle = '#b8995e'; g.fillRect(X(MOSQUE.x0), Z(MOSQUE.z0), rw(MOSQUE) * s, rd(MOSQUE) * s);
+  for (const P of PLOTS) { g.fillStyle = STATUS[P.status].color; g.globalAlpha = 0.85; g.fillRect(X(P.r.x0) + 0.5, Z(P.r.z0) + 0.5, rw(P.r) * s - 1, rd(P.r) * s - 1); }
+  g.globalAlpha = 1; g.fillStyle = '#eee7d8'; g.font = `${Math.round(11 * (W / 200))}px Cairo, Tahoma, sans-serif`; g.textAlign = 'center'; g.fillText('ش', W - 12 * (W / 200), 14 * (W / 200));
+  mapBg.s = s; mapBg.X = X; mapBg.Z = Z;
+}
+function drawMinimap() {
+  const g = mctx, f = flight, { X, Z } = mapBg;
+  g.drawImage(mapBg, 0, 0);
+  g.strokeStyle = '#eee7d8'; g.lineWidth = 1.5; g.beginPath(); g.arc(X(f.home.x), Z(f.home.z), 4, 0, Math.PI * 2); g.stroke();
+  const x = X(f.pos.x), y = Z(f.pos.z), fx = Math.sin(f.yaw), fz = Math.cos(f.yaw), k = 9 * (mini.width / 200);
+  g.fillStyle = '#e2c88f'; g.strokeStyle = '#17130b'; g.lineWidth = 1.5;
+  g.beginPath(); g.moveTo(x + fx * k, y + fz * k); g.lineTo(x - fx * k * 0.6 + fz * k * 0.55, y - fz * k * 0.6 - fx * k * 0.55); g.lineTo(x - fx * k * 0.6 - fz * k * 0.55, y - fz * k * 0.6 + fx * k * 0.55); g.closePath(); g.fill(); g.stroke();
+}
+function setStick(el, side) {
+  const knob = el.querySelector('i');
+  let id = null;
+  const move = e => {
+    const r = el.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2, R0 = r.width / 2 - 10;
+    let dx = (e.clientX - cx) / R0, dy = (e.clientY - cy) / R0; const m = Math.hypot(dx, dy); if (m > 1) { dx /= m; dy /= m; }
+    knob.style.transform = `translate(${dx * R0}px, ${dy * R0}px)`;
+    const dz = v => (Math.abs(v) < 0.12 ? 0 : v);
+    flight.stick[side] = [dz(dx), dz(-dy)];
+  };
+  el.addEventListener('pointerdown', e => { id = e.pointerId; el.setPointerCapture(id); move(e); e.preventDefault(); });
+  el.addEventListener('pointermove', e => { if (e.pointerId === id) move(e); });
+  const end = e => { if (e.pointerId !== id) return; id = null; knob.style.transform = ''; flight.stick[side] = [0, 0]; };
+  el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+}
+setStick(FL('stick-l'), 'l'); setStick(FL('stick-r'), 'r');
+
+function setCam(mode) {
+  flight.cam = mode; droneG.visible = flight.on && mode === 'chase';
+  FL('f-cam').setAttribute('aria-pressed', String(mode === 'fpv'));
+}
+function setFast(on) { flight.fast = on; FL('f-fast').setAttribute('aria-pressed', String(on)); }
+function overlayFade(on) {   // softer sales colours while flying low, so the ground reads as ground
+  for (const [k, m] of Object.entries(OV)) { m.opacity = (m.depthTest ? OV_BASE[k] : Math.min(OV_BASE[k], 0.4)) * (on ? 0.45 : 1); m.needsUpdate = true; }
+}
+function enterFlight() {
+  const f = flight;
+  if (pick.step) cancelAlign();
+  anim = null; controls.enabled = false; f.on = true;
+  f.pos.copy(f.home); f.pos.y = groundAt(f.home.x, f.home.z) + 0.15;
+  f.vel.set(0, 0, 0); f.vy = 0; f.yaw = Math.PI; f.yawRate = 0; f.airborne = true; f.landing = false; f.airTime = 0;
+  f.auto = { x: f.home.x, z: f.home.z, alt: 25, takeoff: true };
+  camera.near = 0.3; camera.updateProjectionMatrix();
+  setCam(f.cam);
+  stageEl.classList.add('flying'); flightEl.hidden = false; FL('btn-fly').setAttribute('aria-pressed', 'true');
+  document.getElementById('opts').hidden = true; hideHint(); tip.hidden = true;
+  drawMapBg(); overlayFade(true);
+  chaseTarget(f.camPos, f.camLook); camera.position.copy(f.camPos); camera.lookAt(f.camLook);
+  invalidate(3);
+}
+function exitFlight() {
+  const f = flight;
+  f.on = false; f.keys.clear(); f.stick.l = [0, 0]; f.stick.r = [0, 0];
+  droneG.visible = false; stageEl.classList.remove('flying'); flightEl.hidden = true; FL('btn-fly').setAttribute('aria-pressed', 'false');
+  camera.near = 1; camera.updateProjectionMatrix(); overlayFade(false);
+  const dir = camera.getWorldDirection(new THREE.Vector3());
+  const hit = new THREE.Ray(camera.position.clone(), dir).intersectPlane(GROUND, new THREE.Vector3());
+  controls.target.copy(hit && hit.distanceTo(camera.position) < 600 ? hit : camera.position.clone().addScaledVector(dir, 60).setY(0));
+  controls.enabled = true; controls.update(); invalidate(3);
+}
+function flightGoto(P) { flight.landing = false; flight.airborne = true; flight.auto = { x: rcx(P.r), z: rcz(P.r), alt: 32, plot: P }; }
+function chaseTarget(pos, look) {
+  const f = flight, fx = Math.sin(f.yaw), fz = Math.cos(f.yaw);
+  if (f.cam === 'fpv') {
+    pos.set(f.pos.x + fx * 0.5, f.pos.y - 0.25, f.pos.z + fz * 0.5);
+    const g = f.gimbal; look.set(pos.x + fx * Math.cos(g) * 10, pos.y + Math.sin(g) * 10, pos.z + fz * Math.cos(g) * 10);
+  } else {
+    const back = 5.5, up = 1.8 + f.look * 6;
+    pos.set(f.pos.x - fx * back, f.pos.y + up, f.pos.z - fz * back);
+    look.set(f.pos.x + fx * 8, f.pos.y - 0.6 - f.look * 4, f.pos.z + fz * 8);
+  }
+}
+const _cp = new THREE.Vector3(), _cl = new THREE.Vector3();
+function flightStep(dt, now) {
+  const f = flight, k = f.keys, clamp = (v, a = 1) => Math.max(-a, Math.min(a, v));
+  let ax = clamp((k.has('KeyD') ? 1 : 0) - (k.has('KeyA') ? 1 : 0) + f.stick.r[0]);
+  let az = clamp((k.has('KeyW') ? 1 : 0) - (k.has('KeyS') ? 1 : 0) + f.stick.r[1]);
+  let ay = clamp((k.has('KeyR') || k.has('ArrowUp') || k.has('Space') ? 1 : 0) - (k.has('KeyF') || k.has('ArrowDown') ? 1 : 0) + f.stick.l[1]);
+  let at = clamp((k.has('KeyE') || k.has('ArrowRight') ? 1 : 0) - (k.has('KeyQ') || k.has('ArrowLeft') ? 1 : 0) + f.stick.l[0]);
+  const manual = Math.abs(ax) + Math.abs(az) + Math.abs(ay) + Math.abs(at) > 0.05;
+  if (manual) { f.auto = null; if (ay > 0) f.landing = false; }
+  const ground = groundAt(f.pos.x, f.pos.z), agl = f.pos.y - ground;
+  if (manual && !f.airborne && ay > 0.2) f.airborne = true;
+  if (f.auto) {
+    const dx = f.auto.x - f.pos.x, dz = f.auto.z - f.pos.z, dist = Math.hypot(dx, dz);
+    const altErr = f.auto.alt - agl;
+    ay = clamp(altErr / 4);
+    if (dist > 2 && !(f.auto.takeoff)) {
+      let err = Math.atan2(dx, dz) - f.yaw; err = Math.atan2(Math.sin(err), Math.cos(err));
+      at = clamp(-err * 2.2);
+      az = altErr > 6 ? 0 : clamp(dist / 30) * (Math.abs(err) < 0.5 ? 1 : 0.15);
+    } else if (Math.abs(altErr) < 0.8) {
+      if (f.auto.land) f.landing = true;
+      if (f.auto.plot) { state.sel = f.auto.plot; refreshOverlay(); renderPanel(); }
+      f.auto = null;
+    }
+  }
+  if (f.landing) { ay = agl > 6 ? -1 : -0.45; ax = az = 0; if (agl < 0.25) { f.landing = false; f.airborne = false; } }
+  const vmax = f.fast ? 16 : 8, vzmax = f.fast ? 6 : 3.5, fx = Math.sin(f.yaw), fz = Math.cos(f.yaw);
+  const tvx = f.airborne ? (fx * az - fz * ax) * vmax : 0, tvz = f.airborne ? (fz * az + fx * ax) * vmax : 0;
+  const kv = 1 - Math.exp(-dt * 2.2);
+  f.vel.x += (tvx - f.vel.x) * kv; f.vel.z += (tvz - f.vel.z) * kv;
+  f.vy += ((f.airborne ? ay * vzmax : -2) - f.vy) * (1 - Math.exp(-dt * 3));
+  f.yawRate += ((f.airborne ? -at * 1.4 : 0) - f.yawRate) * (1 - Math.exp(-dt * 5)); f.yaw += f.yawRate * dt;
+  const nx = f.pos.x + f.vel.x * dt, nz = f.pos.z + f.vel.z * dt;
+  const gNext = groundAt(nx, nz);
+  f.warn = gNext > ground + 0.3 && gNext > f.pos.y - 0.6;   // obstacle sensing: something taller ahead, so hold position
+  if (f.warn) { f.vel.x = 0; f.vel.z = 0; } else { f.pos.x = clamp(nx, 700); f.pos.z = clamp(nz, 700); }
+  f.pos.y += f.vy * dt;
+  const g2 = groundAt(f.pos.x, f.pos.z), minY = g2 + (f.airborne ? 0.15 : 0.15);
+  if (f.pos.y < minY) { f.pos.y = minY; f.vy = Math.max(0, f.vy); }
+  if (f.pos.y > MAX_ALT + g2) { f.pos.y = MAX_ALT + g2; f.vy = Math.min(0, f.vy); }
+  if (f.airborne) f.airTime += dt;
+  /* body: tilt into the motion, spin props */
+  droneG.position.copy(f.pos); droneG.rotation.y = f.yaw;
+  const lf = (f.vel.x * fx + f.vel.z * fz) / vmax, lr = (-f.vel.x * fz + f.vel.z * fx) / vmax;
+  tiltG.rotation.x += (lf * 0.32 - tiltG.rotation.x) * (1 - Math.exp(-dt * 6));
+  tiltG.rotation.z += (lr * 0.32 - tiltG.rotation.z) * (1 - Math.exp(-dt * 6));
+  for (const { p, disc } of PROPS) { p.rotation.y += dt * (f.airborne ? 70 : 0); disc.visible = f.airborne; }
+  /* camera follows smoothly; the drone's camera is rigid */
+  chaseTarget(_cp, _cl);
+  if (f.cam === 'fpv') { f.camPos.copy(_cp); f.camLook.copy(_cl); }
+  else { const kc = 1 - Math.exp(-dt * 6); f.camPos.lerp(_cp, kc); f.camLook.lerp(_cl, kc); }
+  camera.position.copy(f.camPos); camera.lookAt(f.camLook);
+  if (now - f.lastSun > 400) { f.lastSun = now; fitSun(new THREE.Vector3(f.pos.x, 0, f.pos.z), 120); }
+  /* HUD */
+  const spd = Math.hypot(f.vel.x, f.vel.z) * 3.6, hdg = ((Math.atan2(fx, -fz) * 180 / Math.PI) + 360) % 360;
+  hud.alt.textContent = nf(Math.max(0, f.pos.y - g2), 1); hud.spd.textContent = nf(spd, 0);
+  hud.hdg.textContent = nf(hdg, 0) + '°'; hud.card.textContent = CARD[Math.round(hdg / 45) % 8];
+  hud.home.textContent = nf(Math.hypot(f.pos.x - f.home.x, f.pos.z - f.home.z), 0);
+  const t = Math.floor(f.airTime); hud.time.textContent = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+  hud.warn.hidden = !f.warn;
+  const below = PLOTS.find(P => inR(P.r, f.pos.x, f.pos.z));
+  FL('below').hidden = !below;
+  if (below && flight.below !== below) { flight.below = below; FL('below-text').textContent = `فوق القطعة ${below.id} · ${STATUS[below.status].label} · ${nf(below.price)} ر.س`; }
+  drawMinimap();
+}
+
+/* inputs */
+window.addEventListener('keydown', e => {
+  if (!flight.on || /input|textarea|select/i.test(e.target.tagName)) return;
+  if (FLY_KEYS.has(e.code)) { flight.keys.add(e.code); e.preventDefault(); }
+  if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') setFast(true);
+  if (e.code === 'KeyC' && !e.repeat) setCam(flight.cam === 'chase' ? 'fpv' : 'chase');
+  if (e.code === 'KeyL' && !e.repeat) { flight.auto = null; flight.landing = true; }
+  if (e.code === 'KeyH' && !e.repeat) FL('f-home').click();
+});
+window.addEventListener('keyup', e => {
+  flight.keys.delete(e.code);
+  if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') setFast(false);
+});
+window.addEventListener('blur', () => flight.keys.clear());
+let lookDrag = null;
+canvas.addEventListener('pointerdown', e => { if (flight.on && e.pointerType === 'mouse') lookDrag = [e.clientX, e.clientY]; });
+window.addEventListener('pointermove', e => {
+  if (!lookDrag || !flight.on) return;
+  const dx = e.clientX - lookDrag[0], dy = e.clientY - lookDrag[1]; lookDrag = [e.clientX, e.clientY];
+  flight.yaw -= dx * 0.004;
+  if (flight.cam === 'fpv') flight.gimbal = Math.max(-1.55, Math.min(0.35, flight.gimbal - dy * 0.004));
+  else flight.look = Math.max(-0.25, Math.min(1.2, flight.look + dy * 0.003));
+});
+window.addEventListener('pointerup', () => { lookDrag = null; });
+canvas.addEventListener('wheel', e => {
+  if (!flight.on) return; e.preventDefault();
+  if (flight.cam === 'fpv') flight.gimbal = Math.max(-1.55, Math.min(0.35, flight.gimbal - e.deltaY * 0.0015));
+  else flight.look = Math.max(-0.25, Math.min(1.2, flight.look + e.deltaY * 0.001));
+}, { passive: false });
+FL('btn-fly').addEventListener('click', () => (flight.on ? exitFlight() : enterFlight()));
+FL('f-exit').addEventListener('click', exitFlight);
+FL('f-cam').addEventListener('click', () => setCam(flight.cam === 'chase' ? 'fpv' : 'chase'));
+FL('f-fast').addEventListener('click', () => setFast(!flight.fast));
+FL('f-land').addEventListener('click', () => { flight.auto = null; flight.landing = true; });
+FL('f-home').addEventListener('click', () => { flight.landing = false; flight.airborne = true; flight.auto = { x: flight.home.x, z: flight.home.z, alt: Math.max(30, flight.pos.y - groundAt(flight.pos.x, flight.pos.z)), land: true }; });
+FL('below-open').addEventListener('click', () => { if (flight.below) go(flight.below.key, { fly: false }); });
 </script>
 </body>
 </html>
