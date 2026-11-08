@@ -107,7 +107,13 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   border-radius: 10px; padding: 7px 10px; font-size: 13px; white-space: nowrap; box-shadow: 0 6px 24px rgba(0,0,0,.35);
 }
 .tip small { display: block; color: var(--muted); font-family: var(--font-num); font-size: 12px; margin-top: 2px; }
-.fail { position: absolute; inset: 0; display: grid; place-items: center; padding: 24px; text-align: center; background: var(--ink); color: var(--text); line-height: 1.8; }
+.fail { position: absolute; inset: 0; z-index: 6; display: grid; place-items: center; padding: 24px; text-align: center; background: var(--ink); color: var(--text); }
+.fail-box { display: grid; gap: 10px; justify-items: center; max-width: 46ch; }
+.fail-title { margin: 0; font-size: 16px; font-weight: 700; line-height: 1.6; }
+.fail-hint { margin: 0; font-size: 14px; color: var(--muted); line-height: 1.8; }
+.fail-detail { margin: 0; font-size: 12px; color: var(--muted); overflow-wrap: anywhere; unicode-bidi: plaintext; }
+#fail-retry { margin-top: 6px; border: 1px solid var(--gold); background: var(--gold); color: var(--on-gold); border-radius: 10px; padding: 8px 18px; font-size: 14px; cursor: pointer; }
+.seg button:disabled { opacity: .4; cursor: not-allowed; }
 
 .panel { min-height: 0; overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px; }
 .crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
@@ -200,20 +206,41 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
       <div class="opts" id="opts" hidden>
         <div class="opt"><span>الإضاءة</span><div class="seg" role="group" aria-label="الإضاءة"><button type="button" data-light="day">نهار</button><button type="button" data-light="dusk">غروب</button></div></div>
         <div class="opt"><span>أرضيات الغرف</span><div class="seg" role="group" aria-label="أرضيات الغرف"><button type="button" data-view="real">تشطيب واقعي</button><button type="button" data-view="use">ألوان الاستخدام</button></div></div>
-        <div class="opt"><span>جودة الصورة</span><div class="seg" role="group" aria-label="جودة الصورة"><button type="button" data-q="high">عالية</button><button type="button" data-q="balanced">متوازنة</button></div></div>
+        <div class="opt"><span>جودة الصورة</span><div class="seg" role="group" aria-label="جودة الصورة"><button type="button" data-q="high">عالية</button><button type="button" data-q="balanced">متوازنة</button><button type="button" data-q="lite">خفيفة</button></div></div>
       </div>
       <div class="floorbar"><div class="floors" id="floors" role="group" aria-label="الأدوار" hidden></div></div>
       <div class="legend" id="legend" hidden></div>
       <p class="hint" id="hint"><span>اسحب للتدوير · قرّب بالعجلة أو بإصبعين · اضغط على أي مبنى</span></p>
       <div class="loading" id="loading"><span>يجهّز الخامات والإضاءة…</span></div>
-      <div class="fail" id="fail" hidden><p>تعذّر تشغيل العرض ثلاثي الأبعاد في هذا المتصفح.<br>افتح الصفحة في متصفح حديث يدعم WebGL.</p></div>
+      <div class="fail" id="fail" role="alert" hidden><div class="fail-box"><p class="fail-title" id="fail-title">تعذّر تشغيل العرض ثلاثي الأبعاد.</p><p class="fail-hint" id="fail-hint"></p><p class="fail-detail" id="fail-detail" dir="auto"></p><button type="button" id="fail-retry">إعادة المحاولة</button></div></div>
     </section>
     <aside class="panel" id="panel" aria-live="polite"></aside>
   </main>
 </div>
 
 <script>
-  setTimeout(function () { if (!window.__palaceReady) { var f = document.getElementById('fail'); if (f) f.hidden = false; } }, 30000);
+  (function () {
+    var MSG = {
+      nogl: ['هذا المتصفح ما سمح بتشغيل العرض ثلاثي الأبعاد (WebGL).', 'غالبًا تسريع كرت الشاشة مقفل في المتصفح أو التطبيق. افتح الرابط في Chrome أو Safari مباشرة، أو فعّل «استخدام تسريع الأجهزة» من إعدادات المتصفح.'],
+      lost: ['توقف كرت الشاشة عن العرض، غالبًا لنفاد الذاكرة.', 'غيّرت الجودة إلى «خفيفة». اضغط إعادة المحاولة.'],
+      error: ['صار خطأ أثناء تجهيز المشهد.', 'اضغط إعادة المحاولة. إذا تكرر، أرسل لي سطر التفاصيل تحت.'],
+      timeout: ['التجهيز أخذ وقتًا أطول من المتوقع.', 'انتظر قليلًا أو اضغط إعادة المحاولة. إذا تكرر، اختر جودة «خفيفة» من خيارات العرض.']
+    };
+    window.palaceFail = function (kind, detail) {
+      if (window.__palaceFailed && kind !== 'lost') return;
+      window.__palaceFailed = kind;
+      var m = MSG[kind] || MSG.error, f = document.getElementById('fail'), l = document.getElementById('loading');
+      document.getElementById('fail-title').textContent = m[0];
+      document.getElementById('fail-hint').textContent = m[1];
+      document.getElementById('fail-detail').textContent = 'التفاصيل: ' + (detail || kind) + (window.__palaceStep ? ' · المرحلة: ' + window.__palaceStep : '');
+      if (l) l.hidden = true;
+      if (f) f.hidden = false;
+    };
+    window.addEventListener('error', function (e) { if (!window.__palaceReady) window.palaceFail('error', e.message || String(e.error)); });
+    window.addEventListener('unhandledrejection', function (e) { if (!window.__palaceReady) window.palaceFail('error', (e.reason && e.reason.message) || String(e.reason)); });
+    setTimeout(function () { if (!window.__palaceReady) window.palaceFail('timeout', 'لم يكتمل التجهيز خلال 45 ثانية'); }, 45000);
+    document.addEventListener('click', function (e) { if (e.target && e.target.id === 'fail-retry') location.reload(); });
+  })();
 </script>
 <script type="importmap">
 { "imports": {
@@ -400,24 +427,33 @@ const store = {
 };
 const coarse = window.matchMedia('(pointer: coarse)').matches || Math.min(screen.width, screen.height) < 700;
 const QUALITY = {
-  high: { dpr: Math.min(window.devicePixelRatio || 1, 2), shadow: 4096, ao: true, samples: 4 },
-  balanced: { dpr: Math.min(window.devicePixelRatio || 1, 1.25), shadow: 2048, ao: false, samples: 2 },
+  high: { dpr: Math.min(window.devicePixelRatio || 1, 2), shadow: 4096, ao: true, bloom: true, samples: 4 },
+  balanced: { dpr: Math.min(window.devicePixelRatio || 1, 1.25), shadow: 2048, ao: false, bloom: true, samples: 2 },
+  lite: { dpr: 1, shadow: 1024, ao: false, bloom: false, samples: 0, direct: true },
 };
-let qName = QUALITY[store.get('palace.q')] ? store.get('palace.q') : (coarse ? 'balanced' : 'high');
+const lowMem = (navigator.deviceMemory || 8) <= 4;
+let qName = QUALITY[store.get('palace.q')] ? store.get('palace.q') : (coarse ? (lowMem ? 'lite' : 'balanced') : 'high');
+const N5 = coarse ? 256 : 512, N2 = coarse ? 128 : 256, N1 = coarse ? 64 : 128;   // texture sizes, halved on phones
 
 let frames = 3;
 const invalidate = (n = 2) => { frames = Math.max(frames, n); };
 
 const stage = document.getElementById('stage');
-const canvas = document.getElementById('scene');
-let renderer;
-try {
-  renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance', stencil: false });
-} catch (err) {
-  document.getElementById('fail').hidden = false;
-  document.getElementById('loading').hidden = true;
-  throw err;
+let canvas = document.getElementById('scene');
+let renderer = null, glError = '';
+window.__palaceStep = 'تشغيل WebGL';
+for (const opts of [
+  { antialias: false, powerPreference: 'high-performance', stencil: false },
+  { antialias: false, stencil: false },
+  { antialias: false, stencil: false, powerPreference: 'low-power', failIfMajorPerformanceCaveat: false },
+]) {
+  try { renderer = new THREE.WebGLRenderer({ canvas, ...opts }); break; }
+  catch (err) { glError = (err && err.message) || String(err); const fresh = canvas.cloneNode(false); canvas.replaceWith(fresh); canvas = fresh; }
 }
+if (!renderer) { window.palaceFail('nogl', glError); throw new Error(glError); }
+const floatRT = renderer.capabilities.isWebGL2 && (renderer.extensions.has('EXT_color_buffer_float') || renderer.extensions.has('EXT_color_buffer_half_float'));
+if (!floatRT) qName = 'lite';
+canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); store.set('palace.q', 'lite'); window.palaceFail('lost', 'webglcontextlost'); });
 renderer.setPixelRatio(QUALITY[qName].dpr);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -467,6 +503,7 @@ aoPass.updateGtaoMaterial({ radius: 1.4, distanceExponent: 1.6, thickness: 1.5, 
 aoPass.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 5, rings: 2, samples: 16 });
 composer.addPass(aoPass);
 const bloom = new UnrealBloomPass(new THREE.Vector2(2, 2), 0.22, 0.5, 0.9);
+bloom.enabled = !!QUALITY[qName].bloom;
 composer.addPass(bloom);
 composer.addPass(new OutputPass());
 
@@ -510,24 +547,20 @@ function fbm(n, seed, bx, by = bx, oct = 4) {
   for (let i = 0; i < out.length; i++) out[i] /= tot;
   FIELDS.set(key, out); return out;
 }
-function canvasTex(c, { srgb = true, meters = 1 } = {}) {
-  const t = new THREE.CanvasTexture(c);
-  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = MAX_ANISO;
+function arrTex(n, data, { srgb = true, meters = 1 } = {}) {   // GPU texture straight from pixels: no canvas memory
+  const t = new THREE.DataTexture(new Uint8Array(data.buffer), n, n, THREE.RGBAFormat, THREE.UnsignedByteType);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.magFilter = THREE.LinearFilter; t.minFilter = THREE.LinearMipmapLinearFilter;
+  t.generateMipmaps = true; t.anisotropy = MAX_ANISO;
   if (srgb) t.colorSpace = THREE.SRGBColorSpace;
-  t.repeat.set(1 / meters, 1 / meters);
+  t.repeat.set(1 / meters, 1 / meters); t.needsUpdate = true;
   return t;
-}
-function arrTex(n, data, opts) {
-  const c = document.createElement('canvas'); c.width = c.height = n;
-  c.getContext('2d').putImageData(new ImageData(data, n, n), 0, 0);
-  return canvasTex(c, opts);
 }
 function normalFrom(h, n, k) {
   const out = new Uint8ClampedArray(n * n * 4);
   for (let y = 0; y < n; y++) {
     const yu = ((y - 1 + n) % n) * n, yd = ((y + 1) % n) * n, yr = y * n;
     for (let x = 0; x < n; x++) {
-      const nx = (h[yr + (x - 1 + n) % n] - h[yr + (x + 1) % n]) * k, ny = (h[yd + x] - h[yu + x]) * k, l = Math.hypot(nx, ny, 1), i = (yr + x) * 4;
+      const nx = (h[yr + (x - 1 + n) % n] - h[yr + (x + 1) % n]) * k, ny = (h[yu + x] - h[yd + x]) * k, l = Math.hypot(nx, ny, 1), i = (yr + x) * 4;
       out[i] = (nx / l * 0.5 + 0.5) * 255; out[i + 1] = (ny / l * 0.5 + 0.5) * 255; out[i + 2] = (0.5 / l + 0.5) * 255; out[i + 3] = 255;
     }
   }
@@ -549,10 +582,11 @@ function pbr(n, meters, fn, { bump = 4, roughMap = true } = {}) {
 const c3 = (o, r, g, b, k = 1) => { o[0] = r * k; o[1] = g * k; o[2] = b * k; };
 
 const TX = {};
+window.__palaceStep = 'تجهيز الخامات';
 {
-  const A = fbm(512, 11, 4, 4, 5), B = fbm(512, 23, 64, 64, 2), G = fbm(512, 31, 2, 48, 3), Gs = fbm(512, 37, 4, 96, 2);
-  const A2 = fbm(256, 51, 4, 4, 4), B2 = fbm(256, 53, 32, 32, 2), G2 = fbm(256, 57, 2, 32, 3);
-  TX.stone = pbr(512, 2.4, (u, v, i, o) => {           // limestone ashlar, 0.6 m courses
+  const A = fbm(N5, 11, 4, 4, 5), B = fbm(N5, 23, 64, 64, 2), G = fbm(N5, 31, 2, 48, 3), Gs = fbm(N5, 37, 4, 96, 2);
+  const A2 = fbm(N2, 51, 4, 4, 4), B2 = fbm(N2, 53, 32, 32, 2), G2 = fbm(N2, 57, 2, 32, 3);
+  TX.stone = pbr(N5, 2.4, (u, v, i, o) => {           // limestone ashlar, 0.6 m courses
     const row = Math.floor(v / 0.6), uu = (u + (row & 1) * 0.6) % 2.4, col = Math.floor(uu / 1.2);
     const bu = uu - col * 1.2, bv = v - row * 0.6, e = Math.min(bu, 1.2 - bu, bv, 0.6 - bv), a = A[i] - 0.5, b = B[i];
     if (e < 0.01) { c3(o, 188, 174, 150, 1 + a * 0.1); o[3] = 0.1; o[4] = 0.98; return; }
@@ -560,80 +594,80 @@ const TX = {};
     c3(o, 224, 206, 176, 1 + (hash2(col, row, 5) - 0.5) * 0.08 + a * 0.16 - pore * 0.1);
     o[3] = 0.45 + 0.4 * Math.min(e / 0.03, 1) + a * 0.12 - pore * 0.3; o[4] = 0.78 + b * 0.14;
   }, { bump: 5 });
-  TX.pavers = pbr(512, 2.4, (u, v, i, o) => {          // interlocking pavers 60 x 30 cm
+  TX.pavers = pbr(N5, 2.4, (u, v, i, o) => {          // interlocking pavers 60 x 30 cm
     const row = Math.floor(v / 0.3), uu = (u + (row & 1) * 0.3) % 2.4, col = Math.floor(uu / 0.6);
     const bu = uu - col * 0.6, bv = v - row * 0.3, e = Math.min(bu, 0.6 - bu, bv, 0.3 - bv), a = A[i] - 0.5, b = B[i];
     if (e < 0.007) { c3(o, 112, 104, 92); o[3] = 0; o[4] = 1; return; }
     const h = hash2(col, row, 9), p = h < 0.45 ? [196, 182, 160] : h < 0.8 ? [178, 165, 144] : [210, 199, 178];
     c3(o, p[0], p[1], p[2], 1 + a * 0.18 + (b - 0.5) * 0.08); o[3] = 0.55 + 0.45 * Math.min(e / 0.014, 1) + a * 0.06; o[4] = 0.8 + b * 0.12;
   }, { bump: 5 });
-  TX.travertine = pbr(512, 1.2, (u, v, i, o) => {      // pool deck travertine 60 x 40 cm
+  TX.travertine = pbr(N5, 1.2, (u, v, i, o) => {      // pool deck travertine 60 x 40 cm
     const row = Math.floor(v / 0.4), uu = (u + (row & 1) * 0.3) % 1.2, col = Math.floor(uu / 0.6);
     const bu = uu - col * 0.6, bv = v - row * 0.4, e = Math.min(bu, 0.6 - bu, bv, 0.4 - bv), a = A[i] - 0.5, b = B[i];
     if (e < 0.003) { c3(o, 198, 186, 164); o[3] = 0.2; o[4] = 0.95; return; }
     const pore = b > 0.84 ? 1 : 0;
     c3(o, 231, 216, 190, 1 + a * 0.08 + (Gs[i] - 0.5) * 0.12 - pore * 0.18); o[3] = 0.6 + a * 0.1 - pore * 0.4; o[4] = 0.62 + b * 0.15;
   }, { bump: 3 });
-  TX.marble = pbr(512, 1.6, (u, v, i, o) => {          // polished marble slabs 80 x 80 cm
+  TX.marble = pbr(N5, 1.6, (u, v, i, o) => {          // polished marble slabs 80 x 80 cm
     const sc = Math.floor(u / 0.8), sr = Math.floor(v / 0.8), lu = u - sc * 0.8, lv = v - sr * 0.8, e = Math.min(lu, 0.8 - lu, lv, 0.8 - lv);
     const ph = hash2(sc, sr, 4) * 6, t = Math.sin((u * 2.1 + v * 1.4 + A[i] * 5.5 + ph) * Math.PI), t2 = Math.sin((u * 5.3 - v * 3.1 + B[i] * 2.2 + ph) * Math.PI);
     const vein = Math.pow(1 - Math.abs(t), 26) * 0.75 + Math.pow(1 - Math.abs(t2), 40) * 0.35, cloud = (A[i] - 0.5) * 0.06;
     c3(o, 230 - vein * 95, 225 - vein * 92, 215 - vein * 86, 1 + cloud);
     o[3] = e < 0.0025 ? 0.3 : 0.5; o[4] = e < 0.0025 ? 0.6 : 0.2 + vein * 0.08;
   }, { bump: 2 });
-  TX.parquet = pbr(512, 1.2, (u, v, i, o) => {         // oak planks 12 x 60 cm
+  TX.parquet = pbr(N5, 1.2, (u, v, i, o) => {         // oak planks 12 x 60 cm
     const row = Math.floor(v / 0.12), uu = (u + hash2(row, 0, 7) * 0.6) % 1.2, pl = Math.floor(uu / 0.6);
     const bu = uu - pl * 0.6, bv = v - row * 0.12, e = Math.min(bu, 0.6 - bu, bv, 0.12 - bv), g = G[i];
     if (e < 0.0018) { c3(o, 70, 48, 30); o[3] = 0.1; o[4] = 0.9; return; }
     c3(o, 178, 134, 88, 0.86 + (hash2(pl, row, 13) - 0.5) * 0.16 + (g - 0.5) * 0.35 + Math.sin(g * 48) * 0.05);
     o[3] = 0.5 + (g - 0.5) * 0.2; o[4] = 0.42 + (B[i] - 0.5) * 0.1;
   }, { bump: 3 });
-  TX.tileL = pbr(512, 2.4, (u, v, i, o) => {           // large porcelain 120 x 60 cm
+  TX.tileL = pbr(N5, 2.4, (u, v, i, o) => {           // large porcelain 120 x 60 cm
     const e = Math.min(u % 1.2, 1.2 - u % 1.2, v % 0.6, 0.6 - v % 0.6);
     if (e < 0.003) { c3(o, 168, 160, 146); o[3] = 0.2; o[4] = 0.9; return; }
     c3(o, 221, 211, 195, 1 + (A[i] - 0.5) * 0.09 + (Gs[i] - 0.5) * 0.04); o[3] = 0.5; o[4] = 0.18;
   }, { bump: 2 });
-  TX.tileS = pbr(256, 0.6, (u, v, i, o) => {           // wet-area porcelain 30 x 30 cm
+  TX.tileS = pbr(N2, 0.6, (u, v, i, o) => {           // wet-area porcelain 30 x 30 cm
     const e = Math.min(u % 0.3, 0.3 - u % 0.3, v % 0.3, 0.3 - v % 0.3);
     if (e < 0.003) { c3(o, 176, 180, 178); o[3] = 0.1; o[4] = 0.95; return; }
     c3(o, 224, 227, 225, 1 + (A2[i] - 0.5) * 0.05); o[3] = 0.55; o[4] = 0.22;
   }, { bump: 3 });
-  TX.sand = pbr(512, 12, (u, v, i, o) => {
+  TX.sand = pbr(N5, 12, (u, v, i, o) => {
     const rip = Math.sin(((u * 20 + v * 5) / 12 + A[i] * 2.5) * Math.PI * 2), a = A[i] - 0.5, b = B[i] - 0.5;
     c3(o, 212, 180, 134, 0.98 + a * 0.16 + b * 0.06 + rip * 0.015); o[3] = 0.5 + rip * 0.18 + b * 0.25;
   }, { bump: 2, roughMap: false });
-  TX.gravel = pbr(512, 6, (u, v, i, o) => {
+  TX.gravel = pbr(N5, 6, (u, v, i, o) => {
     const b = B[i], s = b > 0.78 ? -0.12 : b < 0.22 ? 0.08 : 0;
     c3(o, 222, 205, 172, 1 + (A[i] - 0.5) * 0.1 + s); o[3] = b;
   }, { bump: 2.5, roughMap: false });
-  TX.asphalt = pbr(512, 4, (u, v, i, o) => {
+  TX.asphalt = pbr(N5, 4, (u, v, i, o) => {
     const b = B[i], s = b > 0.8 ? 0.35 : b < 0.15 ? -0.15 : 0;
     c3(o, 70, 70, 68, 1 + (A[i] - 0.5) * 0.22 + s); o[3] = b; o[4] = 0.88 - s * 0.2;
   }, { bump: 2.5 });
-  TX.grass = pbr(512, 4, (u, v, i, o) => {
+  TX.grass = pbr(N5, 4, (u, v, i, o) => {
     const t = Math.min(1, Math.max(0, A[i] * 1.4 - 0.2)), k = 0.82 + Gs[i] * 0.3 + (B[i] - 0.5) * 0.12;
     c3(o, 74 + 46 * t, 102 + 46 * t, 44 + 26 * t, k); o[3] = Gs[i] * 0.6 + B[i] * 0.4;
   }, { bump: 4, roughMap: false });
-  TX.mosaic = pbr(256, 0.6, (u, v, i, o) => {          // pool mosaic 2.5 cm
+  TX.mosaic = pbr(N2, 0.6, (u, v, i, o) => {          // pool mosaic 2.5 cm
     const cx = Math.floor(u / 0.025), cy = Math.floor(v / 0.025), e = Math.min(u % 0.025, 0.025 - u % 0.025, v % 0.025, 0.025 - v % 0.025);
     if (e < 0.0018) { c3(o, 214, 226, 228); o[3] = 0.1; o[4] = 0.9; return; }
     const h = hash2(cx, cy, 19), p = h < 0.3 ? [38, 132, 170] : h < 0.6 ? [52, 150, 186] : h < 0.85 ? [30, 112, 152] : [92, 178, 204];
     c3(o, p[0], p[1], p[2]); o[3] = 0.6; o[4] = 0.12;
   }, { bump: 3 });
-  TX.concrete = pbr(512, 3, (u, v, i, o) => { c3(o, 170, 167, 160, 1 + (A[i] - 0.5) * 0.14 + (B[i] - 0.5) * 0.06); o[3] = B[i] * 0.5 + A[i] * 0.3; }, { bump: 1.5, roughMap: false });
-  TX.epoxy = pbr(256, 3, (u, v, i, o) => { c3(o, 142, 148, 150, 1 + (A2[i] - 0.5) * 0.06); o[3] = 0.5; }, { bump: 0.5, roughMap: false });
-  TX.roof = pbr(512, 2, (u, v, i, o) => {               // cool-roof tiles 50 x 50 cm
+  TX.concrete = pbr(N5, 3, (u, v, i, o) => { c3(o, 170, 167, 160, 1 + (A[i] - 0.5) * 0.14 + (B[i] - 0.5) * 0.06); o[3] = B[i] * 0.5 + A[i] * 0.3; }, { bump: 1.5, roughMap: false });
+  TX.epoxy = pbr(N2, 3, (u, v, i, o) => { c3(o, 142, 148, 150, 1 + (A2[i] - 0.5) * 0.06); o[3] = 0.5; }, { bump: 0.5, roughMap: false });
+  TX.roof = pbr(N5, 2, (u, v, i, o) => {               // cool-roof tiles 50 x 50 cm
     const e = Math.min(u % 0.5, 0.5 - u % 0.5, v % 0.5, 0.5 - v % 0.5);
     if (e < 0.004) { c3(o, 168, 160, 146); o[3] = 0.1; return; }
     c3(o, 222, 214, 199, 1 + (A[i] - 0.5) * 0.08 + (hash2(Math.floor(u / 0.5), Math.floor(v / 0.5), 3) - 0.5) * 0.05); o[3] = 0.5 + (B[i] - 0.5) * 0.2;
   }, { bump: 3, roughMap: false });
-  TX.plaster = pbr(512, 2, (u, v, i, o) => { c3(o, 232, 221, 202, 1 + (A[i] - 0.5) * 0.05); o[3] = B[i] * 0.35 + A[i] * 0.2; }, { bump: 1.2, roughMap: false });
-  TX.carpet = pbr(256, 1, (u, v, i, o) => { c3(o, 58, 104, 76, 0.9 + B2[i] * 0.2); o[3] = B2[i]; }, { bump: 2, roughMap: false });
-  TX.foliage = pbr(256, 1, (u, v, i, o) => { const b = B2[i]; c3(o, 70, 104, 46, (0.75 + A2[i] * 0.4) * (b > 0.55 ? 1 : 0.62)); o[3] = b; }, { bump: 5, roughMap: false });
-  TX.walnut = pbr(256, 0.8, (u, v, i, o) => { const g = G2[i]; c3(o, 104, 70, 46, 0.8 + (g - 0.5) * 0.5 + Math.sin(g * 40) * 0.04); o[3] = g; }, { bump: 1.5, roughMap: false });
-  TX.weave = pbr(128, 0.04, (u, v, i, o) => { const w = Math.sin(u / 0.04 * Math.PI * 16) * Math.sin(v / 0.04 * Math.PI * 16); c3(o, 255, 255, 255); o[3] = 0.5 + w * 0.5; }, { bump: 2, roughMap: false });
-  TX.ripple = pbr(256, 3, (u, v, i, o) => { c3(o, 255, 255, 255); o[3] = A2[i] * 0.6 + B2[i] * 0.4; }, { bump: 3, roughMap: false });
-  TX.bark = pbr(256, 1, (u, v, i, o) => {               // date-palm trunk: diamond leaf-base scars
+  TX.plaster = pbr(N5, 2, (u, v, i, o) => { c3(o, 232, 221, 202, 1 + (A[i] - 0.5) * 0.05); o[3] = B[i] * 0.35 + A[i] * 0.2; }, { bump: 1.2, roughMap: false });
+  TX.carpet = pbr(N2, 1, (u, v, i, o) => { c3(o, 58, 104, 76, 0.9 + B2[i] * 0.2); o[3] = B2[i]; }, { bump: 2, roughMap: false });
+  TX.foliage = pbr(N2, 1, (u, v, i, o) => { const b = B2[i]; c3(o, 70, 104, 46, (0.75 + A2[i] * 0.4) * (b > 0.55 ? 1 : 0.62)); o[3] = b; }, { bump: 5, roughMap: false });
+  TX.walnut = pbr(N2, 0.8, (u, v, i, o) => { const g = G2[i]; c3(o, 104, 70, 46, 0.8 + (g - 0.5) * 0.5 + Math.sin(g * 40) * 0.04); o[3] = g; }, { bump: 1.5, roughMap: false });
+  TX.weave = pbr(N1, 0.04, (u, v, i, o) => { const w = Math.sin(u / 0.04 * Math.PI * 16) * Math.sin(v / 0.04 * Math.PI * 16); c3(o, 255, 255, 255); o[3] = 0.5 + w * 0.5; }, { bump: 2, roughMap: false });
+  TX.ripple = pbr(N2, 3, (u, v, i, o) => { c3(o, 255, 255, 255); o[3] = A2[i] * 0.6 + B2[i] * 0.4; }, { bump: 3, roughMap: false });
+  TX.bark = pbr(N2, 1, (u, v, i, o) => {               // date-palm trunk: diamond leaf-base scars
     const p = Math.abs(((u + v) * 6) % 1 - 0.5) + Math.abs(((u - v + 4) * 6) % 1 - 0.5), ridge = Math.min(1, p * 1.6);
     c3(o, 118, 88, 58, 0.62 + ridge * 0.45 + (A2[i] - 0.5) * 0.2); o[3] = ridge;
   }, { bump: 6, roughMap: false });
@@ -1451,6 +1485,7 @@ function neighbourVilla(N, parent, r) {
 }
 
 /* ============ build everything ============ */
+window.__palaceStep = 'بناء المشهد';
 buildSite();
 for (const Z of ZONES) if (Z.kind === 'building') buildBuilding(Z);
 const BUILDINGS = ZONES.filter(z => z.kind === 'building');
@@ -1851,7 +1886,7 @@ const optsEl = document.getElementById('opts'), optsBtn = document.getElementByI
 function syncOpts() {
   for (const b of optsEl.querySelectorAll('[data-light]')) b.setAttribute('aria-pressed', String(b.dataset.light === state.light));
   for (const b of optsEl.querySelectorAll('[data-view]')) b.setAttribute('aria-pressed', String(b.dataset.view === state.view));
-  for (const b of optsEl.querySelectorAll('[data-q]')) b.setAttribute('aria-pressed', String(b.dataset.q === qName));
+  for (const b of optsEl.querySelectorAll('[data-q]')) { b.setAttribute('aria-pressed', String(b.dataset.q === qName)); b.disabled = !floatRT && b.dataset.q !== 'lite'; }
 }
 function setView(v) {
   state.view = v; store.set('palace.view', v);
@@ -1864,6 +1899,7 @@ function setQuality(name, persist = true) {
   sun.shadow.mapSize.set(q.shadow, q.shadow);
   if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; }
   for (const t of [composer.renderTarget1, composer.renderTarget2]) { t.samples = q.samples; t.dispose(); }
+  bloom.enabled = !!q.bloom;
   if (persist) store.set('palace.q', name);
   resize(); syncOpts();
 }
@@ -1904,7 +1940,7 @@ function tick(now) {
   if (!moving && frames <= 0) { lastT = 0; return; }
   if (frames > 0) frames--;
   aoPass.enabled = QUALITY[qName].ao && !moving;
-  composer.render();
+  if (QUALITY[qName].direct) renderer.render(scene, camera); else composer.render();
   updateLabels();
   if (moving && lastT) {
     slowAcc += now - lastT; slowN++;
@@ -1914,7 +1950,11 @@ function tick(now) {
     }
   }
   lastT = moving ? now : 0;
-  if (!window.__palaceReady) { window.__palaceReady = true; document.getElementById('loading').hidden = true; }
+  if (!window.__palaceReady) {
+    window.__palaceReady = true; window.__palaceStep = '';
+    document.getElementById('loading').hidden = true;
+    if (window.__palaceFailed === 'timeout') { document.getElementById('fail').hidden = true; window.__palaceFailed = false; }
+  }
 }
 
 /* first frame: wide establishing shot, then settle on the site (or the linked section) */
@@ -1930,6 +1970,7 @@ syncOpts();
 applyView(); renderPanel(); focusSun(null);
 flyTo(OVERVIEW.target, OVERVIEW.radius, OVERVIEW.polar, 2200, OVERVIEW.az);
 if (start && start !== 'site' && BY_ID.has(start)) setTimeout(() => go(start), reduceMotion ? 0 : 1200);
+window.__palaceStep = 'أول رسم';
 requestAnimationFrame(tick);
 </script>
 </body>
