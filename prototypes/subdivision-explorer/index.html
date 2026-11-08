@@ -302,7 +302,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
         <div class="stick right" id="stick-r" aria-label="عصا الحركة"><i></i></div>
       </div>
       <p class="hint" id="hint"><span>اسحب للتدوير · قرّب بالعجلة أو بإصبعين · اضغط على أي قطعة</span></p>
-      <div class="loading" id="loading"><span>يجهّز المخطط والخامات…</span></div>
+      <div class="loading" id="loading"><span id="loading-text">يحمّل محرك العرض…</span></div>
       <div class="fail" id="fail" role="alert" hidden><div class="fail-box"><p class="fail-title" id="fail-title">تعذّر تشغيل العرض ثلاثي الأبعاد.</p><p class="fail-hint" id="fail-hint"></p><p class="fail-detail" id="fail-detail" dir="auto"></p><button type="button" id="fail-retry">إعادة المحاولة</button></div></div>
     </section>
     <aside class="panel" id="panel">
@@ -345,7 +345,8 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
       nogl: ['هذا المتصفح ما سمح بتشغيل العرض ثلاثي الأبعاد (WebGL).', 'غالبًا تسريع كرت الشاشة مقفل في المتصفح أو التطبيق. افتح الرابط في Chrome أو Safari مباشرة، أو فعّل «استخدام تسريع الأجهزة» من إعدادات المتصفح.'],
       lost: ['توقف كرت الشاشة عن العرض، غالبًا لنفاد الذاكرة.', 'غيّرت الجودة إلى «خفيفة». اضغط إعادة المحاولة.'],
       error: ['صار خطأ أثناء تجهيز المشهد.', 'اضغط إعادة المحاولة. إذا تكرر، أرسل لي سطر التفاصيل تحت.'],
-      timeout: ['التجهيز أخذ وقتًا أطول من المتوقع.', 'انتظر قليلًا أو اضغط إعادة المحاولة. إذا تكرر، اختر جودة «خفيفة» من خيارات العرض.']
+      timeout: ['التجهيز أخذ وقتًا أطول من المتوقع.', 'انتظر قليلًا أو اضغط إعادة المحاولة. إذا تكرر، اختر جودة «خفيفة» من خيارات العرض.'],
+      net: ['تعذّر تحميل محرك العرض ثلاثي الأبعاد من الإنترنت.', 'تأكد من الاتصال، وأن الشبكة لا تحجب cdn.jsdelivr.net، ثم اضغط إعادة المحاولة.']
     };
     window.palaceFail = function (kind, detail) {
       if (window.__palaceFailed && kind !== 'lost') return;
@@ -370,16 +371,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 } }
 </script>
 <script type="module">
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { Sky } from 'three/addons/objects/Sky.js';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
-import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
+/* the 3D engine is fetched after the page is on screen, so a slow or blocked CDN never leaves a blank page */
 
 /* ============ helpers ============ */
 const R = (x0, z0, x1, z1) => ({ x0, z0, x1, z1 });
@@ -395,7 +387,24 @@ const GOLD = 0xc9ac70;
 
 
 /* ============ quality tiers, renderer, post-processing ============ */
-await new Promise(r => requestAnimationFrame(() => setTimeout(r, 30)));   // let the loading state paint first
+await new Promise(r => requestAnimationFrame(() => setTimeout(r, 30)));   // let the page paint first
+window.__palaceStep = 'تحميل محرك العرض';
+let ENGINE;
+try {
+  ENGINE = await Promise.all([
+    import('three'), import('three/addons/controls/OrbitControls.js'), import('three/addons/objects/Sky.js'),
+    import('three/addons/postprocessing/EffectComposer.js'), import('three/addons/postprocessing/RenderPass.js'),
+    import('three/addons/postprocessing/GTAOPass.js'), import('three/addons/postprocessing/UnrealBloomPass.js'),
+    import('three/addons/postprocessing/OutputPass.js'), import('three/addons/geometries/RoundedBoxGeometry.js'),
+    import('three/addons/utils/BufferGeometryUtils.js'),
+  ]);
+} catch (err) {
+  window.palaceFail('net', (err && err.message) || String(err));
+  throw err;
+}
+const [THREE, { OrbitControls }, { Sky }, { EffectComposer }, { RenderPass }, { GTAOPass }, { UnrealBloomPass }, { OutputPass }, { RoundedBoxGeometry }, { mergeGeometries, mergeVertices }] = ENGINE;
+document.getElementById('loading-text').textContent = 'يجهّز المخطط والخامات…';
+await new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
 
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
