@@ -198,9 +198,9 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
 .flight { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
 .flight > * { pointer-events: auto; }
-.flying .legend, .flying .hint, .flying .opts { display: none !important; }
+.flying .bar, .flying .legend, .flying .hint, .flying .opts, .flying .floorbar, .flying .tip { display: none !important; }
 .hud {
-  position: absolute; top: 56px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; max-width: calc(100% - 20px); box-sizing: border-box;
+  position: absolute; top: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; max-width: calc(100% - 20px); box-sizing: border-box;
   background: var(--glass); border: 1px solid var(--line); border-radius: 12px; padding: 6px 8px; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
 }
 .hud > div { display: grid; justify-items: center; min-width: 66px; }
@@ -208,21 +208,34 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .hud b { font: 700 18px/1.25 var(--font-num); font-variant-numeric: tabular-nums; }
 .hud small { font-size: 11px; color: var(--muted); }
 .hud .warn b { color: #ff8a7a; }
-.fbtns { position: absolute; left: 10px; top: 56px; display: grid; gap: 6px; }
-.fbtns button { border: 1px solid var(--line); background: var(--glass); color: var(--text); border-radius: 9px; padding: 7px 12px; font-size: 13px; cursor: pointer; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.fexit { position: absolute; top: 10px; left: 10px; min-height: 38px; border: 1px solid var(--gold); background: var(--gold); color: var(--on-gold); border-radius: 10px; padding: 7px 14px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.fbtns { position: absolute; left: 10px; top: 60px; display: grid; gap: 6px; }
+.fbtns button { min-height: 36px; border: 1px solid var(--line); background: var(--glass); color: var(--text); border-radius: 9px; padding: 7px 12px; font-size: 13px; cursor: pointer; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); white-space: nowrap; }
 .fbtns button:hover { border-color: var(--gold); }
-.fbtns button[aria-pressed="true"], .tools button[aria-pressed="true"] { background: var(--gold); color: var(--on-gold); border-color: var(--gold); }
-.below { position: absolute; left: 50%; top: 118px; transform: translateX(-50%); display: flex; gap: 8px; align-items: center; max-width: calc(100% - 20px); box-sizing: border-box; background: var(--surface); border: 1px solid var(--gold); border-radius: 12px; padding: 5px 6px 5px 12px; font-size: 13px; }
+.fbtns button[aria-pressed="true"], .fbtns button[aria-expanded="true"], .tools button[aria-pressed="true"] { background: var(--gold); color: var(--on-gold); border-color: var(--gold); }
+.below { position: absolute; left: 50%; top: 86px; transform: translateX(-50%); display: flex; gap: 8px; align-items: center; max-width: calc(100% - 20px); box-sizing: border-box; background: var(--surface); border: 1px solid var(--gold); border-radius: 999px; padding: 4px 4px 4px 12px; font-size: 13px; }
 .below span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.below .btn { border-radius: 999px; padding: 6px 12px; min-height: 32px; background: var(--gold); color: var(--on-gold); border-color: var(--gold); font-weight: 700; white-space: nowrap; }
 .minimap { position: absolute; left: 10px; bottom: 10px; width: 200px; height: 140px; border-radius: 10px; border: 1px solid var(--line); }
 .keys { position: absolute; right: 10px; bottom: 10px; margin: 0; max-width: min(420px, calc(100% - 240px)); font-size: 12px; line-height: 2; background: var(--glass); border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
 .keys kbd { font: 700 11px/1 var(--font-num); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 2px 5px; margin: 0 1px; background: var(--raised); color: var(--text); }
 .stick { display: none; position: absolute; bottom: 14px; width: 116px; height: 116px; border-radius: 50%; background: rgba(13, 16, 18, .45); border: 1px solid rgba(255, 255, 255, .28); touch-action: none; }
 .stick.left { left: 14px; } .stick.right { right: 14px; }
 .stick i { position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; background: var(--gold); opacity: .88; pointer-events: none; }
+.fsheet {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; max-height: 58%; overflow: auto; overscroll-behavior: contain; box-sizing: border-box;
+  background: var(--surface); border-top: 1px solid var(--gold); border-radius: 16px 16px 0 0; padding: 10px 16px 18px; box-shadow: 0 -12px 32px rgba(0, 0, 0, .45);
+}
+.fsheet-x { position: sticky; top: 0; float: left; z-index: 1; border: 1px solid var(--line); background: var(--raised); color: var(--text); border-radius: 999px; padding: 6px 14px; min-height: 34px; font-size: 13px; cursor: pointer; }
+.fsheet h2 { font-family: var(--font-num); font-weight: 800; font-size: 21px; line-height: 1.3; margin: 0 0 6px; }
+.fsheet .btnrow { display: none; }
 @media (pointer: coarse) {
   .stick { display: block; }
-  .keys, .minimap { display: none; }
+  .keys, .minimap, #f-keys { display: none !important; }
+  .flight .below { top: auto; bottom: 142px; }   /* above the sticks */
+}
+@media (pointer: coarse) and (min-aspect-ratio: 4/3) {
+  .flight .below { bottom: 14px; max-width: calc(100% - 290px); }   /* a wide screen has room between the sticks */
 }
 
 @media (max-width: 860px) {
@@ -231,15 +244,24 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   .panel { max-height: 40dvh; padding: 14px; }
   .panel h2 { font-size: 21px; }
   .badge { display: none; }
+  .app.immersive { grid-template-rows: minmax(0, 1fr); gap: 0; padding-block: 6px; padding-left: max(6px, env(safe-area-inset-left, 0px)); padding-right: max(6px, env(safe-area-inset-right, 0px)); }
+  .app.immersive .top, .app.immersive .panel { display: none; }
+  .app.immersive .main { grid-template-rows: minmax(0, 1fr); }
+  .hud { left: auto; right: 10px; transform: none; }
+  .hud .minor { display: none; }
+  .fbtns { top: 76px; left: 10px; right: 10px; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+  .below { top: 122px; }
+  .minimap { width: 160px; height: 112px; }
 }
 @media (max-width: 600px) {
-  .hud { top: 52px; width: calc(100% - 20px); justify-content: space-between; gap: 0; padding: 5px 4px; }
-  .hud > div { min-width: 0; }
+  .hud { gap: 2px; padding: 4px 6px; }
+  .hud > div { min-width: 52px; }
   .hud span, .hud small { font-size: 10px; }
-  .hud b { font-size: 14px; }
-  .fbtns { top: 116px; left: 10px; right: 10px; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
-  .fbtns button { padding: 5px 8px; font-size: 12px; }
-  .below { top: auto; bottom: 140px; font-size: 12px; }
+  .hud b { font-size: 15px; }
+  .fbtns button { min-height: 34px; padding: 5px 9px; font-size: 12px; }
+  .fexit { font-size: 12px; padding: 6px 11px; }
+  .below { font-size: 12px; }
+  .stick { width: 108px; height: 108px; }
   .legend { display: none; }
   .floorbar { top: auto; bottom: 10px; left: 0; right: 0; justify-content: center; }
   .pin { font-size: 11px; padding: 4px 8px; }
@@ -284,8 +306,8 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
           <div><span>الارتفاع</span><b id="h-alt">0</b><small>م</small></div>
           <div><span>السرعة</span><b id="h-spd">0</b><small>كم/س</small></div>
           <div><span>الاتجاه</span><b id="h-hdg">0°</b><small id="h-card">شمال</small></div>
-          <div><span>عن الإقلاع</span><b id="h-home">0</b><small>م</small></div>
-          <div><span>زمن الطيران</span><b id="h-time">0:00</b><small>&nbsp;</small></div>
+          <div class="minor"><span>عن الإقلاع</span><b id="h-home">0</b><small>م</small></div>
+          <div class="minor"><span>زمن الطيران</span><b id="h-time">0:00</b><small>&nbsp;</small></div>
           <div class="warn" id="h-warn" hidden><span>تنبيه</span><b>عائق</b><small>توقف الدرون</small></div>
         </div>
         <div class="fbtns">
@@ -293,13 +315,15 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
           <button type="button" id="f-fast" aria-pressed="false">سرعة عالية</button>
           <button type="button" id="f-land">هبوط</button>
           <button type="button" id="f-home">عودة للإقلاع</button>
-          <button type="button" id="f-exit">إنهاء الطيران</button>
+          <button type="button" id="f-keys" aria-expanded="false" aria-controls="keys">المفاتيح</button>
         </div>
-        <div class="below" id="below" hidden><span id="below-text"></span><button type="button" class="btn" id="below-open">تفاصيل القطعة</button></div>
+        <button type="button" class="fexit" id="f-exit">إنهاء الطيران</button>
+        <div class="below" id="below" hidden><span id="below-text"></span><button type="button" class="btn" id="below-open">التفاصيل</button></div>
         <canvas class="minimap" id="minimap" width="400" height="280" aria-label="خريطة مصغرة لموقع الدرون"></canvas>
-        <p class="keys"><kbd>W</kbd><kbd>S</kbd> أمام وخلف · <kbd>A</kbd><kbd>D</kbd> يسار ويمين · <kbd>Q</kbd><kbd>E</kbd> دوران · <kbd>R</kbd><kbd>F</kbd> صعود ونزول · <kbd>Shift</kbd> سرعة · <kbd>C</kbd> الكاميرا · <kbd>L</kbd> هبوط · <kbd>H</kbd> عودة · اسحب بالماوس للالتفات، واضغط على أي قطعة ليطير لها</p>
+        <p class="keys" id="keys" hidden><kbd>W</kbd><kbd>S</kbd> أمام وخلف · <kbd>A</kbd><kbd>D</kbd> يسار ويمين · <kbd>Q</kbd><kbd>E</kbd> دوران · <kbd>R</kbd><kbd>F</kbd> صعود ونزول · <kbd>Shift</kbd> سرعة · <kbd>C</kbd> الكاميرا · <kbd>L</kbd> هبوط · <kbd>H</kbd> عودة · اسحب بالماوس للالتفات، واضغط على أي قطعة ليطير لها</p>
         <div class="stick left" id="stick-l" aria-label="عصا الارتفاع والدوران"><i></i></div>
         <div class="stick right" id="stick-r" aria-label="عصا الحركة"><i></i></div>
+        <div class="fsheet" id="fsheet" role="dialog" aria-label="تفاصيل القطعة" hidden><button type="button" class="fsheet-x" id="fsheet-x">إغلاق</button><div id="fsheet-body"></div></div>
       </div>
       <p class="hint" id="hint"><span>اسحب للتدوير · قرّب بالعجلة أو بإصبعين · اضغط على أي قطعة</span></p>
       <div class="loading" id="loading"><span id="loading-text">يحمّل محرك العرض…</span></div>
@@ -1142,6 +1166,41 @@ function buildSubdivision() {
 }
 buildSubdivision();
 
+/* ============ label layout: most important first; no label may cover another label or a control ============ */
+const RESERVE_SEL = '.bar .tools, .floorbar .floors, .legend, .opts, .toast, #flight .hud, #flight .fbtns, #flight .fexit, #flight .stick, #flight .minimap, #flight .below, #flight .keys, #flight .fsheet';
+let reserveEls = null, labelsStale = true;
+window.addEventListener('resize', () => { labelsStale = true; });   // font sizes change at the breakpoints, so label sizes are re-measured
+function reservedRects() {   // read before any label is moved this frame, so the layout is already clean
+  const st = document.getElementById('stage'), s = st.getBoundingClientRect(), out = [];
+  reserveEls = reserveEls || [...st.querySelectorAll(RESERVE_SEL)];
+  for (const el of reserveEls) {
+    const r = el.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2) continue;   // hidden controls take no room
+    out.push([r.left - s.left - 4, r.top - s.top - 4, r.right - s.left + 4, r.bottom - s.top + 4]);
+  }
+  return out;
+}
+const _lv = new THREE.Vector3();
+const onScreen = pos => { _lv.copy(pos).project(camera); return _lv.z < 1 && Math.abs(_lv.x) < 1 && Math.abs(_lv.y) < 1; };
+function layoutLabels(cands, all, extra = []) {   // cands: [{ L, anchor: 'c' | 'b' }] in priority order; every label in `all` that is not placed is hidden
+  const placed = reservedRects().concat(extra), on = new Set();
+  if (labelsStale) { for (const L of all) L.w = 0; labelsStale = false; }
+  for (const { L, anchor } of cands) {
+    if (on.has(L)) continue;
+    _lv.copy(L.pos).project(camera);
+    if (!(_lv.z < 1 && Math.abs(_lv.x) < 1.02 && Math.abs(_lv.y) < 1.02)) continue;
+    const x = (_lv.x * 0.5 + 0.5) * size.w, y = (-_lv.y * 0.5 + 0.5) * size.h;
+    if (!L.w) { L.w = L.el.offsetWidth || 40; L.h = L.el.offsetHeight || 20; }
+    const cy = anchor === 'b' ? y - L.h / 2 : y;
+    const r = [x - L.w / 2 - 3, cy - L.h / 2 - 3, x + L.w / 2 + 3, cy + L.h / 2 + 3];
+    if (r[0] < 0 || r[2] > size.w || r[1] < 0 || r[3] > size.h) continue;
+    if (placed.some(p => r[0] < p[2] && r[2] > p[0] && r[1] < p[3] && r[3] > p[1])) continue;
+    placed.push(r); on.add(L);
+    L.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) ${anchor === 'b' ? 'translate(-50%, -100%)' : 'translate(-50%, -50%)'}`;
+  }
+  for (const L of all) { const v = on.has(L); if (v !== L.vis) { L.el.style.visibility = v ? '' : 'hidden'; L.vis = v; } }
+}
+
 const FOG = scene.fog;
 /* ============ sales overlay on the plots ============ */
 const overlayG = new THREE.Group(); scene.add(overlayG);
@@ -1203,24 +1262,19 @@ for (const Z of ZPINS) {
   const el = document.createElement(Z.block ? 'button' : 'div'); if (Z.block) { el.type = 'button'; el.addEventListener('click', () => goBlock(Z.block)); }
   el.className = 'pin zone'; el.innerHTML = `<b>${esc(Z.name)}</b>`; labelsEl.appendChild(el); Z.el = el; Z.vis = true;
 }
-function place(L, anchor) {
-  _v.copy(L.pos).project(camera);
-  const vis = _v.z < 1 && Math.abs(_v.x) < 1.05 && Math.abs(_v.y) < 1.05;
-  return vis ? `translate(${((_v.x * 0.5 + 0.5) * size.w).toFixed(1)}px, ${((-_v.y * 0.5 + 0.5) * size.h).toFixed(1)}px) ${anchor}` : null;
-}
+const ALL_LABELS = PLOTS.map(P => P.lab).concat(ZPINS);
 function updateLabels() {
-  const far = !flight.on && camera.position.distanceTo(controls.target) > 330;
-  for (const Z of ZPINS) {
-    const t = far ? place(Z, 'translate(-50%, -100%)') : null;
-    if (!!t !== Z.vis) { Z.el.style.visibility = t ? '' : 'hidden'; Z.vis = !!t; }
-    if (t) Z.el.style.transform = t;
+  const camP = camera.position, far = !flight.on && camP.distanceTo(controls.target) > 330, C = [];
+  if (state.sel) C.push({ L: state.sel.lab, anchor: 'c' });
+  if (flight.on && flight.below) C.push({ L: flight.below.lab, anchor: 'c' });
+  if (far) for (const Z of ZPINS) C.push({ L: Z, anchor: 'b' });   // from afar: block names; close in: plot numbers
+  else if (state.overlay) {
+    const lim = flight.on ? 90 : 220, max = flight.on ? 6 : 50, near = [];
+    for (const P of PLOTS) { if (P === state.sel || !matches(P)) continue; const d = camP.distanceTo(P.lab.pos); if (d < lim && onScreen(P.lab.pos)) near.push([d, P]); }
+    near.sort((x, y) => x[0] - y[0]);
+    for (const [, P] of near.slice(0, max)) C.push({ L: P.lab, anchor: 'c' });
   }
-  for (const P of PLOTS) {
-    const L = P.lab, near = P === state.sel || (!far && state.overlay && matches(P) && camera.position.distanceTo(L.pos) < 220);
-    const t = near ? place(L, 'translate(-50%, -50%)') : null;
-    if (!!t !== L.vis) { L.el.style.visibility = t ? '' : 'hidden'; L.vis = !!t; }
-    if (t) L.el.style.transform = t;
-  }
+  layoutLabels(C, ALL_LABELS, droneRects());
 }
 
 /* ============ camera ============ */
@@ -1675,6 +1729,26 @@ droneG.traverse(o => { if (o.isMesh) { o.castShadow = true; o.userData.noAO = tr
 
 /* HUD, mini-map, controls */
 const FL = id => document.getElementById(id);
+const APP = document.querySelector('.app'), COARSE = matchMedia('(pointer: coarse)'), NARROW = matchMedia('(max-width: 860px)');
+/* a drone camera sees wide: about 55° across in any screen shape (the plan view's 35° is only ~16° across on a portrait phone) */
+const BASE_FOV = camera.fov;
+function flightFov() { const d = THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(27.5)) / camera.aspect)); return THREE.MathUtils.clamp(d, 50, 78); }
+new ResizeObserver(() => { if (flight.on) { camera.fov = flightFov(); camera.updateProjectionMatrix(); frameAboveSheet(); } }).observe(document.getElementById('stage'));
+function frameAboveSheet() {   // with the details sheet open, the picture shifts up so the drone stays in the visible part
+  const sh = FL('fsheet'), h = flight.on && !sh.hidden ? sh.getBoundingClientRect().height : 0;
+  if (h > 0) camera.setViewOffset(size.w, size.h, 0, h / 2, size.w, size.h); else camera.clearViewOffset();
+  invalidate(2);
+}
+function droneRects() {   // in the chase view the drone itself is on screen, and no label may sit on it
+  if (!flight.on || flight.cam !== 'chase') return [];
+  _lv.copy(flight.pos).project(camera);
+  if (!(_lv.z < 1)) return [];
+  const x = (_lv.x * 0.5 + 0.5) * size.w, y = (-_lv.y * 0.5 + 0.5) * size.h;
+  const focal = size.h / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2)), k = focal / Math.max(1, camera.position.distanceTo(flight.pos));
+  return [[x - 0.75 * k, y - 0.4 * k, x + 0.75 * k, y + 0.35 * k]];
+}
+function closeSheet() { FL('fsheet').hidden = true; frameAboveSheet(); }
+function showKeys(on) { FL('keys').hidden = !on; FL('f-keys').setAttribute('aria-expanded', String(on)); }
 const flightEl = FL('flight'), hud = { alt: FL('h-alt'), spd: FL('h-spd'), hdg: FL('h-hdg'), card: FL('h-card'), home: FL('h-home'), time: FL('h-time'), warn: FL('h-warn') };
 const CARD = ['شمال', 'شمال شرق', 'شرق', 'جنوب شرق', 'جنوب', 'جنوب غرب', 'غرب', 'شمال غرب'];
 const mini = FL('minimap'), mctx = mini.getContext('2d'), MB = R(-285, -185, 285, 185);
@@ -1731,11 +1805,14 @@ function enterFlight() {
   f.pos.copy(f.home); f.pos.y = groundAt(f.home.x, f.home.z) + 0.15;
   f.vel.set(0, 0, 0); f.vy = 0; f.yaw = Math.PI; f.yawRate = 0; f.airborne = true; f.landing = false; f.airTime = 0;
   f.auto = { x: f.home.x, z: f.home.z, alt: 25, takeoff: true };
-  camera.near = 0.3; camera.updateProjectionMatrix();
+  camera.near = 0.3; camera.fov = flightFov(); camera.updateProjectionMatrix();
   setCam(f.cam);
   stageEl.classList.add('flying'); flightEl.hidden = false; FL('btn-fly').setAttribute('aria-pressed', 'true');
   document.getElementById('opts').hidden = true; hideHint(); tip.hidden = true;
   drawMapBg(); overlayFade(true);
+  APP.classList.add('immersive');   // on narrow screens the header and side panel give the whole screen to the flight
+  clearTimeout(flight.keysT);
+  if (!COARSE.matches) { showKeys(true); flight.keysT = setTimeout(() => showKeys(false), 7000); }   // a first look at the keys, then out of the way
   chaseTarget(f.camPos, f.camLook); camera.position.copy(f.camPos); camera.lookAt(f.camLook);
   invalidate(3);
 }
@@ -1743,7 +1820,8 @@ function exitFlight() {
   const f = flight;
   f.on = false; f.keys.clear(); f.stick.l = [0, 0]; f.stick.r = [0, 0];
   droneG.visible = false; stageEl.classList.remove('flying'); flightEl.hidden = true; FL('btn-fly').setAttribute('aria-pressed', 'false');
-  camera.near = 1; camera.updateProjectionMatrix(); overlayFade(false);
+  camera.near = 1; camera.fov = BASE_FOV; camera.updateProjectionMatrix(); overlayFade(false);
+  APP.classList.remove('immersive'); FL('fsheet').hidden = true; camera.clearViewOffset(); clearTimeout(f.keysT); showKeys(false);
   const dir = camera.getWorldDirection(new THREE.Vector3());
   const hit = new THREE.Ray(camera.position.clone(), dir).intersectPlane(GROUND, new THREE.Vector3());
   controls.target.copy(hit && hit.distanceTo(camera.position) < 600 ? hit : camera.position.clone().addScaledVector(dir, 60).setY(0));
@@ -1822,7 +1900,7 @@ function flightStep(dt, now) {
   const t = Math.floor(f.airTime); hud.time.textContent = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
   hud.warn.hidden = !f.warn;
   const below = PLOTS.find(P => inR(P.r, f.pos.x, f.pos.z));
-  FL('below').hidden = !below;
+  FL('below').hidden = !below; if (!below) flight.below = null;
   if (below && flight.below !== below) { flight.below = below; FL('below-text').textContent = `فوق القطعة ${below.id} · ${STATUS[below.status].label} · ${nf(below.price)} ر.س`; }
   drawMinimap();
 }
@@ -1862,7 +1940,19 @@ FL('f-cam').addEventListener('click', () => setCam(flight.cam === 'chase' ? 'fpv
 FL('f-fast').addEventListener('click', () => setFast(!flight.fast));
 FL('f-land').addEventListener('click', () => { flight.auto = null; flight.landing = true; });
 FL('f-home').addEventListener('click', () => { flight.landing = false; flight.airborne = true; flight.auto = { x: flight.home.x, z: flight.home.z, alt: Math.max(30, flight.pos.y - groundAt(flight.pos.x, flight.pos.z)), land: true }; });
-FL('below-open').addEventListener('click', () => { if (flight.below) go(flight.below.key, { fly: false }); });
+FL('f-keys').addEventListener('click', () => { clearTimeout(flight.keysT); showKeys(FL('keys').hidden); });
+/* plot details while flying: the side panel on wide screens, a bottom sheet over the flight on narrow ones */
+function openSheet(P, fly) {
+  go(P.key, { fly });
+  FL('fsheet-body').innerHTML = plotPanel(P); FL('fsheet').hidden = false; FL('fsheet').scrollTop = 0; frameAboveSheet();
+}
+FL('below-open').addEventListener('click', () => { const P = flight.below; if (!P) return; if (NARROW.matches) openSheet(P, false); else go(P.key, { fly: false }); });
+FL('fsheet-x').addEventListener('click', closeSheet);
+FL('fsheet').addEventListener('click', e => {
+  const b = e.target.closest('button[data-go]'); if (!b) return;
+  if (b.dataset.go === 'site') { closeSheet(); return; }
+  const P = PLOT_BY.get(b.dataset.go); if (P) openSheet(P, true);   // a neighbour: show it and fly there
+});
 </script>
 </body>
 </html>
