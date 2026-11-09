@@ -211,7 +211,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .fexit { position: absolute; top: 10px; left: 10px; min-height: 38px; border: 1px solid var(--gold); background: var(--gold); color: var(--on-gold); border-radius: 10px; padding: 7px 14px; font-size: 13px; font-weight: 700; cursor: pointer; }
 .fbtns { position: absolute; left: 10px; top: 60px; display: grid; gap: 6px; }
 .fbtns button { min-height: 36px; border: 1px solid var(--line); background: var(--glass); color: var(--text); border-radius: 9px; padding: 7px 12px; font-size: 13px; cursor: pointer; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); white-space: nowrap; }
-.fbtns button:hover { border-color: var(--gold); }
+@media (hover: hover) { .fbtns button:hover { border-color: var(--gold); } }   /* no sticky highlight after a tap */
 .fbtns button[aria-pressed="true"], .fbtns button[aria-expanded="true"], .tools button[aria-pressed="true"] { background: var(--gold); color: var(--on-gold); border-color: var(--gold); }
 .below { position: absolute; left: 50%; top: 86px; transform: translateX(-50%); display: flex; gap: 8px; align-items: center; max-width: calc(100% - 20px); box-sizing: border-box; background: var(--surface); border: 1px solid var(--gold); border-radius: 999px; padding: 4px 4px 4px 12px; font-size: 13px; }
 .below span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }

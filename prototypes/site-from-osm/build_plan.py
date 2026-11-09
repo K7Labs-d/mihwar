@@ -1,8 +1,11 @@
 """Build street surfaces, real blocks and an illustrative plot split from an OpenStreetMap extract.
 
-Usage: python3 build_plan.py OSM_JSON LAT LON OUT_JSON
-  OSM_JSON  output of https://api.openstreetmap.org/api/0.6/map.json?bbox=... around the point
-  LAT LON   a point inside the residential area to draw; the landuse=residential polygon that holds it is used
+Usage: python3 build_plan.py OSM_JSON LAT LON OUT_JSON [BUILDINGS_JSON]
+  OSM_JSON        output of https://api.openstreetmap.org/api/0.6/map.json?bbox=... around the point
+  LAT LON         a point inside the residential area to draw; the landuse=residential polygon that holds it is used
+  BUILDINGS_JSON  optional: building footprints from fetch_overture.py (Overture Maps, theme=buildings) for the same box.
+                  With it, plot lines are moved into the gaps between existing buildings, each plot says whether it is
+                  built on, and the buildings and mosques are written out for the 3D page.
 Coordinates in the output are metres from LAT/LON (x = east, y = north). No location is stored in this repository.
 """
 import json, math, sys
@@ -10,6 +13,7 @@ from shapely.geometry import LineString, Polygon, Point, MultiPolygon, box
 from shapely.ops import unary_union
 from shapely import affinity
 OSM, LAT0, LON0, OUT = sys.argv[1], float(sys.argv[2]), float(sys.argv[3]), sys.argv[4]
+BLD = sys.argv[5] if len(sys.argv) > 5 else None
 d = json.load(open(OSM))
 kx = 111320 * math.cos(math.radians(LAT0)); ky = 110574
 nodes = {e['id']: ((e['lon'] - LON0) * kx, (e['lat'] - LAT0) * ky) for e in d['elements'] if e['type'] == 'node'}
@@ -39,8 +43,40 @@ blocks_g = AOI.difference(ROADS)
 blocks = [g for g in getattr(blocks_g, 'geoms', [blocks_g]) if g.area > 400]
 print('streets', len(streets), 'blocks', len(blocks), 'area ha', round(AREA.area / 1e4, 1))
 
+# ---- existing buildings (optional): footprints detected from imagery, in the same local metres
+BLDS, MOSQUES = [], []
+if BLD:
+    import numpy as np, shapely
+    from shapely import wkb
+    to_local = lambda c: np.column_stack(((c[:, 0] - LON0) * kx, (c[:, 1] - LAT0) * ky))
+    for r in json.load(open(BLD)):
+        g = shapely.transform(wkb.loads(bytes.fromhex(r['geometry'])), to_local)
+        BLDS += [q.buffer(0) for q in getattr(g, 'geoms', [g]) if q.geom_type == 'Polygon' and q.area > 12]
+    # mosques mapped as points in OpenStreetMap; the footprint under each point becomes a mosque
+    for e in d['elements']:
+        t = e.get('tags', {})
+        if e['type'] == 'node' and t.get('amenity') == 'place_of_worship' and t.get('religion') == 'muslim':
+            pt = Point(nodes[e['id']])
+            hit = next((i for i, b in enumerate(BLDS) if b.distance(pt) < 3), None)
+            MOSQUES.append({'x': round(pt.x, 1), 'y': round(pt.y, 1), 'name': t.get('name', ''), 'bld': hit})
+    print('buildings', len(BLDS), 'mosques', len(MOSQUES), 'on a footprint', sum(m['bld'] is not None for m in MOSQUES))
+
+def merged(iv):
+    out = []
+    for a, b in sorted(iv):
+        if out and a <= out[-1][1]: out[-1][1] = max(out[-1][1], b)
+        else: out.append([a, b])
+    return out
+
+def snap(t, occ, shift, m=0.6):
+    """a cut position near t that does not pass through a building, or None"""
+    hit = next((iv for iv in occ if iv[0] - m < t < iv[1] + m), None)
+    if hit is None: return t
+    c = min((hit[0] - m, hit[1] + m), key=lambda v: abs(v - t))
+    return c if abs(c - t) <= shift else None
+
 def split_block(B):
-    """two rows back to back along the long side when deep enough, ~20 m frontage"""
+    """two rows back to back along the long side when deep enough, ~20 m frontage; cuts avoid existing buildings"""
     mrr = B.minimum_rotated_rectangle
     c = list(mrr.exterior.coords)[:4]
     e1 = (c[1][0] - c[0][0], c[1][1] - c[0][1]); e2 = (c[2][0] - c[1][0], c[2][1] - c[1][1])
@@ -50,13 +86,27 @@ def split_block(B):
     ctr = B.centroid
     R = affinity.rotate(B, -ang, origin=ctr)
     x0, y0, x1, y1 = R.bounds
+    RB = [affinity.rotate(b, -ang, origin=ctr) for b in BLDS if b.intersects(B)]
     rows = 2 if (y1 - y0) >= 44 else 1
+    ys = [y0, y1]
+    if rows == 2:
+        # the back-to-back line: near the middle, crossing as few buildings as possible
+        cost = lambda y: sum(b.intersection(LineString([(x0 - 1, y), (x1 + 1, y)])).length for b in RB) + abs(y - (y0 + y1) / 2) * 0.05
+        ym = min((y0 + (y1 - y0) * (0.3 + 0.4 * k / 80) for k in range(81)), key=cost) if RB else (y0 + y1) / 2
+        ys = [y0, ym, y1]
     n = max(1, round((x1 - x0) / 20))
     out = []
     for r in range(rows):
-        ya, yb = y0 + (y1 - y0) * r / rows, y0 + (y1 - y0) * (r + 1) / rows
-        for k in range(n):
-            xa, xb = x0 + (x1 - x0) * k / n, x0 + (x1 - x0) * (k + 1) / n
+        ya, yb = ys[r], ys[r + 1]
+        band = box(x0 - 1, ya + 0.5, x1 + 1, yb - 0.5)
+        occ = merged([g.bounds[0::2] for g in (b.intersection(band) for b in RB) if not g.is_empty and g.area > 4])
+        xs = [x0]
+        for k in range(1, n):
+            c = snap(x0 + (x1 - x0) * k / n, occ, 9)
+            if c is not None and c - xs[-1] >= 11 and x1 - c >= 11: xs.append(c)   # narrower than 11 m: merge with the neighbour
+        xs.append(x1)
+        for k in range(len(xs) - 1):
+            xa, xb = xs[k], xs[k + 1]
             cell = box(xa, ya, xb, yb).intersection(R)
             if cell.is_empty: continue
             for g in getattr(cell, 'geoms', [cell]):
@@ -122,6 +172,21 @@ for p in plots:
     c = Polygon(p['poly']).centroid; p['c'] = [round(c.x, 1), round(c.y, 1)]
 out['roadsDone'] = poly_out(done_u); out['roadsTodo'] = poly_out(todo_u); out['walks'] = poly_out(walk_u)
 out['labels'] = labels
+if BLD:
+    from shapely.strtree import STRtree
+    bt = STRtree(BLDS)
+    for p in plots:
+        g = Polygon(p['poly'])
+        p['bld'] = sum(1 for j in bt.query(g) if g.contains(BLDS[int(j)].representative_point()))
+    mosque_ids = {m['bld'] for m in MOSQUES if m['bld'] is not None}
+    out['buildings'] = [{'poly': rnd(b), 'a': round(b.area), 'k': 'mosque' if i in mosque_ids else 'small' if b.area < 60 else 'bld'}
+                        for i, b in enumerate(BLDS) if b.intersects(AOI.buffer(700))]
+    out['mosques'] = [{'x': m['x'], 'y': m['y'], 'name': m['name']} for m in MOSQUES if Point(m['x'], m['y']).distance(AOI) < 700]
+    out['bldSource'] = 'Microsoft ML Building Footprints (ODbL) via Overture Maps'
+    inside = [b for b in BLDS if b.intersects(AREA)]
+    out['bldInArea'] = len(inside)
+    cross = sum(1 for b in inside if sum(1 for p in plots if Polygon(p['poly']).intersection(b).area > 0.15 * b.area) > 1)
+    print('buildings in the area', len(inside), 'crossing two or more plots', cross, 'plots built on', sum(p['bld'] > 0 for p in plots), 'of', len(plots))
 out['streetLen'] = round(sum(s['line'].intersection(AOI).length for s in streets))
 out['streetLenDone'] = round(sum(s['line'].intersection(AOI).length for s in streets if s['done']))
 for s in out['streets']: s.pop('polys', None)
