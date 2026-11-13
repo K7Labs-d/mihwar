@@ -61,6 +61,34 @@ if BLD:
             MOSQUES.append({'x': round(pt.x, 1), 'y': round(pt.y, 1), 'name': t.get('name', ''), 'bld': hit})
     print('buildings', len(BLDS), 'mosques', len(MOSQUES), 'on a footprint', sum(m['bld'] is not None for m in MOSQUES))
 
+def building_out(i, b, kind):
+    """what the 3D page needs to draw a building: footprint, the roof inside the parapet, its main direction, and where roof items fit"""
+    from shapely.geometry.polygon import orient
+    g = b.simplify(0.25)
+    g = orient(Polygon(g.exterior) if g.geom_type == 'Polygon' and g.is_valid and g.area > 12 else Polygon(b.exterior), 1)
+    o = {'poly': rnd(g), 'a': round(g.area), 'k': kind}
+    c = list(g.minimum_rotated_rectangle.exterior.coords)
+    e1, e2 = (c[1][0] - c[0][0], c[1][1] - c[0][1]), (c[2][0] - c[1][0], c[2][1] - c[1][1])
+    ax = e1 if math.hypot(*e1) >= math.hypot(*e2) else e2
+    ang = math.atan2(ax[1], ax[0]); o['ang'] = round(math.degrees(ang), 1)
+    inner = g.buffer(-0.3, join_style=2)
+    if inner.geom_type == 'Polygon' and inner.area > 8 and not inner.interiors: o['in'] = rnd(orient(inner, 1))
+    if kind == 'small': return o
+    # roof items, placed only where they fit: a stair room (with the water tank on it) and one or two air-conditioning units
+    eq, core = [], g.buffer(-0.5)
+    deep = g.buffer(-2.4)
+    if g.area >= 150 and not deep.is_empty:
+        p = max(getattr(deep, 'geoms', [deep]), key=lambda q: q.area).representative_point()
+        room = affinity.rotate(box(p.x - 2.1, p.y - 1.6, p.x + 2.1, p.y + 1.6), math.degrees(ang), origin=(p.x, p.y))
+        if core.contains(room): eq.append([round(p.x, 2), round(p.y, 2), 's'])
+    cen = g.representative_point()
+    for k, d in enumerate((4.5, -5.5)):
+        if k == 1 and g.area < 260: break
+        q = Point(cen.x + math.cos(ang) * d + math.sin(ang) * (1.5 - 3 * ((i + k) % 2)), cen.y + math.sin(ang) * d - math.cos(ang) * (1.5 - 3 * ((i + k) % 2)))
+        if g.buffer(-1.0).contains(q) and all(math.hypot(q.x - e[0], q.y - e[1]) > 3.4 for e in eq): eq.append([round(q.x, 2), round(q.y, 2), 'a'])
+    if eq: o['eq'] = eq
+    return o
+
 def merged(iv):
     out = []
     for a, b in sorted(iv):
@@ -179,7 +207,7 @@ if BLD:
         g = Polygon(p['poly'])
         p['bld'] = sum(1 for j in bt.query(g) if g.contains(BLDS[int(j)].representative_point()))
     mosque_ids = {m['bld'] for m in MOSQUES if m['bld'] is not None}
-    out['buildings'] = [{'poly': rnd(b), 'a': round(b.area), 'k': 'mosque' if i in mosque_ids else 'small' if b.area < 60 else 'bld'}
+    out['buildings'] = [building_out(i, b, 'mosque' if i in mosque_ids else 'small' if b.area < 60 else 'bld')
                         for i, b in enumerate(BLDS) if b.intersects(AOI.buffer(700))]
     out['mosques'] = [{'x': m['x'], 'y': m['y'], 'name': m['name']} for m in MOSQUES if Point(m['x'], m['y']).distance(AOI) < 700]
     out['bldSource'] = 'Microsoft ML Building Footprints (ODbL) via Overture Maps'
