@@ -4,6 +4,18 @@ body {
     env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
 }
 
+/* Keep horizontal administration navigation and tables independently scrollable. */
+.product-screen--admin :is(.admin-sidebar nav, .table-scroll) {
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scroll-padding-inline: 12px;
+}
+
+.product-screen--admin .table-scroll:focus-visible {
+  outline: 2px solid #fbbf24;
+  outline-offset: 3px;
+}
+
 /* Leave text selectable and pinch-to-zoom available. */
 button, a, [role="button"], summary {
   touch-action: manipulation;
