@@ -61,6 +61,10 @@ try {
   assert.equal((await get('/api/client/equipment/missing')).status, 401);
   assert.equal((await get('/api/client/request-inbox')).status, 401);
   assert.equal((await get('/api/client/request-conversations/missing/messages')).status, 401);
+  // Production must never serve environment files, source, Git metadata or SQLite data.
+  for (const route of ['/.env', '/.env.local', '/.git/config', '/data/clients.sqlite', '/server.ts', '/package.json', '/vite.config.ts']) {
+    assert.equal((await get(route)).status, 404, route);
+  }
   console.log('Production check passed: home, assets, client auth, health, and removed routes.');
 } finally {
   if (child.exitCode === null) child.kill('SIGTERM');
