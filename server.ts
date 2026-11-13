@@ -6,6 +6,7 @@ import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import type { Server } from 'node:http';
 import { createClientAuth } from './server/clientAuth.ts';
+import { proxyTrust, serverOrigin, transportSecurity } from './server/transportSecurity.ts';
 
 const filename = fileURLToPath(import.meta.url);
 const moduleDir = path.dirname(filename);
@@ -14,9 +15,16 @@ dotenv.config({ path: [path.join(projectRoot, '.env.local'), path.join(projectRo
 
 export const app = express();
 app.disable('x-powered-by');
+const origin = serverOrigin(process.env.AUTH_ORIGIN, process.env.HOST || '127.0.0.1', process.env.PORT || 3000);
+const trustedProxies = process.env.TRUST_PROXY_CIDRS || '';
+if (new URL(origin).protocol === 'https:' && !trustedProxies.trim()) {
+  throw new Error('HTTPS behind a TLS proxy requires explicit TRUST_PROXY_CIDRS. Do not trust arbitrary forwarded headers.');
+}
+app.set('trust proxy', proxyTrust(trustedProxies));
+app.use(transportSecurity(origin));
 const clientAuth = createClientAuth({
   databasePath: process.env.AUTH_DB_PATH === ':memory:' ? ':memory:' : path.resolve(projectRoot, process.env.AUTH_DB_PATH || 'data/clients.sqlite'),
-  origin: process.env.AUTH_ORIGIN || 'http://localhost:' + (process.env.PORT || 3000),
+  origin,
 });
 app.use('/api/client', clientAuth.router);
 app.get('/api/health', (_req, res) => {

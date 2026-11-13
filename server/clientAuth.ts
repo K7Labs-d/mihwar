@@ -1,7 +1,6 @@
 import express from 'express';
-import { DatabaseSync } from 'node:sqlite';
-import { mkdirSync } from 'node:fs';
-import path from 'node:path';
+import { openPrivateDatabase } from './database.ts';
+import { parseAuthOrigin } from './transportSecurity.ts';
 import { randomBytes, randomUUID, scrypt, createHash, timingSafeEqual } from 'node:crypto';
 import { createBrokerRequests } from './brokerRequests.ts';
 import { ensureBrokerReviewPermission, ensureRequestManagementPermission } from './accountPermissions.ts';
@@ -23,12 +22,8 @@ const derive = (password: string, salt: Buffer) => new Promise<Buffer>((resolve,
 });
 
 export function createClientAuth({ databasePath, origin, now = Date.now }: { databasePath: string; origin: string; now?: () => number }) {
-  const site = new URL(origin);
-  if (site.protocol !== 'https:' && !['localhost', '127.0.0.1', '[::1]'].includes(site.hostname)) {
-    throw new Error('AUTH_ORIGIN must use HTTPS outside localhost.');
-  }
-  if (databasePath !== ':memory:') mkdirSync(path.dirname(databasePath), { recursive: true, mode: 0o700 });
-  const db = new DatabaseSync(databasePath);
+  const site = parseAuthOrigin(origin);
+  const db = openPrivateDatabase(databasePath);
   db.exec(`PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;
     CREATE TABLE IF NOT EXISTS client_users (
       id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL UNIQUE,

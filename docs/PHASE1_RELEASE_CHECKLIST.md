@@ -1,5 +1,7 @@
 # Phase 1 release checklist
 
+Deployment target correction: MIHWAR runs on Khalid's existing server. The retained `render.yaml` does not identify the active hosting environment. Use the existing server's process manager, TLS ingress and database paths; Render workspace access is not a release prerequisite.
+
 ## Reviewed implementation
 
 The release extends the existing MIHWAR application; it does not replace it or connect it to Supabase. The application uses the existing Express authentication and SQLite database selected by `AUTH_DB_PATH`.
@@ -10,10 +12,10 @@ Verification: `npm run check` includes 77 passing tests, TypeScript, production 
 
 ## Before merging or deploying
 
-1. Authenticate to the **existing** Render service for `K7Labs-d/mihwar`. Verify its current deployment commit, branch, domain, persistent disk, `AUTH_DB_PATH`, and `AUTH_ORIGIN`. `render.yaml` describes manual deployment from `main`, Node 24 and `/var/data/clients.sqlite`, but the actual service must be checked. Do not create a replacement service, disk, or database.
+1. Authenticate to the **existing server** running `K7Labs-d/mihwar`. Verify its application directory, current deployment commit and branch, Node version, process manager/service user, domain, TLS proxy, data disk, `AUTH_DB_PATH`, and `AUTH_ORIGIN`. Do not infer these from `render.yaml`, and do not replace the server, disk or database. For the storage/HTTPS hardening release, also configure verified proxy peers in `TRUST_PROXY_CIDRS` as described in `STORAGE_HTTPS_SECURITY.md`.
 2. Verify a fresh, consistent SQLite backup and its recovery procedure. Use the SQLite backup API (or an equivalent SQLite-aware backup), not a copy of the live `.sqlite` file that omits the WAL. Keep backups private; never commit, publish, or upload them to the repository. Verify `PRAGMA integrity_check` and `PRAGMA foreign_key_check` on the backup. Record its timestamp, schema version and location without exposing records or secrets.
 3. Rehearse migration 4 on an isolated private copy with the reviewed application. Verify integrity/foreign keys and preservation of account, request, message and equipment counts. Do not serve that copy publicly or seed test accounts in production.
-4. Verify CI for the exact reviewed head, merge only the Phase 1 PR, and deploy that resulting commit through the existing manual Render route. Do not merge unrelated older PRs. No new environment secrets are required for Phase 1.
+4. Verify CI for the exact reviewed head, merge only the intended PR when authorized, and deploy that resulting commit through the existing server's release procedure when authorized. Do not merge unrelated older PRs. No new environment secrets are required for Phase 1; storage/HTTPS hardening separately requires the proxy configuration documented above.
 
 ## Migration and recovery
 
@@ -23,7 +25,7 @@ Migration 4 is additive and executes in a transaction. Existing accounts, reques
 
 ## Verify the live release
 
-- Render reports the intended commit live; `/api/health` succeeds and the served asset manifest matches the reviewed build
+- The server's running process uses the intended commit; HTTPS `/api/health` succeeds and the served asset manifest matches the reviewed build
 - Anonymous `/#marketplace`, equipment and other platform deep links show the login gate; the marketplace API returns 401
 - The existing public domain loads without console/asset errors on desktop and mobile
 - Verify an existing user's login/account/request persistence only with authorized credentials; do not invent a production test account or submit fake requests
@@ -34,4 +36,4 @@ Migration 4 is additive and executes in a transaction. Existing accounts, reques
 
 Email/password login is implemented. Email ownership verification, password recovery, file/image uploads, OTP, real offers, bookings, disputes and payments are not implemented. The new marketplace is a limited first-phase listing/details view; it returns up to 100 matches and does not persist an item selection across refresh. Older marketplace PR #2 and OTP PR #9 are outside this release.
 
-At review time publication remains blocked on authenticated Render access and verified production backup/migration checks. No production deployment or production database change is claimed by this checklist.
+Production readiness remains unverified until the actual server's runtime, HTTPS/proxy configuration and backup/migration checks have been inspected. No production deployment or production database change is claimed by this checklist.
