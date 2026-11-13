@@ -229,8 +229,11 @@
   transition: background-color 150ms ease;
 }
 
+@media (hover: hover) and (pointer: fine) {
+
 .client-auth-submit:hover:not(:disabled) {
   background: #ffc85f;
+}
 }
 
 .client-auth-switch {
@@ -255,12 +258,12 @@
   cursor: pointer;
 }
 
-.client-auth-home:hover,
-.client-auth-switch button:hover:not(:disabled),
-.client-auth-back:hover,
-.client-auth-recovery summary:hover {
+@media (hover: hover) and (pointer: fine) {
+
+.client-auth-home:hover, .client-auth-switch button:hover:not(:disabled), .client-auth-back:hover, .client-auth-recovery summary:hover {
   text-decoration: underline;
   text-underline-offset: 4px;
+}
 }
 
 .client-auth-back {

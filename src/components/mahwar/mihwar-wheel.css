@@ -74,8 +74,11 @@
   cursor: pointer;
 }
 
+@media (hover: hover) and (pointer: fine) {
+
 .mihwar-wheel .hub-action:hover:not(:disabled) {
   background: #ffc85f;
+}
 }
 
 .mihwar-wheel .hub-close {

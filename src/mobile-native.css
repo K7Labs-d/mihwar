@@ -1,0 +1,25 @@
+/* Keep content clear of the display cutout and home indicator. */
+body {
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
+    env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+}
+
+/* Leave text selectable and pinch-to-zoom available. */
+button, a, [role="button"], summary {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (any-pointer: coarse) {
+  /* Prevent iOS from zooming when a text field receives focus. */
+  #root input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="button"]):not([type="submit"]):not([type="reset"]),
+  #root select,
+  #root textarea {
+    font-size: 16px;
+  }
+
+  /* Supply visible press feedback where the browser highlight is removed. */
+  button:not(:disabled):active, a:active, [role="button"]:active, summary:active {
+    opacity: .82;
+  }
+}
