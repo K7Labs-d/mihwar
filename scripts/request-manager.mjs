@@ -1,4 +1,4 @@
-import { DatabaseSync } from 'node:sqlite';
+import { openPrivateDatabase } from '../server/database.ts';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -17,7 +17,7 @@ if (!['grant', 'revoke'].includes(action) || !email || extra.length || email.len
   let db;
   try {
     if (!existsSync(databasePath)) throw new Error('The account database does not exist. Check AUTH_DB_PATH.');
-    db = new DatabaseSync(databasePath);
+    db = openPrivateDatabase(databasePath, { create: false });
     db.exec('PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;');
     ensureRequestManagementPermission(db);
     // Only a server operator can run this command; no public API grants permission.

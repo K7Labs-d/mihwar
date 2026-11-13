@@ -1,5 +1,5 @@
 // Server operator only. Never invoked by the web application.
-import { DatabaseSync } from 'node:sqlite';
+import { openPrivateDatabase } from '../server/database.ts';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -31,7 +31,7 @@ if (
     );
     if (!existsSync(database))
       throw new Error('Account database does not exist. Check AUTH_DB_PATH.');
-    db = new DatabaseSync(database);
+    db = openPrivateDatabase(database, { create: false });
     db.exec(
       'PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000; BEGIN IMMEDIATE;',
     );
