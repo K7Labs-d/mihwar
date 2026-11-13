@@ -45,6 +45,8 @@ AUTH_DB_PATH=/absolute/path/clients.sqlite node scripts/platform-owner.mjs grant
 
 ## التشغيل
 
+بيئة النشر الفعلية هي سيرفر خالد القائم. وجود `render.yaml` في المستودع إعداد محفوظ، وليس دليلًا على استخدام Render. تُراجع خدمة Node ووكيل HTTPS ومسارات البيانات على السيرفر نفسه قبل النشر.
+
 مرجع المنتج المعتمد: [Master Product Blueprint](docs/MIHWAR_MASTER_PRODUCT_BLUEPRINT.md).
 حالة مرحلة المؤجر والمعدات، نموذج البيانات والترحيل والاختبارات: [Lessor Foundation + Equipment Core](docs/LESSOR_EQUIPMENT_CORE.md).
 
