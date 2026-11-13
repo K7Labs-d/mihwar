@@ -91,10 +91,10 @@ export function createClientAuth({ databasePath, origin, now = Date.now }: { dat
     next();
   });
   router.use(express.json({ limit: '16kb' }));
-  router.use(['/login', '/register', '/admin-login'], (req, res, next) => {
-    if (req.method !== 'POST') return next();
+  // Bind security policy to the matched route, not the caller's path spelling.
+  // Express also accepts case variants and an optional trailing slash.
+  const authLimit = (registration: boolean): express.RequestHandler => (req, res, next) => {
     cleanup();
-    const registration = req.originalUrl.split('?')[0].endsWith('/register');
     const duration = registration ? 3600000 : 900000;
     if (limited((registration ? 'register:' : 'login:') + (req.ip || 'unknown'), registration ? 5 : 20, duration)) {
       res.setHeader('Retry-After', String(duration / 1000));
@@ -102,7 +102,7 @@ export function createClientAuth({ databasePath, origin, now = Date.now }: { dat
     }
     if (activeHashes >= 4) return res.status(503).json({ error: 'الخدمة مشغولة الآن، حاول بعد قليل.' });
     next();
-  });
+  };
   const credentials = (body: any) => {
     if (!body || typeof body.email !== 'string' || typeof body.password !== 'string') return null;
     const email = body.email.trim().toLowerCase();
@@ -110,7 +110,7 @@ export function createClientAuth({ databasePath, origin, now = Date.now }: { dat
     return { email, password: body.password as string };
   };
 
-  router.post('/register', wrap(async (req, res) => {
+  router.post('/register', authLimit(true), wrap(async (req, res) => {
     if (req.body && Object.keys(req.body).some(key => !['name', 'email', 'password'].includes(key))) return res.status(400).json({ error: 'أرسل بيانات التسجيل فقط؛ لا يمكن تحديد صلاحيات الحساب.' });
     const input = credentials(req.body);
     const name = typeof req.body?.name === 'string' ? req.body.name.trim().normalize('NFC') : '';
@@ -132,7 +132,7 @@ export function createClientAuth({ databasePath, origin, now = Date.now }: { dat
     return res.status(201).json({ user: publicUser(user) });
   }));
 
-  router.post(['/login', '/admin-login'], wrap(async (req, res) => {
+  const login = (adminScope: boolean) => wrap(async (req, res) => {
     const input = credentials(req.body);
     if (!input) return res.status(400).json({ error: 'أدخل بريدًا صالحًا وكلمة مرور من 8 إلى 128 حرفًا.' });
     if (limited('email:' + input.email, 10, 900000)) {
@@ -148,12 +148,13 @@ export function createClientAuth({ databasePath, origin, now = Date.now }: { dat
       valid = timingSafeEqual(actual, Buffer.from(expected, 'hex')) && !!user;
     } finally { activeHashes--; }
     if (!valid || !user) return res.status(401).json({ error: 'البريد الإلكتروني أو كلمة المرور غير صحيحة.' });
-    const adminScope = req.path === '/admin-login';
     if (adminScope && user.is_platform_admin !== 1 && user.can_review_brokers !== 1 && user.can_manage_requests !== 1) return res.status(403).json({ error: 'الحساب غير مخول لدخول الإدارة.' });
     issueSession(req, res, user.id, adminScope);
     user.admin_scope = adminScope ? 1 : 0;
     return res.json({ user: publicUser(user) });
-  }));
+  });
+  router.post('/login', authLimit(false), login(false));
+  router.post('/admin-login', authLimit(false), login(true));
 
   const sessionUser = (req: express.Request) => {
     const token = tokenFrom(req);

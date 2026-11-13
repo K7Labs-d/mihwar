@@ -164,6 +164,62 @@ test('rate limits apply to registration with query strings and login attempts', 
   } finally { await service.close(); }
 });
 
+test('registration aliases share the five-attempt hourly limit and leave login available', async () => {
+  let timestamp = Date.now();
+  const service = await start(':memory:', () => timestamp);
+  try {
+    for (const route of ['/register', '/REGISTER', '/register/', '/ReGiStEr/?from=signup', '/register?attempt=5']) {
+      assert.equal((await service.post(route, {})).status, 400, route);
+    }
+    const blocked = await service.post('/REGISTER/', account);
+    assert.equal(blocked.status, 429);
+    assert.equal(blocked.headers.get('retry-after'), '3600');
+    assert.equal((await service.get('/me')).status, 401);
+    assert.equal((await service.post('/login', {})).status, 400);
+    timestamp += 3600000;
+    assert.equal((await service.post('/REGISTER/', account)).status, 201);
+    assert.equal((await service.post('/LOGIN/', account)).status, 200);
+  } finally { await service.close(); }
+});
+
+test('administrative login aliases enforce privileges and preserve the separate session scope', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'mahwar-auth-test-'));
+  const databasePath = join(directory, 'clients.sqlite');
+  let service;
+  try {
+    service = await start(databasePath);
+    assert.equal((await service.post('/register', account)).status, 201);
+    const aliases = ['/ADMIN-LOGIN', '/admin-login/', '/AdMiN-LoGiN/?from=gate'];
+    for (const route of aliases) {
+      const denied = await service.post(route, account);
+      assert.equal(denied.status, 403, route);
+      assert.equal(denied.headers.get('set-cookie'), null);
+    }
+    const inspect = new DatabaseSync(databasePath);
+    try {
+      inspect.prepare('UPDATE client_users SET can_review_brokers=1 WHERE email=?').run(account.email);
+    } finally { inspect.close(); }
+    let Cookie = '';
+    for (const route of aliases) {
+      const login = await service.post(route, account, { Cookie });
+      assert.equal(login.status, 200, route);
+      assert.equal((await login.json()).user.adminSession, true);
+      Cookie = cookie(login);
+      assert.equal((await service.get('/broker-review/requests', Cookie)).status, 200);
+    }
+    const ordinary = await service.post('/LOGIN/', account, { Cookie });
+    assert.equal(ordinary.status, 200);
+    assert.equal((await ordinary.json()).user.adminSession, false);
+    assert.equal((await service.get('/me', Cookie)).status, 401);
+    assert.equal((await service.get('/broker-review/requests', cookie(ordinary))).status, 403);
+  } finally {
+    await service?.close();
+    assert.equal(dirname(resolve(directory)), resolve(tmpdir()));
+    assert.ok(basename(directory).startsWith('mahwar-auth-test-'));
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 test('expired sessions cannot authenticate', async () => {
   let timestamp = Date.now();
   const service = await start(':memory:', () => timestamp);
