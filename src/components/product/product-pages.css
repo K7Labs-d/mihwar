@@ -36,7 +36,8 @@
 .product-journey a { display:flex; justify-content:space-between; align-items:center; gap:12px; min-height:46px; padding:10px 12px; border:1px solid transparent; border-radius:10px; font-size:13px; line-height:1.8; color:#b4bac0; }
 .product-journey a span { min-width:0; overflow-wrap:anywhere; }
 .product-journey a svg { flex:none; }
-.product-journey a:hover { color:#ffd078; border-color:#b27e2d55; background:#ffffff03; }
+@media (hover: hover) and (pointer: fine) {
+.product-journey a:hover { color:#ffd078; border-color:#b27e2d55; background:#ffffff03; } }
 .product-journey a[aria-current="page"] { color:var(--accent); background:#ffb21a0a; border-color:#b27e2d55; }
 @media (max-width:900px) {
   .product-page-layout { grid-template-columns:minmax(0,1fr); gap:18px; }

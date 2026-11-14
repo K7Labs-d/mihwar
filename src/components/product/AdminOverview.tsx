@@ -37,10 +37,21 @@ async function read(route: string) {
 }
 export function AdminOverview({ page }: { page: Page }) {
   const { user } = useAuth();
+  const navigationRef = useRef<HTMLElement>(null);
   const permittedDestinations = destinations.filter((destination) =>
     canAccessAdminPage(user, destination.id),
   );
   const canOpenPage = permittedDestinations.some((destination) => destination.id === page);
+  useEffect(() => {
+    const navigation = navigationRef.current;
+    const current = navigation?.querySelector<HTMLElement>('[aria-current="page"]');
+    if (!navigation || !current) return;
+    const container = navigation.getBoundingClientRect();
+    const item = current.getBoundingClientRect();
+    const offset = item.left < container.left ? item.left - container.left
+      : item.right > container.right ? item.right - container.right : 0;
+    if (offset) navigation.scrollBy({ left: offset, behavior: 'auto' });
+  }, [page, user]);
   if (!user?.adminSession || !canOpenPage)
     return (
       <section className="figma-content account-journey product-screen product-screen--admin">
@@ -59,7 +70,7 @@ export function AdminOverview({ page }: { page: Page }) {
       <div className="figma-content admin-layout account-journey product-screen product-screen--admin">
         <aside className="figma-card admin-sidebar">
           <h2>الإدارة</h2>
-          <nav aria-label="الإدارة">
+          <nav aria-label="الإدارة" ref={navigationRef}>
             {permittedDestinations.map((d) => (
               <a
                 key={d.id}
@@ -380,6 +391,8 @@ function AdminList({ kind }: { kind: 'equipment' | 'users' | 'audit' }) {
         <label className="figma-field">
           البحث
           <input
+            type="search"
+            enterKeyHint="search"
             maxLength={120}
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -442,7 +455,7 @@ function AdminList({ kind }: { kind: 'equipment' | 'users' | 'audit' }) {
       ) : (
         list && (
           <>
-            <div className="figma-card table-scroll">
+            <div className="figma-card table-scroll" role="region" aria-label={`جدول ${title}`} tabIndex={0}>
               <table className="admin-table">
                 <thead>
                   <tr>

@@ -164,6 +164,111 @@ test('rate limits apply to registration with query strings and login attempts', 
   } finally { await service.close(); }
 });
 
+test('login limits isolate accounts sharing a peer and remain shared across login aliases', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'mahwar-auth-test-'));
+  const databasePath = join(directory, 'clients.sqlite');
+  let timestamp = Date.now();
+  const service = await start(databasePath, () => timestamp);
+  const other = { ...account, name: 'عميل آخر', email: 'other@example.com' };
+  const admin = { ...account, name: 'إدارة الاختبار', email: 'admin@example.com' };
+  try {
+    for (const input of [account, other, admin]) {
+      assert.equal((await service.post('/register', input)).status, 201);
+    }
+    const inspect = new DatabaseSync(databasePath);
+    try {
+      inspect.prepare('UPDATE client_users SET can_manage_requests=1 WHERE email=?').run(admin.email);
+    } finally { inspect.close(); }
+
+    for (let i = 0; i < 21; i++) {
+      const route = (i % 2 ? '/admin-login' : '/login') + '?attempt=' + i;
+      const response = await service.post(route, {
+        email: i % 2 ? '  CLIENT@EXAMPLE.COM ' : account.email,
+        password: 'wrong-password-1234',
+      }, { 'X-Forwarded-For': '198.51.100.' + (i + 1) });
+      assert.equal(response.status, i < 10 ? 401 : 429);
+      if (i >= 10) assert.equal(response.headers.get('retry-after'), '900');
+    }
+    assert.equal((await service.post('/login', account)).status, 429);
+    const login = await service.post('/login', other);
+    assert.equal(login.status, 200, 'another account on the same peer must still log in');
+    assert.equal((await service.get('/me', cookie(login))).status, 200);
+    const adminLogin = await service.post('/admin-login', admin);
+    assert.equal(adminLogin.status, 200, 'the separate admin account must still log in');
+    assert.equal((await adminLogin.json()).user.adminSession, true);
+
+    timestamp += 900000 + 1;
+    assert.equal((await service.post('/login', account)).status, 200);
+  } finally {
+    await service.close();
+    assert.equal(dirname(resolve(directory)), resolve(tmpdir()));
+    assert.ok(basename(directory).startsWith('mahwar-auth-test-'));
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test('malformed login floods stay limited without blocking valid account logins', async () => {
+  const service = await start();
+  try {
+    assert.equal((await service.post('/register', account)).status, 201);
+    for (let i = 0; i < 21; i++) {
+      const response = await service.post(i % 2 ? '/admin-login' : '/login', {});
+      assert.equal(response.status, i < 20 ? 400 : 429);
+    }
+    assert.equal((await service.post('/login', account)).status, 200);
+    assert.equal((await service.post('/admin-login', account)).status, 403);
+  } finally { await service.close(); }
+});
+
+test('registration keeps its own limit for case-insensitive trailing-slash routes', async () => {
+  const service = await start();
+  try {
+    for (let i = 0; i < 6; i++) {
+      const response = await service.post('/REGISTER/?attempt=' + i, {
+        email: account.email, password: account.password,
+      });
+      assert.equal(response.status, i < 5 ? 400 : 429);
+    }
+  } finally { await service.close(); }
+});
+
+test('unknown-email spraying stays limited without consuming registered account budgets', async () => {
+  const service = await start();
+  try {
+    assert.equal((await service.post('/register', account)).status, 201);
+    for (let i = 0; i < 21; i++) {
+      const response = await service.post(i % 2 ? '/admin-login' : '/login', {
+        email: 'absent-' + i + '@example.com', password: account.password,
+      });
+      assert.equal(response.status, i < 10 ? 401 : 429);
+    }
+    assert.equal((await service.post('/login', account)).status, 200);
+  } finally { await service.close(); }
+});
+
+test('transient limiter capacity cannot lock out an existing account', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'mahwar-auth-test-'));
+  const databasePath = join(directory, 'clients.sqlite');
+  const timestamp = Date.now();
+  const service = await start(databasePath, () => timestamp);
+  try {
+    assert.equal((await service.post('/register', account)).status, 201);
+    const inspect = new DatabaseSync(databasePath);
+    try {
+      inspect.exec('BEGIN');
+      const insert = inspect.prepare('INSERT INTO client_auth_limits(key,count,expires_at) VALUES (?,1,?)');
+      for (let i = 0; i < 10000; i++) insert.run('transient-test-' + i, timestamp + 900000);
+      inspect.exec('COMMIT');
+    } finally { inspect.close(); }
+    assert.equal((await service.post('/login', account)).status, 200);
+  } finally {
+    await service.close();
+    assert.equal(dirname(resolve(directory)), resolve(tmpdir()));
+    assert.ok(basename(directory).startsWith('mahwar-auth-test-'));
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 test('expired sessions cannot authenticate', async () => {
   let timestamp = Date.now();
   const service = await start(':memory:', () => timestamp);

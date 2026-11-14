@@ -56,10 +56,12 @@ export function createClientAuth({ databasePath, origin, now = Date.now }: { dat
     db.prepare('DELETE FROM client_sessions WHERE expires_at <= ?').run(now());
     db.prepare('DELETE FROM client_auth_limits WHERE expires_at <= ?').run(now());
   };
-  const limited = (key: string, max: number, duration: number) => {
+  const limited = (key: string, max: number, duration: number, accountBound = false) => {
     const hashed = digest(key);
     const existing = db.prepare('SELECT key FROM client_auth_limits WHERE key=?').get(hashed);
-    if (!existing && Number((db.prepare('SELECT COUNT(*) AS n FROM client_auth_limits').get() as any).n) >= 10000) return true;
+    // Real-account keys are bounded by registered users, not arbitrary input.
+    // Transient peer budgets reaching capacity must not lock out other accounts.
+    if (!accountBound && !existing && Number((db.prepare('SELECT COUNT(*) AS n FROM client_auth_limits').get() as any).n) >= 10000) return true;
     const row = db.prepare(`INSERT INTO client_auth_limits (key,count,expires_at) VALUES (?,1,?)
       ON CONFLICT(key) DO UPDATE SET count=count+1 RETURNING count`).get(hashed, now() + duration) as { count: number };
     return row.count > max;
@@ -91,12 +93,14 @@ export function createClientAuth({ databasePath, origin, now = Date.now }: { dat
     next();
   });
   router.use(express.json({ limit: '16kb' }));
-  router.use(['/login', '/register', '/admin-login'], (req, res, next) => {
-    if (req.method !== 'POST') return next();
+  router.post(['/login', '/register', '/admin-login'], (req, res, next) => {
     cleanup();
-    const registration = req.originalUrl.split('?')[0].endsWith('/register');
+    const registration = req.path.toLowerCase().replace(/\/+$/, '') === '/register';
     const duration = registration ? 3600000 : 900000;
-    if (limited((registration ? 'register:' : 'login:') + (req.ip || 'unknown'), registration ? 5 : 20, duration)) {
+    // Valid logins use the normalized account budget below. A proxy or shared
+    // network must not turn one account's attempts into a lockout for everyone.
+    // Keep malformed requests in a separate peer budget before any password work.
+    if ((registration || !credentials(req.body)) && limited((registration ? 'register:' : 'login-invalid:') + (req.ip || 'unknown'), registration ? 5 : 20, duration)) {
       res.setHeader('Retry-After', String(duration / 1000));
       return res.status(429).json({ error: 'محاولات كثيرة. حاول مرة أخرى لاحقًا.' });
     }
@@ -135,11 +139,14 @@ export function createClientAuth({ databasePath, origin, now = Date.now }: { dat
   router.post(['/login', '/admin-login'], wrap(async (req, res) => {
     const input = credentials(req.body);
     if (!input) return res.status(400).json({ error: 'أدخل بريدًا صالحًا وكلمة مرور من 8 إلى 128 حرفًا.' });
-    if (limited('email:' + input.email, 10, 900000)) {
+    const user = db.prepare('SELECT * FROM client_users WHERE email=?').get(input.email) as (User & { password_hash: string }) | undefined;
+    // Unknown-email spraying has its own peer budget and cannot create an
+    // unbounded set of email keys or consume a registered account's attempts.
+    const limitKey = user ? 'email:' + input.email : 'login-unknown:' + (req.ip || 'unknown');
+    if (limited(limitKey, 10, 900000, !!user)) {
       res.setHeader('Retry-After', '900');
       return res.status(429).json({ error: 'محاولات كثيرة. حاول مرة أخرى لاحقًا.' });
     }
-    const user = db.prepare('SELECT * FROM client_users WHERE email=?').get(input.email) as (User & { password_hash: string }) | undefined;
     const [, salt, expected] = user?.password_hash.split('$') || ['scrypt', '0'.repeat(32), '0'.repeat(128)];
     activeHashes++;
     let valid = false;

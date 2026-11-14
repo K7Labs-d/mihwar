@@ -16,7 +16,9 @@
 .inbox-results { font-size: 12px; margin: 16px 0; }
 .inbox-list { display: grid; gap: 10px; }
 .inbox-item { width: 100%; display: flex; align-items: center; gap: 16px; text-align: start; padding: 20px; border-radius: 14px; border: 1px solid #2c3545; background: #101724; transition: border-color .15s; }
-.inbox-item:hover, .inbox-item:focus-visible { border-color: #d8b873; }
+.inbox-item:focus-visible { border-color: #d8b873; }
+@media (hover: hover) and (pointer: fine) {
+.inbox-item:hover { border-color: #d8b873; } }
 .inbox-item-copy { flex: 1; min-width: 0; display: grid; gap: 7px; overflow-wrap: anywhere; }
 .inbox-item-copy strong { font-size: 16px; color: #f0f3f9; }
 .inbox-item-copy span, .inbox-item-copy time { color: #9aa8bd; font-size: 12px; }

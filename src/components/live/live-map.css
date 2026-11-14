@@ -72,7 +72,8 @@
 .lm-sheet-handle { display:none; }
 .lm-dna-top { display:flex; align-items:center; justify-content:space-between; height:24px; margin-bottom:14px; direction:ltr; color:#bea777; font:500 9px/1.4 'Cascadia Mono','Consolas',ui-monospace,monospace; letter-spacing:.12em; }
 .lm-icon-button { width:44px; height:44px; flex:none; display:grid; place-items:center; padding:0; background:transparent; color:#a5aba4; border:0; border-radius:50%; }
-.lm-icon-button:hover { background:#e2cd940c; color:#eddbb7; }
+@media (hover: hover) and (pointer: fine) {
+.lm-icon-button:hover { background:#e2cd940c; color:#eddbb7; } }
 .lm-dna-top .lm-icon-button { margin-right:-11px; }
 .lm-dna-summary { display:flex; justify-content:space-between; align-items:center; gap:10px; }
 .lm-dna-id { display:block; font:500 22px/1.2 'Cascadia Mono','Consolas',ui-monospace,monospace; color:#ede5d4; text-align:right; }

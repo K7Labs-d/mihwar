@@ -138,8 +138,10 @@
   opacity: 0.45;
   cursor: default;
 }
+@media (hover: hover) and (pointer: fine) {
 .mahwar-experience .quiet-button:hover {
   border-color: var(--accent);
+}
 }
 .figma-field {
   display: flex;
