@@ -11,6 +11,8 @@
   width: var(--hub-core-size);
   height: var(--hub-core-size);
   -webkit-tap-highlight-color: transparent;
+  /* Motion owns transform; a CSS transform transition would lag every frame. */
+  transition-property: box-shadow, background-color, border-color, color;
 }
 
 .mihwar-wheel .hub-rim {
@@ -52,7 +54,7 @@
 
 .mihwar-wheel .hub-actions {
   width: 100%;
-  min-height: 64px;
+  min-height: 96px;
   margin-top: 8px;
 }
 

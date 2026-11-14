@@ -10,7 +10,6 @@ export const MAHWAR_BRANCHES: MahwarBranch[] = [
     id: 'request',
     number: 1,
     label: 'الطلب',
-    badge: '1',
     iconName: 'file-text',
     angle: -90, // 12 o'clock
     cardTitle: 'ابدأ بطلبك',
